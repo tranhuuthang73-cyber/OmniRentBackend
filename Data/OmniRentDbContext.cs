@@ -157,7 +157,7 @@ namespace OmniRentBackend.Data
                 .HasForeignKey(b => b.RenterId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Review relationships
+            // Review relationships (FIXED: ProductId no longer cascade)
             modelBuilder.Entity<Review>()
                 .HasOne(r => r.Booking)
                 .WithMany(b => b.Reviews)
@@ -168,7 +168,7 @@ namespace OmniRentBackend.Data
                 .HasOne(r => r.Product)
                 .WithMany(p => p.Reviews)
                 .HasForeignKey(r => r.ProductId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);   // CHANGED: was Cascade -> NoAction
 
             modelBuilder.Entity<Review>()
                 .HasOne(r => r.User)
