@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -22,8 +23,8 @@ builder.Services.AddDbContext<OmniRentDbContext>(options =>
 builder.Services.AddScoped<AiService>();
 builder.Services.AddScoped<TrustService>();
 
-// 3. Add controllers and configure JSON options
-builder.Services.AddControllers()
+// 3. Add Controllers + Razor Views (MVC) và configure JSON options
+builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>
     {
         // Prevent infinite loops on circular relational dependencies
@@ -34,15 +35,27 @@ builder.Services.AddControllers()
 // 4. Configure SignalR for real-time chat and alerts
 builder.Services.AddSignalR();
 
-// 5. Configure JWT Authentication
+// 5. Configure Authentication: Cookie (for browser/MVC) + JWT Bearer (for API clients)
 var secret = builder.Configuration["Jwt:Secret"] ?? "OmniRentSuperSecretStartupJwtTokenKey2026!!!";
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    // Cookie là scheme mặc định cho trình duyệt (MVC Razor Views)
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+})
+.AddCookie(options =>
+{
+    options.LoginPath = "/auth/login";     // Redirect đến trang login nếu chưa xác thực
+    options.LogoutPath = "/auth/logout";
+    options.AccessDeniedPath = "/auth/login";
+    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+    options.SlidingExpiration = true;     // Gia hạn cookie nếu user còn hoạt động
+    options.Cookie.HttpOnly = true;       // Bảo vệ cookie khỏi JavaScript
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 })
 .AddJwtBearer(options =>
 {
+    // JWT vẫn giữ nguyên cho API clients (Postman, mobile app, v.v.)
     options.RequireHttpsMetadata = false;
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
@@ -89,16 +102,28 @@ using (var scope = app.Services.CreateScope())
 
 app.UseCors("CorsPolicy");
 
+// Phục vụ các file tĩnh (Bootstrap CSS/JS, ảnh, v.v.) từ wwwroot/
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Map route endpoints
+// Đăng ký Permission Middleware cho hệ thống phân quyền RBAC
+app.UseMiddleware<OmniRentBackend.Middleware.PermissionMiddleware>();
+
+// Map API controllers (attribute routing)
 app.MapControllers();
+
+// Map MVC conventional routes (cho Razor Views)
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 // Map SignalR Hub
 app.MapHub<ChatHub>("/hubs/chat");
 
-// Minimal status endpoint
-app.MapGet("/", () => new { name = "OmniRent C# ASP.NET Core Backend", status = "RUNNING" });
+// Ghi chú: endpoint tĩnh "/" đã được xóa.
+// Trang gốc "/" nay được xử lý bởi HomeController.Index
+// thông qua MapControllerRoute bên trên.
 
 app.Run();

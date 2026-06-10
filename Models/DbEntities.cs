@@ -35,6 +35,9 @@ namespace OmniRentBackend.Models
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         [JsonIgnore]
+        public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+
+        [JsonIgnore]
         public ICollection<Product> Products { get; set; } = new List<Product>();
 
         [JsonIgnore]
@@ -76,6 +79,9 @@ namespace OmniRentBackend.Models
 
         [JsonIgnore]
         public ICollection<Attribute> Attributes { get; set; } = new List<Attribute>();
+
+        [JsonIgnore]
+        public ICollection<ProductCategory> ProductCategories { get; set; } = new List<ProductCategory>();
 
         [JsonIgnore]
         public ICollection<Product> Products { get; set; } = new List<Product>();
@@ -142,6 +148,8 @@ namespace OmniRentBackend.Models
         public string ImagesJson { get; set; } = "[]"; // JSON string array of URLs
 
         public string Status { get; set; } = "PENDING_APPROVAL"; // PENDING_APPROVAL, AVAILABLE, RENTED, MAINTENANCE
+
+        public ICollection<ProductCategory> ProductCategories { get; set; } = new List<ProductCategory>();
 
         public ICollection<ProductAttribute> ProductAttributes { get; set; } = new List<ProductAttribute>();
 
@@ -384,5 +392,92 @@ namespace OmniRentBackend.Models
         public double RepairEstimate { get; set; } = 0.0;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
+
+    public class Role
+    {
+        [Key]
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        [Required]
+        public string Name { get; set; } = string.Empty;
+
+        public string? Description { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        [JsonIgnore]
+        public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+
+        [JsonIgnore]
+        public ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
+    }
+
+    public class Permission
+    {
+        [Key]
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        [Required]
+        public string Name { get; set; } = string.Empty;
+
+        public string? Description { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        [JsonIgnore]
+        public ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
+    }
+
+    public class UserRole
+    {
+        [Required]
+        public string UserId { get; set; } = string.Empty;
+
+        [ForeignKey("UserId")]
+        [JsonIgnore]
+        public User? User { get; set; }
+
+        [Required]
+        public string RoleId { get; set; } = string.Empty;
+
+        [ForeignKey("RoleId")]
+        public Role? Role { get; set; }
+    }
+
+    public class RolePermission
+    {
+        [Required]
+        public string RoleId { get; set; } = string.Empty;
+
+        [ForeignKey("RoleId")]
+        [JsonIgnore]
+        public Role? Role { get; set; }
+
+        [Required]
+        public string PermissionId { get; set; } = string.Empty;
+
+        [ForeignKey("PermissionId")]
+        public Permission? Permission { get; set; }
+    }
+
+    public class ProductCategory
+    {
+        [Required]
+        public string ProductId { get; set; } = string.Empty;
+
+        [ForeignKey("ProductId")]
+        [JsonIgnore]
+        public Product? Product { get; set; }
+
+        [Required]
+        public string CategoryId { get; set; } = string.Empty;
+
+        [ForeignKey("CategoryId")]
+        public Category? Category { get; set; }
     }
 }

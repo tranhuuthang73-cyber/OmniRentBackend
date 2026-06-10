@@ -52,6 +52,11 @@ namespace OmniRentBackend.Data
         public DbSet<Notification> Notifications { get; set; } = null!;
         public DbSet<QrCheckIn> QrCheckIns { get; set; } = null!;
         public DbSet<DamageReport> DamageReports { get; set; } = null!;
+        public DbSet<Role> Roles { get; set; } = null!;
+        public DbSet<Permission> Permissions { get; set; } = null!;
+        public DbSet<UserRole> UserRoles { get; set; } = null!;
+        public DbSet<RolePermission> RolePermissions { get; set; } = null!;
+        public DbSet<ProductCategory> ProductCategories { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -70,6 +75,11 @@ namespace OmniRentBackend.Data
             modelBuilder.Entity<Notification>().ToTable("Notification");
             modelBuilder.Entity<QrCheckIn>().ToTable("QrCheckIn");
             modelBuilder.Entity<DamageReport>().ToTable("DamageReport");
+            modelBuilder.Entity<Role>().ToTable("Role");
+            modelBuilder.Entity<Permission>().ToTable("Permission");
+            modelBuilder.Entity<UserRole>().ToTable("UserRole");
+            modelBuilder.Entity<RolePermission>().ToTable("RolePermission");
+            modelBuilder.Entity<ProductCategory>().ToTable("ProductCategory");
 
             // User unique constraints
             modelBuilder.Entity<User>()
@@ -198,6 +208,64 @@ namespace OmniRentBackend.Data
                 .HasOne(d => d.Booking)
                 .WithMany(b => b.DamageReports)
                 .HasForeignKey(d => d.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Role configuration
+            modelBuilder.Entity<Role>()
+                .HasIndex(r => r.Name)
+                .IsUnique();
+
+            // Permission configuration
+            modelBuilder.Entity<Permission>()
+                .HasIndex(p => p.Name)
+                .IsUnique();
+
+            // UserRole configuration
+            modelBuilder.Entity<UserRole>()
+                .HasKey(ur => new { ur.UserId, ur.RoleId });
+
+            modelBuilder.Entity<UserRole>()
+                .HasOne(ur => ur.User)
+                .WithMany(u => u.UserRoles)
+                .HasForeignKey(ur => ur.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserRole>()
+                .HasOne(ur => ur.Role)
+                .WithMany(r => r.UserRoles)
+                .HasForeignKey(ur => ur.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // RolePermission configuration
+            modelBuilder.Entity<RolePermission>()
+                .HasKey(rp => new { rp.RoleId, rp.PermissionId });
+
+            modelBuilder.Entity<RolePermission>()
+                .HasOne(rp => rp.Role)
+                .WithMany(r => r.RolePermissions)
+                .HasForeignKey(rp => rp.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RolePermission>()
+                .HasOne(rp => rp.Permission)
+                .WithMany(p => p.RolePermissions)
+                .HasForeignKey(rp => rp.PermissionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ProductCategory configuration
+            modelBuilder.Entity<ProductCategory>()
+                .HasKey(pc => new { pc.ProductId, pc.CategoryId });
+
+            modelBuilder.Entity<ProductCategory>()
+                .HasOne(pc => pc.Product)
+                .WithMany(p => p.ProductCategories)
+                .HasForeignKey(pc => pc.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProductCategory>()
+                .HasOne(pc => pc.Category)
+                .WithMany(c => c.ProductCategories)
+                .HasForeignKey(pc => pc.CategoryId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

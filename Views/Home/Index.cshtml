@@ -1,0 +1,298 @@
+@{
+    Layout = null;
+    var userName = User.Identity?.Name ?? "Khách";
+    var isAuth   = User.Identity?.IsAuthenticated ?? false;
+
+    // DÒNG ĐƯỢC THÊM VÀO: Lấy thông tin Role từ Claims của Cookie đăng nhập
+    var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value 
+                   ?? User.FindFirst("role")?.Value ?? "";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OmniRent — Nền tảng Cho thuê Tài sản Thông minh</title>
+    <meta name="description" content="OmniRent - Hệ thống quản lý cho thuê tài sản thông minh, hiện đại." />
+
+    <!-- Bootstrap 5 -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous" />
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet" />
+
+    <style>
+        :root {
+            --brand:     #6C63FF;
+            --brand-lt:  #9c91ff;
+            --dark-1:    #0f0c29;
+            --dark-2:    #1a1a3e;
+            --dark-3:    #24243e;
+            --text-main: #f0eeff;
+            --text-sub:  #a89fd8;
+            --card-bg:   rgba(255,255,255,0.06);
+            --card-bd:   rgba(255,255,255,0.11);
+        }
+        html, body { height: 100%; margin: 0; font-family: 'Inter', sans-serif; color: var(--text-main); }
+        body {
+            background: linear-gradient(135deg, var(--dark-1) 0%, var(--dark-2) 55%, var(--dark-3) 100%);
+            min-height: 100vh;
+        }
+
+        /* ─── NAVBAR ─── */
+        .omni-navbar {
+            background: rgba(15, 12, 41, 0.75);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-bottom: 1px solid var(--card-bd);
+            padding: 0.7rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .navbar-brand-custom {
+            display: flex; align-items: center; gap: 0.55rem;
+            text-decoration: none;
+        }
+        .brand-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--brand), var(--brand-lt));
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 14px rgba(108,99,255,0.45);
+        }
+        .brand-icon i { font-size: 1.1rem; color: #fff; }
+        .brand-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #fff 0%, var(--brand-lt) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .btn-navbar-login {
+            background: linear-gradient(135deg, var(--brand), var(--brand-lt));
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.88rem;
+            padding: 0.45rem 1.1rem;
+            text-decoration: none;
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 14px rgba(108,99,255,0.35);
+        }
+        .btn-navbar-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(108,99,255,0.5);
+            color: #fff;
+        }
+        .user-badge {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            color: var(--text-sub);
+            font-size: 0.88rem;
+        }
+        .user-badge i { color: var(--brand-lt); }
+
+        /* ─── HERO ─── */
+        .hero {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center;
+            padding: 6rem 1rem 5rem;
+            position: relative;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: rgba(108,99,255,0.18);
+            border: 1px solid rgba(108,99,255,0.35);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--brand-lt);
+            padding: 0.3rem 0.9rem;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.4rem;
+        }
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.4rem);
+            font-weight: 800;
+            line-height: 1.15;
+            background: linear-gradient(120deg, #fff 0%, var(--brand-lt) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.2rem;
+        }
+        .hero p {
+            max-width: 520px;
+            color: var(--text-sub);
+            font-size: 1.05rem;
+            line-height: 1.7;
+            margin-bottom: 2.2rem;
+        }
+        .btn-hero {
+            background: linear-gradient(135deg, var(--brand), #9c91ff);
+            border: none; border-radius: 12px;
+            color: #fff; font-weight: 600; font-size: 1rem;
+            padding: 0.85rem 2rem;
+            text-decoration: none;
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            box-shadow: 0 8px 28px rgba(108,99,255,0.45);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-hero:hover { transform: translateY(-3px); box-shadow: 0 14px 36px rgba(108,99,255,0.55); color: #fff; }
+
+        /* ─── FEATURE CARDS ─── */
+        .features { padding: 2rem 0 5rem; }
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-bd);
+            border-radius: 16px;
+            padding: 1.8rem;
+            height: 100%;
+            transition: transform 0.25s, box-shadow 0.25s;
+        }
+        .feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 40px rgba(108,99,255,0.2);
+        }
+        .feature-icon {
+            width: 46px; height: 46px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+        .feature-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .feature-card p  { font-size: 0.875rem; color: var(--text-sub); margin: 0; line-height: 1.6; }
+
+        /* ─── FOOTER ─── */
+        .omni-footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--text-sub);
+            font-size: 0.82rem;
+            border-top: 1px solid var(--card-bd);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══ NAVBAR ═══ -->
+    <nav class="omni-navbar" id="main-navbar">
+        <div class="container d-flex align-items-center justify-content-between">
+
+            <!-- Brand -->
+            <a href="/" class="navbar-brand-custom" id="navbar-brand-link">
+                <div class="brand-icon" aria-hidden="true">
+                    <i class="bi bi-building-fill"></i>
+                </div>
+                <span class="brand-name">OmniRent</span>
+            </a>
+
+            <!-- Right side -->
+<div>
+                @if (isAuth)
+                {
+                    // Logic tính toán luồng quay lại Dashboard dựa theo Role
+                    string dashboardUrl = "#";
+                    if (userRole.ToString().ToUpper() == "ADMIN") { dashboardUrl = "/AdminDashboard"; }
+                    else if (userRole.ToString().ToUpper() == "OWNER") { dashboardUrl = "/OwnerDashboard"; }
+
+                    <a href="@dashboardUrl" class="text-decoration-none" title="Quay lại Dashboard của bạn">
+                        <span class="user-badge" style="cursor: pointer;">
+                            <i class="bi bi-person-circle"></i>
+                            @userName
+                            @if (userRole.ToString().ToUpper() == "ADMIN" || userRole.ToString().ToUpper() == "OWNER")
+                            {
+                                <small style="font-size: 10px; opacity: 0.75; font-weight: bold; margin-left: 2px;">
+                                    (@userRole.ToString().ToUpper())
+                                </small>
+                            }
+                        </span>
+                    </a>
+
+                    <a href="/auth/logout" class="btn btn-outline-danger btn-sm ms-2" style="border-radius: 8px; padding: 5px 12px;">
+                        <i class="bi bi-box-arrow-right"></i> Đăng xuất
+                    </a>
+                }
+                else
+                {
+                    <a href="/auth/login" class="btn-navbar-login" id="navbar-login-btn">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        Đăng nhập
+                    </a>
+                }
+            </div>
+        </div>
+    </nav>
+    
+    <!-- ═══ HERO ═══ -->
+    <section class="hero container-fluid px-3" id="hero-section">
+        <span class="hero-badge">🏢 Nền tảng cho thuê thông minh</span>
+        <h1>Quản lý tài sản<br />cho thuê dễ dàng hơn</h1>
+        <p>OmniRent giúp bạn kết nối chủ tài sản và người thuê một cách minh bạch, an toàn và hiệu quả — với hệ thống phân quyền RBAC tiên tiến.</p>
+        <a href="/auth/login" class="btn-hero" id="hero-cta-btn">
+            <i class="bi bi-rocket-takeoff-fill"></i>
+            Bắt đầu ngay
+        </a>
+    </section>
+
+    <!-- ═══ FEATURES ═══ -->
+    <section class="features" id="features-section">
+        <div class="container">
+            <div class="row g-4 justify-content-center">
+
+                <div class="col-md-4 col-sm-6">
+                    <div class="feature-card" id="feat-card-rbac">
+                        <div class="feature-icon" style="background:rgba(108,99,255,0.18);">
+                            <i class="bi bi-shield-lock-fill" style="color:#9c91ff;"></i>
+                        </div>
+                        <h3>Phân quyền RBAC</h3>
+                        <p>Hệ thống phân quyền linh hoạt theo vai trò: Admin, Owner, Renter — mỗi role có tập quyền riêng biệt.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-4 col-sm-6">
+                    <div class="feature-card" id="feat-card-eav">
+                        <div class="feature-icon" style="background:rgba(67,233,123,0.15);">
+                            <i class="bi bi-diagram-3-fill" style="color:#43e97b;"></i>
+                        </div>
+                        <h3>Database EAV</h3>
+                        <p>Mô hình dữ liệu Entity-Attribute-Value cho phép mở rộng thuộc tính sản phẩm linh hoạt theo từng danh mục.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-4 col-sm-6">
+                    <div class="feature-card" id="feat-card-realtime">
+                        <div class="feature-icon" style="background:rgba(255,101,132,0.15);">
+                            <i class="bi bi-lightning-charge-fill" style="color:#ff6584;"></i>
+                        </div>
+                        <h3>Real-time Chat</h3>
+                        <p>Tính năng nhắn tin thời gian thực giữa chủ tài sản và người thuê, hỗ trợ bởi SignalR.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ FOOTER ═══ -->
+    <footer class="omni-footer" id="main-footer">
+        &copy; 2026 OmniRent — Đồ án Lập trình Web
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmLCqQhN6SREfMQ2V3bM6cQBQKB"
+            crossorigin="anonymous"></script>
+</body>
+</html>
