@@ -13,7 +13,77 @@ namespace OmniRentBackend.Data
         {
             await context.Database.EnsureCreatedAsync();
 
-            // 1. Seed Users if empty
+            // 1. Seed Roles and Permissions if empty
+            if (!context.Roles.Any())
+            {
+                var adminRole = new Role
+                {
+                    Id = "role-admin-uuid-0000-0000-000000000001",
+                    Name = "ADMIN",
+                    Description = "Quản trị viên hệ thống"
+                };
+
+                var ownerRole = new Role
+                {
+                    Id = "role-owner-uuid-0000-0000-000000000002",
+                    Name = "OWNER",
+                    Description = "Chủ sở hữu tài sản cho thuê"
+                };
+
+                var renterRole = new Role
+                {
+                    Id = "role-renter-uuid-0000-0000-000000000003",
+                    Name = "RENTER",
+                    Description = "Khách thuê đồ"
+                };
+
+                context.Roles.AddRange(adminRole, ownerRole, renterRole);
+                await context.SaveChangesAsync();
+            }
+
+            if (!context.Permissions.Any())
+            {
+                var permissions = new List<Permission>
+                {
+                    new Permission { Id = "perm-read-products", Name = "READ_PRODUCTS", Description = "Xem danh sách sản phẩm" },
+                    new Permission { Id = "perm-create-product", Name = "CREATE_PRODUCT", Description = "Đăng tin sản phẩm mới" },
+                    new Permission { Id = "perm-update-product", Name = "UPDATE_PRODUCT", Description = "Chỉnh sửa sản phẩm cá nhân" },
+                    new Permission { Id = "perm-delete-product", Name = "DELETE_PRODUCT", Description = "Xóa sản phẩm cá nhân" },
+                    new Permission { Id = "perm-manage-users", Name = "MANAGE_USERS", Description = "Quản lý toàn bộ người dùng" },
+                    new Permission { Id = "perm-manage-categories", Name = "MANAGE_CATEGORIES", Description = "Quản lý danh mục và thuộc tính EAV" },
+                    new Permission { Id = "perm-book-product", Name = "BOOK_PRODUCT", Description = "Đặt thuê sản phẩm" },
+                    new Permission { Id = "perm-approve-booking", Name = "APPROVE_BOOKING", Description = "Duyệt yêu cầu thuê sản phẩm" }
+                };
+
+                context.Permissions.AddRange(permissions);
+                await context.SaveChangesAsync();
+
+                // Map RolePermissions
+                // Admin gets all permissions
+                foreach (var perm in permissions)
+                {
+                    context.RolePermissions.Add(new RolePermission { RoleId = "role-admin-uuid-0000-0000-000000000001", PermissionId = perm.Id });
+                }
+
+                // Owner permissions
+                context.RolePermissions.AddRange(
+                    new RolePermission { RoleId = "role-owner-uuid-0000-0000-000000000002", PermissionId = "perm-read-products" },
+                    new RolePermission { RoleId = "role-owner-uuid-0000-0000-000000000002", PermissionId = "perm-create-product" },
+                    new RolePermission { RoleId = "role-owner-uuid-0000-0000-000000000002", PermissionId = "perm-update-product" },
+                    new RolePermission { RoleId = "role-owner-uuid-0000-0000-000000000002", PermissionId = "perm-delete-product" },
+                    new RolePermission { RoleId = "role-owner-uuid-0000-0000-000000000002", PermissionId = "perm-approve-booking" }
+                );
+
+                // Renter permissions
+                context.RolePermissions.AddRange(
+                    new RolePermission { RoleId = "role-renter-uuid-0000-0000-000000000003", PermissionId = "perm-read-products" },
+                    new RolePermission { RoleId = "role-renter-uuid-0000-0000-000000000003", PermissionId = "perm-book-product" }
+                );
+
+                await context.SaveChangesAsync();
+            }
+
+            // 2. Seed Users if empty
             if (!context.Users.Any())
             {
                 var adminPassword = BCrypt.Net.BCrypt.HashPassword("admin123");
@@ -57,6 +127,14 @@ namespace OmniRentBackend.Data
                 };
 
                 context.Users.AddRange(admin, owner, renter);
+                await context.SaveChangesAsync();
+
+                // Map User to Role
+                context.UserRoles.AddRange(
+                    new UserRole { UserId = admin.Id, RoleId = "role-admin-uuid-0000-0000-000000000001" },
+                    new UserRole { UserId = owner.Id, RoleId = "role-owner-uuid-0000-0000-000000000002" },
+                    new UserRole { UserId = renter.Id, RoleId = "role-renter-uuid-0000-0000-000000000003" }
+                );
                 await context.SaveChangesAsync();
             }
 

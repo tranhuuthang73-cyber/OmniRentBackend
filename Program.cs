@@ -92,6 +92,9 @@ app.UseCors("CorsPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Đăng ký Permission Middleware cho hệ thống phân quyền RBAC
+app.UseMiddleware<OmniRentBackend.Middleware.PermissionMiddleware>();
+
 // Map route endpoints
 app.MapControllers();
 
