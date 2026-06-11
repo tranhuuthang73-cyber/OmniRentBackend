@@ -1,0 +1,66 @@
+@using OmniRentBackend.Models
+@{
+    ViewData["Title"] = "Thêm mới Đơn hàng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var products = ViewBag.Products as List<Product>;
+    var renters = ViewBag.Renters as List<User>;
+}
+
+<div class="card card-custom p-4" style="max-width: 800px; margin: 0 auto;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="m-0 fw-bold">Thêm Đơn hàng mới</h4>
+        <a href="/AdminDashboard/Bookings" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Hủy</a>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            Vui lòng kiểm tra lại thông tin.
+        </div>
+    }
+
+    <form method="post" action="/AdminDashboard/CreateBooking">
+        @Html.AntiForgeryToken()
+
+        <div class="mb-3">
+            <label for="ProductId" class="form-label fw-bold">Chọn Sản phẩm</label>
+            <select class="form-select" id="ProductId" name="ProductId" required>
+                <option value="">-- Chọn một sản phẩm đang trống --</option>
+                @if(products != null)
+                {
+                    foreach(var p in products)
+                    {
+                        <option value="@p.Id">@p.Name - @p.PricePerDay.ToString("N0")đ/ngày</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="RenterId" class="form-label fw-bold">Chọn Người thuê</label>
+            <select class="form-select" id="RenterId" name="RenterId" required>
+                <option value="">-- Chọn người thuê --</option>
+                @if(renters != null)
+                {
+                    foreach(var r in renters)
+                    {
+                        <option value="@r.Id">@r.FullName (@r.Email)</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="StartDate" class="form-label fw-bold">Ngày thuê</label>
+                <input type="date" class="form-control" id="StartDate" name="StartDate" required>
+            </div>
+            <div class="col-md-6">
+                <label for="EndDate" class="form-label fw-bold">Ngày trả</label>
+                <input type="date" class="form-control" id="EndDate" name="EndDate" required>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mt-3"><i class="bi bi-save"></i> Tạo đơn hàng</button>
+    </form>
+</div>

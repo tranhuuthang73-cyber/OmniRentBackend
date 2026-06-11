@@ -1,0 +1,40 @@
+@{
+    ViewData["Title"] = "Tổng quan Dashboard";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card card-custom p-4 bg-primary text-white border-0 shadow-sm" style="background: linear-gradient(135deg, #6C63FF 0%, #483d8b 100%);">
+            <h2 class="fw-bold mb-3">Chào mừng trở lại, Admin! 👋</h2>
+            <p class="fs-5 mb-0" style="opacity: 0.9;">Đây là trung tâm điều khiển của hệ thống OmniRent. Hãy quản lý mọi hoạt động cho thuê và người dùng tại đây.</p>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card card-custom p-4 text-center border-0 shadow-sm h-100">
+            <div class="display-4 text-primary mb-2"><i class="bi bi-receipt"></i></div>
+            <h5 class="fw-bold text-muted">Đơn Hàng</h5>
+            <p class="mb-3">Quản lý và xét duyệt các đơn thuê đồ từ hệ thống.</p>
+            <a href="/AdminDashboard/Bookings" class="btn btn-outline-primary mt-auto">Đi tới Đơn hàng</a>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-custom p-4 text-center border-0 shadow-sm h-100 opacity-75">
+            <div class="display-4 text-secondary mb-2"><i class="bi bi-people"></i></div>
+            <h5 class="fw-bold text-muted">Người Dùng</h5>
+            <p class="mb-3">Quản lý khách thuê và chủ sở hữu tài sản.</p>
+            <button class="btn btn-outline-secondary mt-auto" disabled>Sắp ra mắt</button>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-custom p-4 text-center border-0 shadow-sm h-100 opacity-75">
+            <div class="display-4 text-secondary mb-2"><i class="bi bi-box-seam"></i></div>
+            <h5 class="fw-bold text-muted">Sản Phẩm</h5>
+            <p class="mb-3">Kiểm duyệt các sản phẩm được đăng cho thuê.</p>
+            <button class="btn btn-outline-secondary mt-auto" disabled>Sắp ra mắt</button>
+        </div>
+    </div>
+</div>

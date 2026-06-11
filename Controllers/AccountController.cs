@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
@@ -43,7 +43,38 @@ namespace OmniRentBackend.Controllers
                 return View(model);
             }
 
-            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, model.Password);
+            PasswordVerificationResult result = PasswordVerificationResult.Failed;
+            try
+            {
+                result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, model.Password);
+            }
+            catch (FormatException)
+            {
+                try
+                {
+                    // Fallback 1: Kiểm tra mật khẩu băm bằng BCrypt (do DbSeeder tự động tạo)
+                    if (BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
+                    {
+                        result = PasswordVerificationResult.Success;
+                        
+                        // Tự động nâng cấp hash sang chuẩn của ASP.NET Core Identity
+                        user.PasswordHash = _passwordHasher.HashPassword(user, model.Password);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+                catch
+                {
+                    // Fallback 2: Kiểm tra mật khẩu dạng chữ thường (plain-text)
+                    if (user.PasswordHash == model.Password)
+                    {
+                        result = PasswordVerificationResult.Success;
+                        
+                        user.PasswordHash = _passwordHasher.HashPassword(user, model.Password);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
+
             if (result == PasswordVerificationResult.Failed)
             {
                 ModelState.AddModelError(string.Empty, "Email hoặc mật khẩu không đúng.");
@@ -54,6 +85,12 @@ namespace OmniRentBackend.Controllers
 
             if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                 return Redirect(model.ReturnUrl);
+
+            // Tự động chuyển hướng Admin vào trang Quản trị
+            if (user.Role == "ADMIN")
+            {
+                return RedirectToAction("Bookings", "AdminDashboard");
+            }
 
             return RedirectToAction("Index", "Home");
         }

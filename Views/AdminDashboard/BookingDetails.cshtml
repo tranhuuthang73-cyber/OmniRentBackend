@@ -1,0 +1,51 @@
+@using OmniRentBackend.Models
+@model Booking
+@{
+    ViewData["Title"] = "Chi tiết Đơn hàng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="card card-custom p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="m-0 fw-bold">Chi tiết Đơn hàng <span class="text-muted fs-6">#@Model.Id</span></h4>
+        <a href="/AdminDashboard/Bookings" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Quay lại</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="border rounded p-3 h-100">
+                <h6 class="text-uppercase text-muted fw-bold mb-3"><i class="bi bi-box-seam"></i> Thông tin Sản phẩm</h6>
+                <p><strong>Tên sản phẩm:</strong> @(Model.Product?.Name ?? "N/A")</p>
+                <p><strong>Chủ sở hữu:</strong> @(Model.Product?.Owner?.FullName ?? "N/A") - @(Model.Product?.Owner?.Email ?? "N/A")</p>
+                <p><strong>Giá thuê / ngày:</strong> @(Model.Product?.PricePerDay.ToString("N0") ?? "0")đ</p>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="border rounded p-3 h-100">
+                <h6 class="text-uppercase text-muted fw-bold mb-3"><i class="bi bi-person"></i> Thông tin Người thuê</h6>
+                <p><strong>Họ Tên:</strong> @(Model.Renter?.FullName ?? "N/A")</p>
+                <p><strong>Email:</strong> @(Model.Renter?.Email ?? "N/A")</p>
+                <p><strong>Điểm tin cậy:</strong> @(Model.Renter?.RenterTrustScore.ToString() ?? "N/A") / 100</p>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="border rounded p-3">
+                <h6 class="text-uppercase text-muted fw-bold mb-3"><i class="bi bi-card-text"></i> Thông tin Đơn hàng</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Ngày bắt đầu:</strong> @Model.StartDate.ToString("dd/MM/yyyy")</p>
+                        <p><strong>Ngày kết thúc:</strong> @Model.EndDate.ToString("dd/MM/yyyy")</p>
+                        <p><strong>Ngày tạo:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Trạng thái:</strong> <span class="badge bg-secondary">@Model.Status</span></p>
+                        <p><strong>Thanh toán:</strong> <span class="badge bg-info text-dark">@Model.PaymentStatus</span></p>
+                        <p class="fs-5 mt-2"><strong>Tổng Tiền:</strong> <span class="text-danger fw-bold">@Model.TotalPrice.ToString("N0")đ</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

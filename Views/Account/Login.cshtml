@@ -1,161 +1,373 @@
-﻿@using OmniRentBackend.Models.ViewModels
-@model LoginViewModel
 @{
     Layout = null;
-    ViewData["Title"] = "Đăng nhập - OmniRent";
+    var returnUrl = ViewBag.ReturnUrl as string ?? "";
+    var errorMsg  = ViewData.ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).FirstOrDefault() ?? "";
 }
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <title>Đăng nhập — OmniRent</title>
+    <meta name="description" content="Đăng nhập vào hệ thống quản lý cho thuê OmniRent." />
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous" />
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet" />
+
     <style>
-            :root {
-                --brand: #6C63FF;
-                --brand-lt: #9c91ff;
-                --dark-1: #0f0c29;
-                --dark-2: #1a1a3e;
-                --dark-3: #24243e;
-                --text-main: #f0eeff;
-                --text-sub: #a89fd8;
-            }
+        *, *::before, *::after { box-sizing: border-box; }
 
-            body {
-                background: linear-gradient(135deg, var(--dark-1) 0%, var(--dark-2) 55%, var(--dark-3) 100%);
-                font-family: 'Inter', sans-serif;
-                color: var(--text-main);
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 1rem;
-            }
+        :root {
+            --brand-primary:   #6C63FF;
+            --brand-secondary: #8B80FF;
+            --bg-gradient-1:   #0f0c29;
+            --bg-gradient-2:   #1a1a3e;
+            --bg-gradient-3:   #24243e;
+            --card-bg:          rgba(255, 255, 255, 0.07);
+            --card-border:      rgba(255, 255, 255, 0.12);
+            --input-bg:         rgba(255, 255, 255, 0.06);
+            --input-border:     rgba(255, 255, 255, 0.18);
+            --text-primary:     #f0eeff;
+            --text-secondary:   #a89fd8;
+        }
 
-            .card-login {
-                background: rgba(255,255,255,0.06);
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255,255,255,0.11);
-                border-radius: 1.5rem;
-                padding: 2rem;
-                width: 100%;
-                max-width: 440px;
-                box-shadow: 0 25px 45px rgba(0,0,0,0.3);
-            }
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 50%, var(--bg-gradient-3) 100%);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
 
-            .form-control {
-                background: rgba(0,0,0,0.3);
-                border: 1px solid rgba(255,255,255,0.15);
-                color: var(--text-main);
-                border-radius: 0.75rem;
-            }
+        /* === Animated background orbs === */
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.35;
+            pointer-events: none;
+            animation: floatOrb 8s ease-in-out infinite alternate;
+        }
+        .bg-orb-1 {
+            width: 420px; height: 420px;
+            background: radial-gradient(circle, #6C63FF, transparent);
+            top: -120px; left: -120px;
+            animation-delay: 0s;
+        }
+        .bg-orb-2 {
+            width: 350px; height: 350px;
+            background: radial-gradient(circle, #ff6584, transparent);
+            bottom: -100px; right: -80px;
+            animation-delay: -3s;
+        }
+        .bg-orb-3 {
+            width: 280px; height: 280px;
+            background: radial-gradient(circle, #43e97b, transparent);
+            top: 50%; right: 10%;
+            animation-delay: -5s;
+        }
+        @@keyframes floatOrb {
+            0%   { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-30px) scale(1.05); }
+        }
 
-                .form-control:focus {
-                    background: rgba(0,0,0,0.5);
-                    border-color: var(--brand);
-                    box-shadow: 0 0 0 0.25rem rgba(108,99,255,0.25);
-                    color: #fff;
-                }
+        /* === Login card === */
+        .login-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
 
-            .btn-primary {
-                background: linear-gradient(135deg, var(--brand), var(--brand-lt));
-                border: none;
-                border-radius: 0.75rem;
-                font-weight: 600;
-                padding: 0.6rem;
-            }
+        .login-card {
+            width: 100%;
+            max-width: 440px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 2.5rem 2.4rem;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45),
+                        0 0 0 1px rgba(255,255,255,0.04) inset;
+            animation: slideUp 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+        @@keyframes slideUp {
+            from { opacity: 0; transform: translateY(32px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
 
-                .btn-primary:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 6px 20px rgba(108,99,255,0.4);
-                }
+        /* === Logo / Brand === */
+        .brand-logo {
+            width: 56px; height: 56px;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.2rem;
+            box-shadow: 0 8px 24px rgba(108, 99, 255, 0.45);
+        }
+        .brand-logo i { font-size: 1.6rem; color: #fff; }
 
-            .btn-outline-google {
-                border: 1px solid rgba(255,255,255,0.2);
-                background: rgba(255,255,255,0.05);
-                color: var(--text-main);
-                border-radius: 0.75rem;
-                font-weight: 500;
-                padding: 0.6rem;
-            }
+        .card-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 0.3rem;
+            background: linear-gradient(90deg, #fff 0%, var(--brand-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .card-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+            margin-bottom: 1.8rem;
+        }
 
-                .btn-outline-google:hover {
-                    background: rgba(255,255,255,0.12);
-                    border-color: var(--brand-lt);
-                    color: #fff;
-                }
+        /* === Error alert === */
+        .alert-login-error {
+            background: rgba(255, 101, 132, 0.14);
+            border: 1px solid rgba(255, 101, 132, 0.35);
+            border-radius: 10px;
+            color: #ff8fa8;
+            font-size: 0.875rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: shakeX 0.4s ease;
+        }
+        @@keyframes shakeX {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
 
-            .text-link {
-                color: var(--brand-lt);
-                text-decoration: none;
-            }
+        /* === Form controls === */
+        .form-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
+        }
 
-                .text-link:hover {
-                    text-decoration: underline;
-                }
+        .form-control-custom {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            padding: 0.75rem 1rem;
+            transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+            outline: none;
+        }
+        .form-control-custom::placeholder {
+            color: rgba(168, 159, 216, 0.5);
+        }
+        .form-control-custom:focus {
+            border-color: var(--brand-primary);
+            background: rgba(108, 99, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.22);
+        }
 
-            .alert-danger {
-                background: rgba(220,53,69,0.2);
-                border-color: rgba(220,53,69,0.4);
-                color: #ffb3b3;
-                border-radius: 0.75rem;
-            }
+        .input-group-custom { position: relative; }
+        .input-group-custom .input-icon {
+            position: absolute;
+            left: 0.9rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 1rem;
+            pointer-events: none;
+        }
+        .input-group-custom .form-control-custom { padding-left: 2.6rem; }
+
+        /* === Password toggle === */
+        .password-wrapper { position: relative; }
+        .password-wrapper .form-control-custom { padding-right: 2.8rem; }
+        .btn-toggle-pw {
+            position: absolute;
+            right: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            font-size: 1.05rem;
+            transition: color 0.2s;
+        }
+        .btn-toggle-pw:hover { color: var(--brand-secondary); }
+
+        /* === Buttons === */
+        .btn-login {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, var(--brand-primary) 0%, #9c91ff 100%);
+            cursor: pointer;
+            margin-top: 1.2rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 6px 20px rgba(108, 99, 255, 0.4);
+        }
+        .btn-login::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(108,99,255,0.5); }
+        .btn-login:hover::after { opacity: 1; }
+        .btn-login:active { transform: translateY(0); }
+
+        .mb-field { margin-bottom: 1.1rem; }
+
+        .text-link {
+            color: var(--brand-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .text-link:hover { color: #fff; text-decoration: underline; }
+
+        /* === Responsive === */
+        @@media (max-width: 480px) {
+            .login-card { padding: 2rem 1.4rem; }
+            .card-title { font-size: 1.35rem; }
+        }
     </style>
 </head>
 <body>
-    <div class="card-login">
-        <div class="text-center mb-4">
-            <div class="brand-icon d-inline-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--brand), var(--brand-lt)); border-radius: 14px; margin-bottom: 1rem;">
-                <i class="bi bi-building-fill fs-4 text-white"></i>
+
+    <div class="bg-orb bg-orb-1" aria-hidden="true"></div>
+    <div class="bg-orb bg-orb-2" aria-hidden="true"></div>
+    <div class="bg-orb bg-orb-3" aria-hidden="true"></div>
+
+    <main class="login-wrapper">
+        <div class="login-card" role="main">
+
+            <div class="brand-logo" aria-hidden="true">
+                <i class="bi bi-building-fill"></i>
             </div>
-            <h3 class="fw-bold">Chào mừng trở lại</h3>
-            <p class="text-sub text-muted" style="color: var(--text-sub) !important;">Đăng nhập để tiếp tục</p>
+            <h1 class="card-title">OmniRent</h1>
+            <p class="card-subtitle">Hệ thống Quản lý Cho thuê Tài sản</p>
+
+            @if (!string.IsNullOrEmpty(errorMsg))
+            {
+                <div class="alert-login-error" role="alert" id="login-error-msg">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    @errorMsg
+                </div>
+            }
+
+            <form id="login-form" method="post" action="/Account/Login" novalidate>
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ReturnUrl" value="@returnUrl" />
+
+                <div class="mb-field">
+                    <label for="email-input" class="form-label">Địa chỉ Email</label>
+                    <div class="input-group-custom">
+                        <i class="bi bi-envelope-fill input-icon" aria-hidden="true"></i>
+                        <input type="email"
+                               id="email-input"
+                               name="Email"
+                               class="form-control-custom"
+                               placeholder="example@email.com"
+                               autocomplete="email"
+                               required />
+                    </div>
+                </div>
+
+                <div class="mb-field">
+                    <label for="password-input" class="form-label">Mật khẩu</label>
+                    <div class="input-group-custom password-wrapper">
+                        <i class="bi bi-lock-fill input-icon" aria-hidden="true"></i>
+                        <input type="password"
+                               id="password-input"
+                               name="Password"
+                               class="form-control-custom"
+                               placeholder="••••••••"
+                               autocomplete="current-password"
+                               required />
+                        <button type="button"
+                                class="btn-toggle-pw"
+                                id="toggle-pw-btn"
+                                aria-label="Hiện/ẩn mật khẩu">
+                            <i class="bi bi-eye-fill" id="pw-eye-icon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login" id="login-submit-btn">
+                    <i class="bi bi-box-arrow-in-right me-1"></i>
+                    Đăng nhập
+                </button>
+            </form>
+
+            <div class="text-center mt-4" style="font-size: 0.9rem;">
+                <span style="color: var(--text-secondary);">Chưa có tài khoản? </span>
+                <a href="/Account/Register" class="text-link">Đăng ký ngay</a>
+            </div>
+
         </div>
+    </main>
 
-        <form asp-action="Login" method="post">
-            <input type="hidden" asp-for="ReturnUrl" />
-            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmLCqQhN6SREfMQ2V3bM6cQBQKB"
+            crossorigin="anonymous"></script>
 
-            <div class="mb-3">
-                <label asp-for="Email" class="form-label">Email</label>
-                <input asp-for="Email" class="form-control" placeholder="name@example.com" />
-                <span asp-validation-for="Email" class="text-danger small"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Password" class="form-label">Mật khẩu</label>
-                <input asp-for="Password" type="password" class="form-control" placeholder="••••••" />
-                <span asp-validation-for="Password" class="text-danger small"></span>
-            </div>
-            <div class="mb-3 form-check">
-                <input asp-for="RememberMe" class="form-check-input" />
-                <label asp-for="RememberMe" class="form-check-label">Ghi nhớ đăng nhập</label>
-            </div>
+    <script>
+        // Toggle hiện/ẩn mật khẩu
+        const toggleBtn  = document.getElementById('toggle-pw-btn');
+        const pwInput    = document.getElementById('password-input');
+        const pwEyeIcon  = document.getElementById('pw-eye-icon');
 
-            <button type="submit" class="btn btn-primary w-100 mb-3">
-                <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
-            </button>
+        toggleBtn.addEventListener('click', () => {
+            const isHidden = pwInput.type === 'password';
+            pwInput.type = isHidden ? 'text' : 'password';
+            pwEyeIcon.className = isHidden ? 'bi bi-eye-slash-fill' : 'bi bi-eye-fill';
+        });
 
-            <div class="text-center mb-3 position-relative">
-                <hr class="border-secondary" />
-                <span class="px-2 bg-transparent" style="position: relative; top: -0.8rem; background: transparent !important; color: var(--text-sub);">Hoặc</span>
-            </div>
+        // Loading state khi submit form đăng nhập
+        const loginForm      = document.getElementById('login-form');
+        const loginSubmitBtn = document.getElementById('login-submit-btn');
 
-            <a asp-action="LoginWithGoogle" asp-route-returnUrl="@Model.ReturnUrl" class="btn btn-outline-google w-100">
-                <i class="bi bi-google"></i> Tiếp tục với Google
-            </a>
-        </form>
-
-        <div class="text-center mt-4">
-            <span>Chưa có tài khoản? </span>
-            <a asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl" class="text-link">Đăng ký ngay</a>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <partial name="_ValidationScriptsPartial" />
+        loginForm.addEventListener('submit', () => {
+            if (loginForm.checkValidity()) {
+                loginSubmitBtn.disabled = true;
+                loginSubmitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang xác thực...';
+            }
+        });
+    </script>
 </body>
 </html>
