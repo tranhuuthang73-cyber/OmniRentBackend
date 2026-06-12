@@ -1,4 +1,5 @@
 @using OmniRentBackend.Models
+@using System.Text.Json
 @{
     ViewData["Title"] = "Thêm mới Đơn hàng";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
@@ -6,7 +7,86 @@
     var renters = ViewBag.Renters as List<User>;
 }
 
-<div class="card card-custom p-4" style="max-width: 800px; margin: 0 auto;">
+<style>
+    .product-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background-color: #f9f9f9;
+    }
+    .product-card:hover {
+        border-color: #007bff;
+        background-color: #f0f7ff;
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+    }
+    .product-card.selected {
+        border-color: #28a745;
+        background-color: #f0fff4;
+        border-width: 2px;
+    }
+    .product-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 4px;
+        margin-right: 15px;
+    }
+    .product-placeholder {
+        width: 80px;
+        height: 80px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        margin-right: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .price-section {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 15px;
+        border-radius: 4px;
+        margin-top: 20px;
+    }
+    .price-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding: 8px 0;
+    }
+    .price-row.total {
+        border-top: 2px solid #ffc107;
+        padding-top: 15px;
+        font-weight: bold;
+        font-size: 1.1rem;
+        color: #dc3545;
+    }
+    .form-section-title {
+        font-size: 0.95rem;
+        font-weight: bold;
+        color: #333;
+        margin-top: 25px;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #007bff;
+    }
+    .selected-product-info {
+        background-color: #e8f5e9;
+        border: 2px solid #4caf50;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        display: none;
+    }
+    .selected-product-info.show {
+        display: block;
+    }
+</style>
+
+<div class="card card-custom p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="m-0 fw-bold">Thêm Đơn hàng mới</h4>
         <a href="/AdminDashboard/Bookings" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Hủy</a>
@@ -19,32 +99,91 @@
         </div>
     }
 
-    <form method="post" action="/AdminDashboard/CreateBooking">
+    <form method="post" action="/AdminDashboard/CreateBooking" id="bookingForm">
         @Html.AntiForgeryToken()
 
-        <div class="mb-3">
-            <label for="ProductId" class="form-label fw-bold">Chọn Sản phẩm</label>
-            <select class="form-select" id="ProductId" name="ProductId" required>
-                <option value="">-- Chọn một sản phẩm đang trống --</option>
-                @if(products != null)
+        <!-- Selected Product Info -->
+        <div id="selectedProductInfo" class="selected-product-info">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="fw-bold mb-2">Sản phẩm đã chọn:</h6>
+                    <p id="selectedProductName" class="mb-1"><strong>--</strong></p>
+                    <p id="selectedProductPrice" class="text-muted mb-0">Giá: <span>--</span>đ/ngày</p>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearProductSelection()">
+                    <i class="bi bi-x-lg"></i> Bỏ chọn
+                </button>
+            </div>
+        </div>
+
+        <div class="form-section-title">
+            <i class="bi bi-box-seam"></i> Chọn Sản phẩm
+        </div>
+
+        <input type="hidden" id="ProductId" name="ProductId" required>
+
+        @if (products != null && products.Any())
+        {
+            <div id="productsList">
+                @foreach (var product in products)
                 {
-                    foreach(var p in products)
-                    {
-                        <option value="@p.Id">@p.Name - @p.PricePerDay.ToString("N0")đ/ngày</option>
-                    }
+                    var images = JsonSerializer.Deserialize<List<string>>(product.ImagesJson ?? "[]") ?? new List<string>();
+                    var firstImage = images.FirstOrDefault();
+
+                    <div class="product-card" onclick="selectProduct('@product.Id', '@product.Name', @product.PricePerDay)">
+                        <div class="d-flex">
+                            @if (!string.IsNullOrEmpty(firstImage))
+                            {
+                                <img src="@firstImage" alt="@product.Name" class="product-image" />
+                            }
+                            else
+                            {
+                                <div class="product-placeholder">
+                                    <i class="bi bi-image" style="color: #999; font-size: 2rem;"></i>
+                                </div>
+                            }
+                            <div class="flex-grow-1">
+                                <h6 class="fw-bold mb-1">@product.Name</h6>
+                                <p class="text-muted mb-2" style="font-size: 0.9rem;">
+                                    @product.Description?.Substring(0, Math.Min(80, product.Description.Length))...
+                                </p>
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-primary fw-bold">@product.PricePerDay.ToString("N0")đ/ngày</span>
+                                    <span class="text-secondary" style="font-size: 0.85rem;">
+                                        Cọc: @product.DepositAmount.ToString("N0")đ
+                                    </span>
+                                </div>
+                            </div>
+                            <div style="width: 24px; display: flex; align-items: center; justify-content: center;">
+                                <div id="check-@product.Id" style="display: none; color: #28a745; font-size: 1.5rem;">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 }
-            </select>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i> Không có sản phẩm nào khả dụng. Vui lòng <a href="/AdminDashboard/Products">thêm sản phẩm</a> trước.
+            </div>
+        }
+
+        <div class="form-section-title">
+            <i class="bi bi-person"></i> Thông tin Đơn hàng
         </div>
 
         <div class="mb-3">
-            <label for="RenterId" class="form-label fw-bold">Chọn Người thuê</label>
+            <label for="RenterId" class="form-label fw-bold">Chọn Người thuê <span class="text-danger">*</span></label>
             <select class="form-select" id="RenterId" name="RenterId" required>
                 <option value="">-- Chọn người thuê --</option>
-                @if(renters != null)
+                @if (renters != null)
                 {
-                    foreach(var r in renters)
+                    foreach (var r in renters)
                     {
-                        <option value="@r.Id">@r.FullName (@r.Email)</option>
+                        <option value="@r.Id">@r.FullName (@r.Email) - @r.Role</option>
                     }
                 }
             </select>
@@ -52,15 +191,173 @@
 
         <div class="row mb-3">
             <div class="col-md-6">
-                <label for="StartDate" class="form-label fw-bold">Ngày thuê</label>
-                <input type="date" class="form-control" id="StartDate" name="StartDate" required>
+                <label for="StartDate" class="form-label fw-bold">Ngày thuê <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" id="StartDate" name="StartDate" required onchange="calculatePrice()">
             </div>
             <div class="col-md-6">
-                <label for="EndDate" class="form-label fw-bold">Ngày trả</label>
-                <input type="date" class="form-control" id="EndDate" name="EndDate" required>
+                <label for="EndDate" class="form-label fw-bold">Ngày trả <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" id="EndDate" name="EndDate" required onchange="calculatePrice()">
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary w-100 mt-3"><i class="bi bi-save"></i> Tạo đơn hàng</button>
+        <!-- Price Calculation -->
+        <div id="priceSection" class="price-section" style="display: none;">
+            <h6 class="fw-bold mb-3">Tính toán Giá:</h6>
+            <div class="price-row">
+                <span>Số ngày:</span>
+                <span id="durationDays">0</span>
+            </div>
+            <div class="price-row">
+                <span>Giá cơ bản:</span>
+                <span id="basePrice">0đ</span>
+            </div>
+            <div class="price-row">
+                <span>Phụ cấp cuối tuần:</span>
+                <span id="weekendSurcharge">0đ</span>
+            </div>
+            <div class="price-row">
+                <span>Phụ cấp ngày lễ:</span>
+                <span id="holidaySurcharge">0đ</span>
+            </div>
+            <div class="price-row">
+                <span>Chiết khấu:</span>
+                <span id="discount">0đ</span>
+            </div>
+            <div class="price-row total">
+                <span>Tổng cộng:</span>
+                <span id="totalPrice">0đ</span>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-5">
+            <a href="/AdminDashboard/Bookings" class="btn btn-secondary">
+                <i class="bi bi-x-lg"></i> Hủy
+            </a>
+            <button type="submit" class="btn btn-success" id="submitBtn" disabled>
+                <i class="bi bi-save"></i> Tạo Đơn hàng
+            </button>
+        </div>
     </form>
 </div>
+
+<script>
+    let selectedProductPrice = 0;
+
+    function selectProduct(productId, productName, pricePerDay) {
+        // Update form
+        document.getElementById('ProductId').value = productId;
+        selectedProductPrice = pricePerDay;
+
+        // Update UI
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        document.querySelectorAll('[id^="check-"]').forEach(check => {
+            check.style.display = 'none';
+        });
+
+        event.currentTarget.classList.add('selected');
+        document.getElementById('check-' + productId).style.display = 'block';
+
+        // Update selected product info
+        document.getElementById('selectedProductName').innerHTML = `<strong>${productName}</strong>`;
+        document.getElementById('selectedProductPrice').innerHTML = `Giá: <span>${pricePerDay.toLocaleString('vi-VN')}</span>đ/ngày`;
+        document.getElementById('selectedProductInfo').classList.add('show');
+
+        // Enable submit button
+        document.getElementById('submitBtn').disabled = false;
+
+        // Calculate price
+        calculatePrice();
+    }
+
+    function clearProductSelection() {
+        document.getElementById('ProductId').value = '';
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        document.querySelectorAll('[id^="check-"]').forEach(check => {
+            check.style.display = 'none';
+        });
+        document.getElementById('selectedProductInfo').classList.remove('show');
+        document.getElementById('priceSection').style.display = 'none';
+        document.getElementById('submitBtn').disabled = true;
+        selectedProductPrice = 0;
+    }
+
+    function calculatePrice() {
+        const startDate = document.getElementById('StartDate').value;
+        const endDate = document.getElementById('EndDate').value;
+
+        if (!startDate || !endDate || !selectedProductPrice) {
+            document.getElementById('priceSection').style.display = 'none';
+            return;
+        }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        if (end <= start) {
+            alert('Ngày trả phải sau ngày thuê');
+            return;
+        }
+
+        const timeDiff = end - start;
+        const durationDays = Math.max(1, Math.ceil(timeDiff / (1000 * 60 * 60 * 24)));
+
+        let basePrice = 0;
+        let weekendSurcharge = 0;
+        let holidaySurcharge = 0;
+
+        let current = new Date(start);
+        for (let i = 0; i < durationDays; i++) {
+            const dayOfWeek = current.getDay();
+            const date = current.getDate();
+            const month = current.getMonth() + 1;
+
+            const isWeekend = dayOfWeek === 6 || dayOfWeek === 0;
+            const isHoliday = (month === 12 && (date === 24 || date === 25)) || (month === 1 && date === 1);
+
+            if (isHoliday) {
+                holidaySurcharge += selectedProductPrice * 0.25;
+            } else if (isWeekend) {
+                weekendSurcharge += selectedProductPrice * 0.10;
+            }
+
+            basePrice += selectedProductPrice;
+            current.setDate(current.getDate() + 1);
+        }
+
+        let discountRate = 0;
+        if (durationDays > 7) discountRate = 0.10;
+        else if (durationDays > 3) discountRate = 0.05;
+
+        const subtotal = basePrice + weekendSurcharge + holidaySurcharge;
+        const discountAmount = subtotal * discountRate;
+        const totalPrice = subtotal - discountAmount;
+
+        document.getElementById('durationDays').textContent = durationDays;
+        document.getElementById('basePrice').textContent = basePrice.toLocaleString('vi-VN') + 'đ';
+        document.getElementById('weekendSurcharge').textContent = weekendSurcharge.toLocaleString('vi-VN') + 'đ';
+        document.getElementById('holidaySurcharge').textContent = holidaySurcharge.toLocaleString('vi-VN') + 'đ';
+        document.getElementById('discount').textContent = discountAmount.toLocaleString('vi-VN') + 'đ';
+        document.getElementById('totalPrice').textContent = totalPrice.toLocaleString('vi-VN') + 'đ';
+
+        document.getElementById('priceSection').style.display = 'block';
+    }
+
+    // Form validation
+    document.getElementById('bookingForm').addEventListener('submit', function (e) {
+        if (!document.getElementById('ProductId').value) {
+            e.preventDefault();
+            alert('Vui lòng chọn sản phẩm');
+            return false;
+        }
+        if (!document.getElementById('RenterId').value) {
+            e.preventDefault();
+            alert('Vui lòng chọn người thuê');
+            return false;
+        }
+    });
+</script>
+

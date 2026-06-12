@@ -1,0 +1,138 @@
+@using OmniRentBackend.Models
+@using System.Text.Json
+@model IEnumerable<Product>
+@{
+    ViewData["Title"] = "Quản lý Sản phẩm";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .product-thumbnail {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+    .status-badge {
+        padding: 0.4rem 0.8rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    .price-highlight {
+        color: #dc3545;
+        font-weight: bold;
+    }
+</style>
+
+<div class="card card-custom p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="m-0 fw-bold">Danh sách Sản phẩm</h4>
+        <a href="/AdminDashboard/CreateProduct" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Thêm sản phẩm
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 60px;">Ảnh</th>
+                    <th>Tên Sản phẩm</th>
+                    <th>Chủ sở hữu</th>
+                    <th>Danh mục</th>
+                    <th>Giá/Ngày</th>
+                    <th>Tiền cọc</th>
+                    <th>Trạng thái</th>
+                    <th style="width: 100px;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        var images = JsonSerializer.Deserialize<List<string>>(item.ImagesJson ?? "[]") ?? new List<string>();
+                        var firstImage = images.FirstOrDefault();
+
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrEmpty(firstImage))
+                                {
+                                    <img src="@firstImage" alt="@item.Name" class="product-thumbnail" />
+                                }
+                                else
+                                {
+                                    <div style="width: 50px; height: 50px; background-color: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-image" style="color: #999;"></i>
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <strong>@item.Name</strong>
+                                <br />
+                                <small class="text-muted">@item.Description?.Substring(0, Math.Min(50, item.Description.Length))...</small>
+                            </td>
+                            <td>
+                                @(item.Owner?.FullName ?? "N/A")
+                            </td>
+                            <td>
+                                @(item.Category?.Name ?? "N/A")
+                            </td>
+                            <td>
+                                <span class="price-highlight">@item.PricePerDay.ToString("N0")đ</span>
+                            </td>
+                            <td>
+                                @item.DepositAmount.ToString("N0")đ
+                            </td>
+                            <td>
+                                @if (item.Status == "AVAILABLE")
+                                {
+                                    <span class="badge bg-success status-badge">Có sẵn</span>
+                                }
+                                else if (item.Status == "RENTED")
+                                {
+                                    <span class="badge bg-warning text-dark status-badge">Đang cho thuê</span>
+                                }
+                                else if (item.Status == "MAINTENANCE")
+                                {
+                                    <span class="badge bg-info status-badge">Bảo trì</span>
+                                }
+                                else if (item.Status == "PENDING_APPROVAL")
+                                {
+                                    <span class="badge bg-secondary status-badge">Chờ duyệt</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary status-badge">@item.Status</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="/AdminDashboard/EditProduct/@item.Id" class="btn btn-sm btn-warning" title="Chỉnh sửa">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="post" action="/AdminDashboard/DeleteProduct/@item.Id" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <i class="bi bi-inbox" style="font-size: 2rem; color: #999;"></i>
+                            <p class="text-muted mt-2">Không có sản phẩm nào</p>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

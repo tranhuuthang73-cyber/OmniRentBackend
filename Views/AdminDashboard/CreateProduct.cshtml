@@ -1,0 +1,286 @@
+@using OmniRentBackend.Models
+@model dynamic
+@{
+    ViewData["Title"] = "Thêm Sản phẩm";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var categories = (List<Category>)ViewBag.Categories;
+    var owners = (List<User>)ViewBag.Owners;
+}
+
+<style>
+    .image-preview {
+        display: inline-block;
+        margin-right: 10px;
+        margin-bottom: 10px;
+        position: relative;
+    }
+    .image-preview img {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+    }
+    .image-preview .remove-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background-color: rgba(255, 0, 0, 0.8);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .image-preview .remove-btn:hover {
+        background-color: rgba(255, 0, 0, 1);
+    }
+    .drop-zone {
+        border: 2px dashed #007bff;
+        border-radius: 4px;
+        padding: 30px;
+        text-align: center;
+        cursor: pointer;
+        background-color: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+    .drop-zone:hover {
+        border-color: #0056b3;
+        background-color: #e7f1ff;
+    }
+    .drop-zone.drag-over {
+        border-color: #0056b3;
+        background-color: #e7f1ff;
+    }
+    .form-section-title {
+        font-size: 0.95rem;
+        font-weight: bold;
+        color: #333;
+        margin-top: 20px;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #007bff;
+    }
+</style>
+
+<div class="card card-custom p-4">
+    <h4 class="mb-4 fw-bold">Thêm Sản phẩm Mới</h4>
+
+    <form method="post" enctype="multipart/form-data" id="productForm">
+        @Html.AntiForgeryToken()
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <label for="Name" class="form-label fw-bold">Tên Sản phẩm <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="Name" name="Name" required placeholder="Nhập tên sản phẩm">
+                <small class="form-text text-muted">Ví dụ: Laptop Dell XPS 13, iPhone 15 Pro, ...</small>
+            </div>
+            <div class="col-md-6">
+                <label for="CategoryId" class="form-label fw-bold">Danh mục <span class="text-danger">*</span></label>
+                <select class="form-control" id="CategoryId" name="CategoryId" required>
+                    <option value="">-- Chọn danh mục --</option>
+                    @if (categories != null && categories.Any())
+                    {
+                        foreach (var cat in categories)
+                        {
+                            <option value="@cat.Id">@cat.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label for="Description" class="form-label fw-bold">Mô tả Chi tiết <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="Description" name="Description" rows="4" required placeholder="Nhập mô tả đầy đủ về sản phẩm, điều kiện, tính năng..."></textarea>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <label for="PricePerDay" class="form-label fw-bold">Giá cho thuê/Ngày (đ) <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="PricePerDay" name="PricePerDay" step="1000" min="0" required placeholder="50000">
+            </div>
+            <div class="col-md-4">
+                <label for="DepositAmount" class="form-label fw-bold">Tiền Cọc (đ) <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="DepositAmount" name="DepositAmount" step="1000" min="0" required placeholder="500000">
+            </div>
+            <div class="col-md-4">
+                <label for="OwnerId" class="form-label fw-bold">Chủ sở hữu <span class="text-danger">*</span></label>
+                <select class="form-control" id="OwnerId" name="OwnerId" required>
+                    <option value="">-- Chọn chủ sở hữu --</option>
+                    @if (owners != null && owners.Any())
+                    {
+                        foreach (var owner in owners)
+                        {
+                            <option value="@owner.Id">@owner.FullName (@owner.Email)</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label for="Status" class="form-label fw-bold">Trạng thái</label>
+            <select class="form-control" id="Status" name="Status">
+                <option value="AVAILABLE">Có sẵn</option>
+                <option value="PENDING_APPROVAL">Chờ duyệt</option>
+                <option value="MAINTENANCE">Bảo trì</option>
+                <option value="RENTED">Đang cho thuê</option>
+            </select>
+        </div>
+
+        <div class="form-section-title">
+            <i class="bi bi-image"></i> Tải Ảnh Sản phẩm
+        </div>
+
+        <div class="drop-zone" id="dropZone" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+            <div style="font-size: 2rem; color: #007bff; margin-bottom: 10px;">
+                <i class="bi bi-cloud-arrow-up"></i>
+            </div>
+            <p class="mb-2"><strong>Kéo thả ảnh vào đây</strong> hoặc</p>
+            <label for="Images" class="btn btn-outline-primary">
+                <i class="bi bi-folder-open"></i> Chọn ảnh từ máy tính
+            </label>
+            <input type="file" id="Images" name="Images" multiple accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+            <p class="text-muted mt-3 mb-0" style="font-size: 0.9rem;">Hỗ trợ: JPG, PNG, GIF, WebP (Tối đa 5MB/ảnh, tối đa 10 ảnh)</p>
+        </div>
+
+        <div id="imagePreviewContainer" class="mt-4" style="display: none;">
+            <h6 class="fw-bold mb-3">Ảnh được chọn:</h6>
+            <div id="previewsList"></div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-5">
+            <a href="/AdminDashboard/Products" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Quay lại
+            </a>
+            <button type="submit" class="btn btn-success" id="submitBtn">
+                <i class="bi bi-check-circle"></i> Thêm Sản phẩm
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    let selectedFiles = [];
+
+    function handleDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('dropZone').classList.remove('drag-over');
+        handleFiles(e.dataTransfer.files);
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('dropZone').classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('dropZone').classList.remove('drag-over');
+    }
+
+    function handleFileSelect(event) {
+        handleFiles(event.target.files);
+    }
+
+    function handleFiles(files) {
+        selectedFiles = [];
+        const validFiles = [];
+
+        for (let file of files) {
+            if (validFiles.length >= 10) {
+                alert('Tối đa 10 ảnh được phép');
+                break;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                alert(`${file.name} quá lớn (tối đa 5MB)`);
+                continue;
+            }
+            if (!file.type.startsWith('image/')) {
+                alert(`${file.name} không phải là ảnh`);
+                continue;
+            }
+            validFiles.push(file);
+            selectedFiles.push(file);
+        }
+
+        updatePreviews();
+
+        // Update the actual input
+        const dataTransfer = new DataTransfer();
+        selectedFiles.forEach(file => dataTransfer.items.add(file));
+        document.getElementById('Images').files = dataTransfer.files;
+    }
+
+    function updatePreviews() {
+        const container = document.getElementById('previewsList');
+        container.innerHTML = '';
+
+        if (selectedFiles.length === 0) {
+            document.getElementById('imagePreviewContainer').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('imagePreviewContainer').style.display = 'block';
+
+        selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const div = document.createElement('div');
+                div.className = 'image-preview';
+                div.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview" />
+                    <button type="button" class="remove-btn" onclick="removeImage(${index})">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                `;
+                container.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function removeImage(index) {
+        selectedFiles.splice(index, 1);
+        updatePreviews();
+
+        const dataTransfer = new DataTransfer();
+        selectedFiles.forEach(file => dataTransfer.items.add(file));
+        document.getElementById('Images').files = dataTransfer.files;
+    }
+
+    // Form validation
+    document.getElementById('productForm').addEventListener('submit', function (e) {
+        const name = document.getElementById('Name').value.trim();
+        const description = document.getElementById('Description').value.trim();
+        const pricePerDay = parseFloat(document.getElementById('PricePerDay').value);
+        const depositAmount = parseFloat(document.getElementById('DepositAmount').value);
+
+        if (!name || !description) {
+            e.preventDefault();
+            alert('Vui lòng nhập tên và mô tả sản phẩm');
+            return false;
+        }
+
+        if (isNaN(pricePerDay) || pricePerDay <= 0) {
+            e.preventDefault();
+            alert('Giá cho thuê phải lớn hơn 0');
+            return false;
+        }
+
+        if (isNaN(depositAmount) || depositAmount < 0) {
+            e.preventDefault();
+            alert('Tiền cọc không hợp lệ');
+            return false;
+        }
+    });
+</script>

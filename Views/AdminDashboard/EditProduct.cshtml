@@ -1,0 +1,358 @@
+@using OmniRentBackend.Models
+@using System.Text.Json
+@model Product
+@{
+    ViewData["Title"] = "Chỉnh sửa Sản phẩm";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var categories = (List<Category>)ViewBag.Categories;
+    var owners = (List<User>)ViewBag.Owners;
+    var images = JsonSerializer.Deserialize<List<string>>(Model.ImagesJson ?? "[]") ?? new List<string>();
+}
+
+<style>
+    .image-preview {
+        display: inline-block;
+        margin-right: 10px;
+        margin-bottom: 10px;
+        position: relative;
+    }
+    .image-preview img {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+    }
+    .image-preview .remove-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background-color: rgba(255, 0, 0, 0.8);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .image-preview .remove-btn:hover {
+        background-color: rgba(255, 0, 0, 1);
+    }
+    .drop-zone {
+        border: 2px dashed #007bff;
+        border-radius: 4px;
+        padding: 30px;
+        text-align: center;
+        cursor: pointer;
+        background-color: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+    .drop-zone:hover {
+        border-color: #0056b3;
+        background-color: #e7f1ff;
+    }
+    .drop-zone.drag-over {
+        border-color: #0056b3;
+        background-color: #e7f1ff;
+    }
+    .form-section-title {
+        font-size: 0.95rem;
+        font-weight: bold;
+        color: #333;
+        margin-top: 20px;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #007bff;
+    }
+    .existing-images {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="card card-custom p-4">
+    <h4 class="mb-4 fw-bold">Chỉnh sửa Sản phẩm: @Model.Name</h4>
+
+    <form method="post" enctype="multipart/form-data" id="productForm">
+        @Html.AntiForgeryToken()
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <label for="Name" class="form-label fw-bold">Tên Sản phẩm <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="Name" name="Name" value="@Model.Name" required>
+            </div>
+            <div class="col-md-6">
+                <label for="CategoryId" class="form-label fw-bold">Danh mục <span class="text-danger">*</span></label>
+                <select class="form-control" id="CategoryId" name="CategoryId" required>
+                    <option value="">-- Chọn danh mục --</option>
+                    @if (categories != null && categories.Any())
+                    {
+                        foreach (var cat in categories)
+                        {
+                            if (cat.Id == Model.CategoryId)
+                            {
+                                <option value="@cat.Id" selected>@cat.Name</option>
+                            }
+                            else
+                            {
+                                <option value="@cat.Id">@cat.Name</option>
+                            }
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label for="Description" class="form-label fw-bold">Mô tả Chi tiết <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="Description" name="Description" rows="4" required>@Model.Description</textarea>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <label for="PricePerDay" class="form-label fw-bold">Giá cho thuê/Ngày (đ) <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="PricePerDay" name="PricePerDay" step="1000" min="0" value="@Model.PricePerDay" required>
+            </div>
+            <div class="col-md-4">
+                <label for="DepositAmount" class="form-label fw-bold">Tiền Cọc (đ) <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="DepositAmount" name="DepositAmount" step="1000" min="0" value="@Model.DepositAmount" required>
+            </div>
+            <div class="col-md-4">
+                <label for="OwnerId" class="form-label fw-bold">Chủ sở hữu <span class="text-danger">*</span></label>
+                <select class="form-control" id="OwnerId" name="OwnerId" required>
+                    <option value="">-- Chọn chủ sở hữu --</option>
+                    @if (owners != null && owners.Any())
+                    {
+                        foreach (var owner in owners)
+                        {
+                            if (owner.Id == Model.OwnerId)
+                            {
+                                <option value="@owner.Id" selected>@owner.FullName (@owner.Email)</option>
+                            }
+                            else
+                            {
+                                <option value="@owner.Id">@owner.FullName (@owner.Email)</option>
+                            }
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label for="Status" class="form-label fw-bold">Trạng thái</label>
+            <select class="form-control" id="Status" name="Status">
+                @{
+                    var statuses = new[] { ("AVAILABLE", "Có sẵn"), ("PENDING_APPROVAL", "Chờ duyệt"), ("MAINTENANCE", "Bảo trì"), ("RENTED", "Đang cho thuê") };
+                    foreach (var status in statuses)
+                    {
+                        if (Model.Status == status.Item1)
+                        {
+                            <option value="@status.Item1" selected>@status.Item2</option>
+                        }
+                        else
+                        {
+                            <option value="@status.Item1">@status.Item2</option>
+                        }
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="form-section-title">
+            <i class="bi bi-image"></i> Quản lý Ảnh Sản phẩm
+        </div>
+
+        @if (images.Any())
+        {
+            <div class="existing-images">
+                <h6 class="fw-bold mb-3">Ảnh Hiện tại:</h6>
+                <div id="existingImagesList">
+                    @foreach (var image in images)
+                    {
+                        <div class="image-preview">
+                            <img src="@image" alt="Product" />
+                            <button type="button" class="remove-btn" onclick="removeExistingImage('@image')">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="drop-zone" id="dropZone" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+            <div style="font-size: 2rem; color: #007bff; margin-bottom: 10px;">
+                <i class="bi bi-cloud-arrow-up"></i>
+            </div>
+            <p class="mb-2"><strong>Kéo thả ảnh để thêm ảnh mới</strong> hoặc</p>
+            <label for="NewImages" class="btn btn-outline-primary">
+                <i class="bi bi-folder-open"></i> Chọn thêm ảnh
+            </label>
+            <input type="file" id="NewImages" name="NewImages" multiple accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+            <p class="text-muted mt-3 mb-0" style="font-size: 0.9rem;">Hỗ trợ: JPG, PNG, GIF, WebP (Tối đa 5MB/ảnh)</p>
+        </div>
+
+        <div id="newImagePreviewContainer" class="mt-4" style="display: none;">
+            <h6 class="fw-bold mb-3">Ảnh Mới được chọn:</h6>
+            <div id="previewsList"></div>
+        </div>
+
+        <!-- Hidden input for removed images -->
+        <input type="hidden" id="RemovedImages" name="RemovedImages" value="[]">
+
+        <div class="d-flex justify-content-between mt-5">
+            <a href="/AdminDashboard/Products" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Quay lại
+            </a>
+            <button type="submit" class="btn btn-success" id="submitBtn">
+                <i class="bi bi-check-circle"></i> Lưu Thay đổi
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    let selectedNewFiles = [];
+    let removedImages = [];
+
+    function handleDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('dropZone').classList.remove('drag-over');
+        handleFiles(e.dataTransfer.files);
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('dropZone').classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('dropZone').classList.remove('drag-over');
+    }
+
+    function handleFileSelect(event) {
+        handleFiles(event.target.files);
+    }
+
+    function handleFiles(files) {
+        selectedNewFiles = [];
+        const validFiles = [];
+
+        for (let file of files) {
+            if (validFiles.length >= 10) {
+                alert('Tối đa 10 ảnh được phép');
+                break;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                alert(`${file.name} quá lớn (tối đa 5MB)`);
+                continue;
+            }
+            if (!file.type.startsWith('image/')) {
+                alert(`${file.name} không phải là ảnh`);
+                continue;
+            }
+            validFiles.push(file);
+            selectedNewFiles.push(file);
+        }
+
+        updatePreviews();
+
+        const dataTransfer = new DataTransfer();
+        selectedNewFiles.forEach(file => dataTransfer.items.add(file));
+        document.getElementById('NewImages').files = dataTransfer.files;
+    }
+
+    function updatePreviews() {
+        const container = document.getElementById('previewsList');
+        container.innerHTML = '';
+
+        if (selectedNewFiles.length === 0) {
+            document.getElementById('newImagePreviewContainer').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('newImagePreviewContainer').style.display = 'block';
+
+        selectedNewFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const div = document.createElement('div');
+                div.className = 'image-preview';
+                div.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview" />
+                    <button type="button" class="remove-btn" onclick="removeNewImage(${index})">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                `;
+                container.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function removeNewImage(index) {
+        selectedNewFiles.splice(index, 1);
+        updatePreviews();
+
+        const dataTransfer = new DataTransfer();
+        selectedNewFiles.forEach(file => dataTransfer.items.add(file));
+        document.getElementById('NewImages').files = dataTransfer.files;
+    }
+
+    function removeExistingImage(imageUrl) {
+        if (!confirm('Bạn có chắc chắn muốn xóa ảnh này?')) return;
+
+        removedImages.push(imageUrl);
+        document.getElementById('RemovedImages').value = JSON.stringify(removedImages);
+
+        // Remove from UI
+        const existingList = document.getElementById('existingImagesList');
+        const images = existingList.querySelectorAll('img');
+        images.forEach(img => {
+            if (img.src === imageUrl) {
+                img.closest('.image-preview').remove();
+            }
+        });
+
+        if (existingList.querySelectorAll('.image-preview').length === 0) {
+            const parent = existingList.parentElement;
+            parent.style.display = 'none';
+        }
+    }
+
+    document.getElementById('productForm').addEventListener('submit', function (e) {
+        const name = document.getElementById('Name').value.trim();
+        const description = document.getElementById('Description').value.trim();
+        const pricePerDay = parseFloat(document.getElementById('PricePerDay').value);
+        const depositAmount = parseFloat(document.getElementById('DepositAmount').value);
+
+        if (!name || !description) {
+            e.preventDefault();
+            alert('Vui lòng nhập tên và mô tả sản phẩm');
+            return false;
+        }
+
+        if (isNaN(pricePerDay) || pricePerDay <= 0) {
+            e.preventDefault();
+            alert('Giá cho thuê phải lớn hơn 0');
+            return false;
+        }
+
+        if (isNaN(depositAmount) || depositAmount < 0) {
+            e.preventDefault();
+            alert('Tiền cọc không hợp lệ');
+            return false;
+        }
+    });
+</script>
