@@ -1,13 +1,13 @@
 @using OmniRentBackend.Models
 @model Booking
 @{
-    ViewData["Title"] = "Chỉnh sửa Đơn hàng";
+    ViewData["Title"] = "Cập nhật Trạng thái Đơn hàng";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
 <div class="card card-custom p-4" style="max-width: 800px; margin: 0 auto;">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="m-0 fw-bold">Chỉnh sửa Đơn hàng</h4>
+        <h4 class="m-0 fw-bold">Cập nhật Trạng thái Đơn hàng</h4>
         <a href="/AdminDashboard/Bookings" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Hủy</a>
     </div>
 
@@ -24,14 +24,19 @@
             <input type="text" class="form-control" value="@(Model.Renter?.FullName)" disabled>
         </div>
 
+        <div class="mb-3">
+            <label class="form-label fw-bold">Địa chỉ nhận tài sản cho thuê</label>
+            <textarea class="form-control" rows="2" disabled>@Model.RentalAddress</textarea>
+        </div>
+
         <div class="row mb-3">
             <div class="col-md-6">
                 <label for="StartDate" class="form-label fw-bold">Ngày thuê</label>
-                <input type="date" class="form-control" id="StartDate" name="StartDate" value="@Model.StartDate.ToString("yyyy-MM-dd")" required>
+                <input type="date" class="form-control" id="StartDate" value="@Model.StartDate.ToString("yyyy-MM-dd")" disabled>
             </div>
             <div class="col-md-6">
                 <label for="EndDate" class="form-label fw-bold">Ngày trả</label>
-                <input type="date" class="form-control" id="EndDate" name="EndDate" value="@Model.EndDate.ToString("yyyy-MM-dd")" required>
+                <input type="date" class="form-control" id="EndDate" value="@Model.EndDate.ToString("yyyy-MM-dd")" disabled>
             </div>
         </div>
 
@@ -58,7 +63,7 @@
 
         <div class="mb-3">
             <label for="TotalPrice" class="form-label fw-bold">Tổng tiền (VNĐ)</label>
-            <input type="number" class="form-control" id="TotalPrice" name="TotalPrice" value="@Model.TotalPrice" required>
+            <input type="number" class="form-control" id="TotalPrice" value="@Model.TotalPrice" disabled>
         </div>
 
         <button type="submit" class="btn btn-primary w-100 mt-3"><i class="bi bi-save"></i> Lưu thay đổi</button>

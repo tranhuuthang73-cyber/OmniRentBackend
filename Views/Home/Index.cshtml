@@ -220,6 +220,13 @@
             backdrop-filter: blur(5px);
         }
 
+        .category-card.active-category {
+            border-color: var(--primary);
+            background: rgba(108, 99, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(108, 99, 255, 0.3);
+            transform: translateY(-5px);
+        }
+
         .category-card:hover {
             transform: translateY(-10px);
             border-color: var(--primary);
@@ -427,8 +434,14 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Trang chủ</a>
+                        <a class="nav-link" href="/">Trang chủ</a>
                     </li>
+                    @if (User.Identity != null && User.Identity.IsAuthenticated)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Home/MyBookings">Đơn hàng của tôi</a>
+                        </li>
+                    }
                     <li class="nav-item">
                         <a class="nav-link" href="#">Khám phá</a>
                     </li>
@@ -437,6 +450,11 @@
                     </li>
                 </ul>
                 <div class="d-flex gap-3 mt-3 mt-lg-0 align-items-center">
+                    <a href="/Home/Cart" class="position-relative text-white me-3 d-flex align-items-center" style="font-size: 1.3rem; text-decoration: none;">
+                        <i class="bi bi-cart3"></i>
+                        <span id="cartBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem; display: none;">0</span>
+                    </a>
+
                     @if (User.Identity != null && User.Identity.IsAuthenticated)
                     {
                         <span class="text-white fw-bold me-2">Xin chào, @User.Identity.Name</span>
@@ -444,10 +462,6 @@
                         @if (User.IsInRole("ADMIN"))
                         {
                             <a href="/AdminDashboard/Bookings" class="btn btn-outline-primary-custom">Trang Quản trị</a>
-                        }
-                        else
-                        {
-                            <a href="#" class="btn btn-outline-primary-custom">Tài khoản</a>
                         }
 
                         <form action="/Account/Logout" method="post" class="d-inline m-0">
@@ -494,10 +508,12 @@
                     foreach (var category in Model.Categories)
                     {
                         <div class="col-6 col-md-4 col-lg-3">
-                            <div class="category-card">
-                                <i class="bi bi-grid-fill category-icon"></i>
-                                <h3 class="category-name">@category.Name</h3>
-                            </div>
+                            <a href="/?categoryId=@category.Id" style="text-decoration: none; color: inherit;">
+                                <div class="category-card @(ViewBag.SelectedCategoryId == category.Id ? "active-category" : "")">
+                                    <i class="bi bi-grid-fill category-icon"></i>
+                                    <h3 class="category-name">@category.Name</h3>
+                                </div>
+                            </a>
                         </div>
                     }
                 }
@@ -530,8 +546,17 @@
         <div class="container">
             <div class="d-flex justify-content-between align-items-end mb-5">
                 <div>
-                    <h2 class="section-title">Tài sản mới nhất</h2>
-                    <p class="section-subtitle mb-0">Các tài sản vừa được đăng cho thuê</p>
+                    @if (ViewBag.SelectedCategoryId != null)
+                    {
+                        var selectedCat = Model.Categories.FirstOrDefault(c => c.Id == ViewBag.SelectedCategoryId);
+                        <h2 class="section-title">Sản phẩm: @selectedCat?.Name</h2>
+                        <a href="/" class="btn btn-sm btn-outline-secondary mt-2 text-white"><i class="bi bi-arrow-left"></i> Xem tất cả danh mục</a>
+                    }
+                    else
+                    {
+                        <h2 class="section-title">Tài sản mới nhất</h2>
+                        <p class="section-subtitle mb-0">Các tài sản vừa được đăng cho thuê</p>
+                    }
                 </div>
                 <a href="#" class="text-link" style="color: var(--primary); text-decoration: none; font-weight: 500;">Xem tất cả <i class="bi bi-arrow-right"></i></a>
             </div>
@@ -542,27 +567,39 @@
                     foreach (var product in Model.FeaturedProducts)
                     {
                         <div class="col-12 col-md-6 col-lg-3">
-                            <div class="product-card">
-                                <div class="product-img-wrapper">
-                                    <div class="product-badge">Có sẵn</div>
-                                    <!-- Hiển thị ảnh đầu tiên nếu có, nếu không hiển thị placeholder -->
-                                    <img src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80" alt="@product.Name" class="product-img" />
-                                </div>
-                                <div class="product-content">
-                                    <div class="product-category">@(product.Category?.Name ?? "Chung")</div>
-                                    <h3 class="product-title">@product.Name</h3>
-                                    <div class="product-footer">
-                                        <div class="product-price">
-                                            @product.PricePerDay.ToString("N0")đ <span>/ ngày</span>
-                                        </div>
-                                        <div class="product-owner" title="@(product.Owner?.FullName ?? "Người dùng")">
-                                            <div class="owner-avatar">
-                                                @((product.Owner?.FullName ?? "U").Substring(0, 1).ToUpper())
+                            <a href="/Home/ProductDetails/@product.Id" style="text-decoration: none; color: inherit; display: block; height: 100%;">
+                                <div class="product-card">
+                                    <div class="product-img-wrapper">
+                                        <div class="product-badge">Có sẵn</div>
+                                        @{
+                                            var firstImage = "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80"; // Default
+                                            try {
+                                                if (!string.IsNullOrEmpty(product.ImagesJson)) {
+                                                    var images = System.Text.Json.JsonSerializer.Deserialize<List<string>>(product.ImagesJson);
+                                                    if (images != null && images.Any()) {
+                                                        firstImage = images.First();
+                                                    }
+                                                }
+                                            } catch { }
+                                        }
+                                        <img src="@firstImage" alt="@product.Name" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80'" />
+                                    </div>
+                                    <div class="product-content">
+                                        <div class="product-category">@(product.Category?.Name ?? "Chung")</div>
+                                        <h3 class="product-title">@product.Name</h3>
+                                        <div class="product-footer">
+                                            <div class="product-price">
+                                                @product.PricePerDay.ToString("N0")đ <span>/ ngày</span>
+                                            </div>
+                                            <div class="product-owner" title="@(product.Owner?.FullName ?? "Người dùng")">
+                                                <div class="owner-avatar">
+                                                    @((product.Owner?.FullName ?? "U").Substring(0, 1).ToUpper())
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
                     }
                 }
@@ -620,5 +657,20 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function updateCartBadge() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let badge = document.getElementById('cartBadge');
+            if (badge) {
+                if (cart.length > 0) {
+                    badge.innerText = cart.length;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+        document.addEventListener('DOMContentLoaded', updateCartBadge);
+    </script>
 </body>
 </html>

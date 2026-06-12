@@ -110,22 +110,22 @@
         </div>
 
         <div class="mb-4">
-            <label for="Description" class="form-label fw-bold">Mô tả Chi tiết <span class="text-danger">*</span></label>
-            <textarea class="form-control" id="Description" name="Description" rows="4" required>@Model.Description</textarea>
+            <label for="Description" class="form-label fw-bold">Mô tả Chi tiết</label>
+            <textarea class="form-control" id="Description" name="Description" rows="4">@Model.Description</textarea>
         </div>
 
         <div class="row mb-4">
             <div class="col-md-4">
-                <label for="PricePerDay" class="form-label fw-bold">Giá cho thuê/Ngày (đ) <span class="text-danger">*</span></label>
-                <input type="number" class="form-control" id="PricePerDay" name="PricePerDay" step="1000" min="0" value="@Model.PricePerDay" required>
+                <label for="PricePerDay" class="form-label fw-bold">Giá cho thuê/Ngày (đ)</label>
+                <input type="number" class="form-control" id="PricePerDay" name="PricePerDay" step="1000" min="0" value="@Model.PricePerDay">
             </div>
             <div class="col-md-4">
-                <label for="DepositAmount" class="form-label fw-bold">Tiền Cọc (đ) <span class="text-danger">*</span></label>
-                <input type="number" class="form-control" id="DepositAmount" name="DepositAmount" step="1000" min="0" value="@Model.DepositAmount" required>
+                <label for="DepositAmount" class="form-label fw-bold">Tiền Cọc (đ)</label>
+                <input type="number" class="form-control" id="DepositAmount" name="DepositAmount" step="1000" min="0" value="@Model.DepositAmount">
             </div>
             <div class="col-md-4">
-                <label for="OwnerId" class="form-label fw-bold">Chủ sở hữu <span class="text-danger">*</span></label>
-                <select class="form-control" id="OwnerId" name="OwnerId" required>
+                <label for="OwnerId" class="form-label fw-bold">Chủ sở hữu</label>
+                <select class="form-control" id="OwnerId" name="OwnerId">
                     <option value="">-- Chọn chủ sở hữu --</option>
                     @if (owners != null && owners.Any())
                     {
@@ -166,46 +166,36 @@
         </div>
 
         <div class="form-section-title">
-            <i class="bi bi-image"></i> Quản lý Ảnh Sản phẩm
+            <i class="bi bi-image"></i> Quản lý Ảnh Sản phẩm (Link URL)
         </div>
 
-        @if (images.Any())
-        {
-            <div class="existing-images">
-                <h6 class="fw-bold mb-3">Ảnh Hiện tại:</h6>
-                <div id="existingImagesList">
-                    @foreach (var image in images)
-                    {
-                        <div class="image-preview">
-                            <img src="@image" alt="Product" />
-                            <button type="button" class="remove-btn" onclick="removeExistingImage('@image')">
-                                <i class="bi bi-x-lg"></i>
-                            </button>
-                        </div>
-                    }
+        <div id="imageUrlsContainer">
+            @if (images.Any())
+            {
+                for (var i = 0; i < images.Count; i++)
+                {
+                    <div class="image-url-row d-flex gap-2 mb-2" id="urlRow_@i">
+                        <input type="text" class="form-control" name="ImageUrls" value="@images[i]" oninput="previewUrlImage(this)">
+                        <button type="button" class="btn btn-outline-danger" onclick="removeUrlRow(@i)" title="Xóa"><i class="bi bi-trash"></i></button>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="image-url-row d-flex gap-2 mb-2" id="urlRow_0">
+                    <input type="text" class="form-control" name="ImageUrls" placeholder="https://example.com/image.jpg" oninput="previewUrlImage(this)">
+                    <button type="button" class="btn btn-outline-danger" onclick="removeUrlRow(0)" title="Xóa"><i class="bi bi-trash"></i></button>
                 </div>
-            </div>
-        }
-
-        <div class="drop-zone" id="dropZone" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-            <div style="font-size: 2rem; color: #007bff; margin-bottom: 10px;">
-                <i class="bi bi-cloud-arrow-up"></i>
-            </div>
-            <p class="mb-2"><strong>Kéo thả ảnh để thêm ảnh mới</strong> hoặc</p>
-            <label for="NewImages" class="btn btn-outline-primary">
-                <i class="bi bi-folder-open"></i> Chọn thêm ảnh
-            </label>
-            <input type="file" id="NewImages" name="NewImages" multiple accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
-            <p class="text-muted mt-3 mb-0" style="font-size: 0.9rem;">Hỗ trợ: JPG, PNG, GIF, WebP (Tối đa 5MB/ảnh)</p>
+            }
         </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="addUrlRow()">
+            <i class="bi bi-plus-circle"></i> Thêm link ảnh
+        </button>
 
-        <div id="newImagePreviewContainer" class="mt-4" style="display: none;">
-            <h6 class="fw-bold mb-3">Ảnh Mới được chọn:</h6>
-            <div id="previewsList"></div>
+        <div id="imagePreviewContainer" class="mt-4" style="display: @(images.Any() ? "block" : "none");">
+            <h6 class="fw-bold mb-3">Xem trước ảnh:</h6>
+            <div id="previewsList" class="d-flex flex-wrap gap-2"></div>
         </div>
-
-        <!-- Hidden input for removed images -->
-        <input type="hidden" id="RemovedImages" name="RemovedImages" value="[]">
 
         <div class="d-flex justify-content-between mt-5">
             <a href="/AdminDashboard/Products" class="btn btn-secondary">
@@ -219,139 +209,63 @@
 </div>
 
 <script>
-    let selectedNewFiles = [];
-    let removedImages = [];
+    let urlRowCount = @(images.Any() ? images.Count : 1);
 
-    function handleDrop(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        document.getElementById('dropZone').classList.remove('drag-over');
-        handleFiles(e.dataTransfer.files);
+    function addUrlRow() {
+        const container = document.getElementById('imageUrlsContainer');
+        const idx = urlRowCount++;
+        const div = document.createElement('div');
+        div.className = 'image-url-row d-flex gap-2 mb-2';
+        div.id = 'urlRow_' + idx;
+        div.innerHTML = `
+            <input type="text" class="form-control" name="ImageUrls" placeholder="https://example.com/image.jpg" oninput="previewUrlImage(this)">
+            <button type="button" class="btn btn-outline-danger" onclick="removeUrlRow(${idx})" title="Xóa"><i class="bi bi-trash"></i></button>
+        `;
+        container.appendChild(div);
     }
 
-    function handleDragOver(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        document.getElementById('dropZone').classList.add('drag-over');
-    }
-
-    function handleDragLeave(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        document.getElementById('dropZone').classList.remove('drag-over');
-    }
-
-    function handleFileSelect(event) {
-        handleFiles(event.target.files);
-    }
-
-    function handleFiles(files) {
-        selectedNewFiles = [];
-        const validFiles = [];
-
-        for (let file of files) {
-            if (validFiles.length >= 10) {
-                alert('Tối đa 10 ảnh được phép');
-                break;
-            }
-            if (file.size > 5 * 1024 * 1024) {
-                alert(`${file.name} quá lớn (tối đa 5MB)`);
-                continue;
-            }
-            if (!file.type.startsWith('image/')) {
-                alert(`${file.name} không phải là ảnh`);
-                continue;
-            }
-            validFiles.push(file);
-            selectedNewFiles.push(file);
+    function removeUrlRow(idx) {
+        const row = document.getElementById('urlRow_' + idx);
+        if (row) {
+            row.remove();
+            updateUrlPreviews();
         }
-
-        updatePreviews();
-
-        const dataTransfer = new DataTransfer();
-        selectedNewFiles.forEach(file => dataTransfer.items.add(file));
-        document.getElementById('NewImages').files = dataTransfer.files;
     }
 
-    function updatePreviews() {
+    function previewUrlImage(input) {
+        updateUrlPreviews();
+    }
+
+    function updateUrlPreviews() {
+        const inputs = document.querySelectorAll('#imageUrlsContainer input[name="ImageUrls"]');
         const container = document.getElementById('previewsList');
         container.innerHTML = '';
-
-        if (selectedNewFiles.length === 0) {
-            document.getElementById('newImagePreviewContainer').style.display = 'none';
-            return;
-        }
-
-        document.getElementById('newImagePreviewContainer').style.display = 'block';
-
-        selectedNewFiles.forEach((file, index) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
+        let hasUrl = false;
+        inputs.forEach(function (inp) {
+            const url = inp.value.trim();
+            if (url) {
+                hasUrl = true;
                 const div = document.createElement('div');
                 div.className = 'image-preview';
-                div.innerHTML = `
-                    <img src="${e.target.result}" alt="Preview" />
-                    <button type="button" class="remove-btn" onclick="removeNewImage(${index})">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                `;
+                div.innerHTML = `<img src="${url}" alt="Preview" onerror="this.src=''; this.style.border='2px solid red';" />`;
                 container.appendChild(div);
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    function removeNewImage(index) {
-        selectedNewFiles.splice(index, 1);
-        updatePreviews();
-
-        const dataTransfer = new DataTransfer();
-        selectedNewFiles.forEach(file => dataTransfer.items.add(file));
-        document.getElementById('NewImages').files = dataTransfer.files;
-    }
-
-    function removeExistingImage(imageUrl) {
-        if (!confirm('Bạn có chắc chắn muốn xóa ảnh này?')) return;
-
-        removedImages.push(imageUrl);
-        document.getElementById('RemovedImages').value = JSON.stringify(removedImages);
-
-        // Remove from UI
-        const existingList = document.getElementById('existingImagesList');
-        const images = existingList.querySelectorAll('img');
-        images.forEach(img => {
-            if (img.src === imageUrl) {
-                img.closest('.image-preview').remove();
             }
         });
-
-        if (existingList.querySelectorAll('.image-preview').length === 0) {
-            const parent = existingList.parentElement;
-            parent.style.display = 'none';
-        }
+        document.getElementById('imagePreviewContainer').style.display = hasUrl ? 'block' : 'none';
     }
 
+    // Initialize previews on load
+    window.onload = function() {
+        updateUrlPreviews();
+    };
+
+    // Form validation
     document.getElementById('productForm').addEventListener('submit', function (e) {
         const name = document.getElementById('Name').value.trim();
-        const description = document.getElementById('Description').value.trim();
-        const pricePerDay = parseFloat(document.getElementById('PricePerDay').value);
-        const depositAmount = parseFloat(document.getElementById('DepositAmount').value);
 
-        if (!name || !description) {
+        if (!name) {
             e.preventDefault();
-            alert('Vui lòng nhập tên và mô tả sản phẩm');
-            return false;
-        }
-
-        if (isNaN(pricePerDay) || pricePerDay <= 0) {
-            e.preventDefault();
-            alert('Giá cho thuê phải lớn hơn 0');
-            return false;
-        }
-
-        if (isNaN(depositAmount) || depositAmount < 0) {
-            e.preventDefault();
-            alert('Tiền cọc không hợp lệ');
+            alert('Vui lòng nhập tên sản phẩm');
             return false;
         }
     });

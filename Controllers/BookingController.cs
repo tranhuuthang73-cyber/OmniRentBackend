@@ -174,7 +174,8 @@ namespace OmniRentBackend.Controllers
                 EndDate = end,
                 TotalPrice = pricing.totalPrice,
                 Status = "PENDING",
-                PaymentStatus = "UNPAID"
+                PaymentStatus = "UNPAID",
+                RentalAddress = dto.RentalAddress
             };
 
             _context.Bookings.Add(booking);
@@ -641,6 +642,7 @@ namespace OmniRentBackend.Controllers
         public string ProductId { get; set; } = string.Empty;
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
+        public string? RentalAddress { get; set; }
     }
 
     public class UpdateStatusDto

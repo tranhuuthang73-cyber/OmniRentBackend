@@ -1,0 +1,460 @@
+@using OmniRentBackend.Models
+@model Product
+@{
+    Layout = null;
+    var isAuthenticated = User.Identity != null && User.Identity.IsAuthenticated;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Xác nhận đặt thuê — OmniRent</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Bootstrap & Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <style>
+        :root {
+            --primary: #6C63FF;
+            --primary-hover: #5a52d5;
+            --secondary: #0f0c29;
+            --dark-bg: #1a1a3e;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text-main: #ffffff;
+            --text-muted: #a89fd8;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --glass-bg: rgba(26, 26, 62, 0.85);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--dark-bg) 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* Navbar */
+        .navbar-custom {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--text-main) !important;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .brand-icon {
+            color: var(--primary);
+            font-size: 1.8rem;
+        }
+
+        .btn-outline-primary-custom {
+            color: var(--text-main);
+            border: 1px solid var(--primary);
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-outline-primary-custom:hover {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(108, 99, 255, 0.4);
+        }
+
+        .btn-primary-custom {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-primary-custom:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 99, 255, 0.4);
+        }
+
+        /* Content Container */
+        .main-container {
+            margin-top: 120px;
+            padding-bottom: 80px;
+        }
+
+        .checkout-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 2.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .product-summary-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.5rem;
+        }
+
+        .summary-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: #2a2a4a;
+        }
+
+        .form-control-custom {
+            background: rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid var(--border-color) !important;
+            color: white !important;
+            border-radius: 12px !important;
+            padding: 0.8rem 1rem !important;
+        }
+
+        .form-control-custom:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 10px rgba(108, 99, 255, 0.3) !important;
+        }
+
+        .form-label-custom {
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .pricing-summary {
+            background: rgba(0,0,0,0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .summary-row.total {
+            margin-bottom: 0;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #43e97b;
+        }
+
+        /* Footer */
+        footer {
+            background: rgba(0,0,0,0.3);
+            border-top: 1px solid var(--border-color);
+            padding: 4rem 0 2rem;
+            margin-top: 5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-building-fill brand-icon"></i> OmniRent
+            </a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Trang chủ</a>
+                    </li>
+                    @if (isAuthenticated)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/Home/MyBookings">Đơn hàng của tôi</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+            <div class="ms-auto d-flex gap-3 align-items-center">
+                <a href="/Home/Cart" class="position-relative text-white me-3 d-flex align-items-center" style="font-size: 1.3rem; text-decoration: none;">
+                    <i class="bi bi-cart3"></i>
+                    <span id="cartBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem; display: none;">0</span>
+                </a>
+
+                @if (isAuthenticated)
+                {
+                    <span class="text-white fw-bold d-none d-md-inline me-2">Xin chào, @User.Identity.Name</span>
+                    <form action="/Account/Logout" method="post" class="d-inline m-0">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-primary-custom">Đăng xuất</button>
+                    </form>
+                }
+                else
+                {
+                    <a href="/Account/Login?returnUrl=/Home/Checkout/@Model.Id" class="btn btn-outline-primary-custom">Đăng nhập</a>
+                }
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container main-container">
+        <h2 class="mb-5 fw-bold text-center"><i class="bi bi-wallet2 text-primary"></i> Xác nhận thanh toán &amp; Địa chỉ thuê</h2>
+
+        <div class="row g-5">
+            <!-- Left: Product Summary -->
+            <div class="col-lg-5">
+                <div class="product-summary-card">
+                    @{
+                        var imagesList = new List<string>();
+                        try {
+                            if (!string.IsNullOrEmpty(Model.ImagesJson)) {
+                                imagesList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(Model.ImagesJson) ?? new List<string>();
+                            }
+                        } catch { }
+
+                        var mainImg = imagesList.Any() ? imagesList.First() : "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80";
+                    }
+                    <img src="@mainImg" alt="@Model.Name" class="summary-img mb-3" onerror="this.src='https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80'" />
+                    
+                    <span class="badge bg-primary mb-2">@(Model.Category?.Name ?? "Sản phẩm")</span>
+                    <h4 class="fw-bold mb-3 text-white">@Model.Name</h4>
+                    
+                    <div class="d-flex justify-content-between mb-2 pb-2 border-bottom" style="border-color: var(--border-color);">
+                        <span class="text-muted">Đơn giá thuê</span>
+                        <span class="fw-bold">@Model.PricePerDay.ToString("N0")đ / ngày</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Tiền đặt cọc cọc</span>
+                        <span class="fw-bold text-warning">@Model.DepositAmount.ToString("N0")đ</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Chủ sở hữu</span>
+                        <span>@(Model.Owner?.FullName ?? "Chủ đồ")</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Checkout Form -->
+            <div class="col-lg-7">
+                <div class="checkout-card">
+                    @if (isAuthenticated)
+                    {
+                        <div id="bookingError" class="alert alert-danger d-none" role="alert"></div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="startDate" class="form-label-custom">Ngày bắt đầu nhận đồ</label>
+                                <input type="date" class="form-control form-control-custom" id="startDate" required min="@DateTime.Now.ToString("yyyy-MM-dd")" value="@DateTime.Now.ToString("yyyy-MM-dd")">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="endDate" class="form-label-custom">Ngày trả đồ dự kiến</label>
+                                <input type="date" class="form-control form-control-custom" id="endDate" required min="@DateTime.Now.AddDays(1).ToString("yyyy-MM-dd")" value="@DateTime.Now.AddDays(1).ToString("yyyy-MM-dd")">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="rentalAddress" class="form-label-custom">Địa chỉ nhận tài sản thuê (nhập chi tiết)</label>
+                            <textarea class="form-control form-control-custom" id="rentalAddress" rows="3" placeholder="Ví dụ: Số 12, ngõ 34 Đường Láng, Đống Đa, Hà Nội..." required></textarea>
+                        </div>
+
+                        <div class="pricing-summary">
+                            <div class="summary-row">
+                                <span>Thời gian thuê</span>
+                                <span id="summaryDays" class="fw-bold">1 ngày</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Tiền đặt cọc</span>
+                                <span class="fw-bold text-warning">@Model.DepositAmount.ToString("N0")đ</span>
+                            </div>
+                            <div class="summary-row total">
+                                <span>Tổng cộng chi phí thuê</span>
+                                <span id="summaryTotal">Calculating...</span>
+                            </div>
+                        </div>
+
+                        <button id="btnSubmitBooking" class="btn btn-primary-custom w-100 py-3 mt-2" onclick="submitBookingRequest()">
+                            <i class="bi bi-credit-card-fill"></i> Tiến hành thuê &amp; Thanh toán đặt cọc
+                        </button>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="bi bi-lock-fill text-muted fs-1 mb-3 d-block"></i>
+                            <p class="text-muted">Bạn cần đăng nhập tài khoản để thực hiện thanh toán thuê sản phẩm này.</p>
+                            <a href="/Account/Login?returnUrl=/Home/Checkout/@Model.Id" class="btn btn-primary-custom px-4 py-2 mt-2">Đăng nhập ngay</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container text-center text-muted" style="font-size: 0.9rem;">
+            &copy; @DateTime.Now.Year OmniRent. Mọi quyền được bảo lưu.
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const productId = "@Model.Id";
+        const pricePerDay = @Model.PricePerDay;
+
+        function updateCartBadge() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let badge = document.getElementById('cartBadge');
+            if (badge) {
+                if (cart.length > 0) {
+                    badge.innerText = cart.length;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+
+        document.getElementById('startDate').addEventListener('change', updatePriceEstimate);
+        document.getElementById('endDate').addEventListener('change', updatePriceEstimate);
+
+        async function updatePriceEstimate() {
+            const startDateStr = document.getElementById('startDate').value;
+            const endDateStr = document.getElementById('endDate').value;
+            const summaryDays = document.getElementById('summaryDays');
+            const summaryTotal = document.getElementById('summaryTotal');
+
+            if (!startDateStr || !endDateStr) return;
+
+            const start = new Date(startDateStr);
+            const end = new Date(endDateStr);
+
+            if (end < start) {
+                summaryDays.innerText = '0 ngày';
+                summaryTotal.innerText = 'Ngày kết thúc không hợp lệ';
+                return;
+            }
+
+            try {
+                const response = await fetch('/bookings/estimate-price', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        productId: productId,
+                        startDate: startDateStr,
+                        endDate: endDateStr
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    summaryDays.innerText = `${data.days} ngày`;
+                    summaryTotal.innerText = `${data.totalPrice.toLocaleString('vi-VN')}đ`;
+                } else {
+                    const err = await response.json();
+                    summaryTotal.innerText = err.message || 'Lỗi tính giá';
+                }
+            } catch (e) {
+                console.error(e);
+                const diffTime = Math.abs(end - start);
+                const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+                summaryDays.innerText = `${diffDays} ngày`;
+                summaryTotal.innerText = `${(diffDays * pricePerDay).toLocaleString('vi-VN')}đ`;
+            }
+        }
+
+        async function submitBookingRequest() {
+            const startDateStr = document.getElementById('startDate').value;
+            const endDateStr = document.getElementById('endDate').value;
+            const rentalAddress = document.getElementById('rentalAddress').value.trim();
+            const btn = document.getElementById('btnSubmitBooking');
+            const errorBox = document.getElementById('bookingError');
+
+            errorBox.classList.add('d-none');
+
+            if (!startDateStr || !endDateStr) {
+                showError('Vui lòng chọn ngày bắt đầu và ngày trả đồ.');
+                return;
+            }
+
+            if (!rentalAddress) {
+                showError('Vui lòng nhập Địa chỉ nhận tài sản thuê.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang tạo đơn thuê...';
+
+            try {
+                const response = await fetch('/bookings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        productId: productId,
+                        startDate: startDateStr,
+                        endDate: endDateStr,
+                        rentalAddress: rentalAddress
+                    })
+                });
+
+                if (response.ok) {
+                    const booking = await response.json();
+                    window.location.href = `/Home/Payment/${booking.id}`;
+                } else {
+                    const err = await response.json();
+                    showError(err.message || 'Có lỗi xảy ra khi tạo đơn thuê.');
+                    btn.disabled = false;
+                    btn.innerText = 'Tiến hành thuê & Thanh toán đặt cọc';
+                }
+            } catch (e) {
+                showError('Lỗi kết nối máy chủ. Vui lòng thử lại.');
+                btn.disabled = false;
+                btn.innerText = 'Tiến hành thuê & Thanh toán đặt cọc';
+            }
+        }
+
+        function showError(msg) {
+            const errorBox = document.getElementById('bookingError');
+            errorBox.innerText = msg;
+            errorBox.classList.remove('d-none');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCartBadge();
+            updatePriceEstimate();
+        });
+    </script>
+</body>
+</html>

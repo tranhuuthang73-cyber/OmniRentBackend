@@ -128,11 +128,20 @@
             <small class="text-muted">Admin Panel</small>
         </div>
         <div class="nav flex-column mt-3">
-            <a href="/AdminDashboard" class="nav-link">
+            @{
+                var currentPath = Context.Request.Path.Value ?? "";
+                var isDashboard = currentPath == "/AdminDashboard" || currentPath == "/AdminDashboard/";
+                var isBookings = currentPath.StartsWith("/AdminDashboard/Booking") || currentPath.StartsWith("/AdminDashboard/CreateBooking") || currentPath.StartsWith("/AdminDashboard/EditBooking");
+                var isProducts = currentPath.StartsWith("/AdminDashboard/Product") || currentPath.StartsWith("/AdminDashboard/CreateProduct") || currentPath.StartsWith("/AdminDashboard/EditProduct");
+            }
+            <a href="/AdminDashboard" class="nav-link @(isDashboard ? "active" : "")">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
-            <a href="/AdminDashboard/Bookings" class="nav-link active">
+            <a href="/AdminDashboard/Bookings" class="nav-link @(isBookings ? "active" : "")">
                 <i class="bi bi-receipt"></i> Đơn hàng
+            </a>
+            <a href="/AdminDashboard/Products" class="nav-link @(isProducts ? "active" : "")">
+                <i class="bi bi-box-seam"></i> Sản phẩm
             </a>
             <a href="/" class="nav-link mt-auto border-top" style="border-color: rgba(255,255,255,0.1)!important;">
                 <i class="bi bi-box-arrow-left"></i> Về trang chủ

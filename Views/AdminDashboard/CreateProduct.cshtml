@@ -96,22 +96,22 @@
         </div>
 
         <div class="mb-4">
-            <label for="Description" class="form-label fw-bold">Mô tả Chi tiết <span class="text-danger">*</span></label>
-            <textarea class="form-control" id="Description" name="Description" rows="4" required placeholder="Nhập mô tả đầy đủ về sản phẩm, điều kiện, tính năng..."></textarea>
+            <label for="Description" class="form-label fw-bold">Mô tả Chi tiết</label>
+            <textarea class="form-control" id="Description" name="Description" rows="4" placeholder="Nhập mô tả đầy đủ về sản phẩm, điều kiện, tính năng..."></textarea>
         </div>
 
         <div class="row mb-4">
             <div class="col-md-4">
-                <label for="PricePerDay" class="form-label fw-bold">Giá cho thuê/Ngày (đ) <span class="text-danger">*</span></label>
-                <input type="number" class="form-control" id="PricePerDay" name="PricePerDay" step="1000" min="0" required placeholder="50000">
+                <label for="PricePerDay" class="form-label fw-bold">Giá cho thuê/Ngày (đ)</label>
+                <input type="number" class="form-control" id="PricePerDay" name="PricePerDay" step="1000" min="0" placeholder="50000">
             </div>
             <div class="col-md-4">
-                <label for="DepositAmount" class="form-label fw-bold">Tiền Cọc (đ) <span class="text-danger">*</span></label>
-                <input type="number" class="form-control" id="DepositAmount" name="DepositAmount" step="1000" min="0" required placeholder="500000">
+                <label for="DepositAmount" class="form-label fw-bold">Tiền Cọc (đ)</label>
+                <input type="number" class="form-control" id="DepositAmount" name="DepositAmount" step="1000" min="0" placeholder="500000">
             </div>
             <div class="col-md-4">
-                <label for="OwnerId" class="form-label fw-bold">Chủ sở hữu <span class="text-danger">*</span></label>
-                <select class="form-control" id="OwnerId" name="OwnerId" required>
+                <label for="OwnerId" class="form-label fw-bold">Chủ sở hữu</label>
+                <select class="form-control" id="OwnerId" name="OwnerId">
                     <option value="">-- Chọn chủ sở hữu --</option>
                     @if (owners != null && owners.Any())
                     {
@@ -135,24 +135,22 @@
         </div>
 
         <div class="form-section-title">
-            <i class="bi bi-image"></i> Tải Ảnh Sản phẩm
+            <i class="bi bi-image"></i> Ảnh Sản phẩm (Link URL)
         </div>
 
-        <div class="drop-zone" id="dropZone" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-            <div style="font-size: 2rem; color: #007bff; margin-bottom: 10px;">
-                <i class="bi bi-cloud-arrow-up"></i>
+        <div id="imageUrlsContainer">
+            <div class="image-url-row d-flex gap-2 mb-2" id="urlRow_0">
+                <input type="text" class="form-control" name="ImageUrls" placeholder="https://example.com/image.jpg" oninput="previewUrlImage(this, 0)">
+                <button type="button" class="btn btn-outline-danger" onclick="removeUrlRow(0)" title="Xóa"><i class="bi bi-trash"></i></button>
             </div>
-            <p class="mb-2"><strong>Kéo thả ảnh vào đây</strong> hoặc</p>
-            <label for="Images" class="btn btn-outline-primary">
-                <i class="bi bi-folder-open"></i> Chọn ảnh từ máy tính
-            </label>
-            <input type="file" id="Images" name="Images" multiple accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
-            <p class="text-muted mt-3 mb-0" style="font-size: 0.9rem;">Hỗ trợ: JPG, PNG, GIF, WebP (Tối đa 5MB/ảnh, tối đa 10 ảnh)</p>
         </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="addUrlRow()">
+            <i class="bi bi-plus-circle"></i> Thêm link ảnh
+        </button>
 
         <div id="imagePreviewContainer" class="mt-4" style="display: none;">
-            <h6 class="fw-bold mb-3">Ảnh được chọn:</h6>
-            <div id="previewsList"></div>
+            <h6 class="fw-bold mb-3">Xem trước ảnh:</h6>
+            <div id="previewsList" class="d-flex flex-wrap gap-2"></div>
         </div>
 
         <div class="d-flex justify-content-between mt-5">
@@ -167,119 +165,57 @@
 </div>
 
 <script>
-    let selectedFiles = [];
+    let urlRowCount = 1;
 
-    function handleDrop(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        document.getElementById('dropZone').classList.remove('drag-over');
-        handleFiles(e.dataTransfer.files);
+    function addUrlRow() {
+        const container = document.getElementById('imageUrlsContainer');
+        const idx = urlRowCount++;
+        const div = document.createElement('div');
+        div.className = 'image-url-row d-flex gap-2 mb-2';
+        div.id = 'urlRow_' + idx;
+        div.innerHTML = `
+            <input type="text" class="form-control" name="ImageUrls" placeholder="https://example.com/image.jpg" oninput="previewUrlImage(this, ${idx})">
+            <button type="button" class="btn btn-outline-danger" onclick="removeUrlRow(${idx})" title="Xóa"><i class="bi bi-trash"></i></button>
+        `;
+        container.appendChild(div);
     }
 
-    function handleDragOver(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        document.getElementById('dropZone').classList.add('drag-over');
-    }
-
-    function handleDragLeave(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        document.getElementById('dropZone').classList.remove('drag-over');
-    }
-
-    function handleFileSelect(event) {
-        handleFiles(event.target.files);
-    }
-
-    function handleFiles(files) {
-        selectedFiles = [];
-        const validFiles = [];
-
-        for (let file of files) {
-            if (validFiles.length >= 10) {
-                alert('Tối đa 10 ảnh được phép');
-                break;
-            }
-            if (file.size > 5 * 1024 * 1024) {
-                alert(`${file.name} quá lớn (tối đa 5MB)`);
-                continue;
-            }
-            if (!file.type.startsWith('image/')) {
-                alert(`${file.name} không phải là ảnh`);
-                continue;
-            }
-            validFiles.push(file);
-            selectedFiles.push(file);
+    function removeUrlRow(idx) {
+        const row = document.getElementById('urlRow_' + idx);
+        if (row) {
+            row.remove();
+            updateUrlPreviews();
         }
-
-        updatePreviews();
-
-        // Update the actual input
-        const dataTransfer = new DataTransfer();
-        selectedFiles.forEach(file => dataTransfer.items.add(file));
-        document.getElementById('Images').files = dataTransfer.files;
     }
 
-    function updatePreviews() {
+    function previewUrlImage(input, idx) {
+        updateUrlPreviews();
+    }
+
+    function updateUrlPreviews() {
+        const inputs = document.querySelectorAll('#imageUrlsContainer input[name="ImageUrls"]');
         const container = document.getElementById('previewsList');
         container.innerHTML = '';
-
-        if (selectedFiles.length === 0) {
-            document.getElementById('imagePreviewContainer').style.display = 'none';
-            return;
-        }
-
-        document.getElementById('imagePreviewContainer').style.display = 'block';
-
-        selectedFiles.forEach((file, index) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
+        let hasUrl = false;
+        inputs.forEach(function (inp) {
+            const url = inp.value.trim();
+            if (url) {
+                hasUrl = true;
                 const div = document.createElement('div');
                 div.className = 'image-preview';
-                div.innerHTML = `
-                    <img src="${e.target.result}" alt="Preview" />
-                    <button type="button" class="remove-btn" onclick="removeImage(${index})">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                `;
+                div.innerHTML = `<img src="${url}" alt="Preview" onerror="this.src=''; this.style.border='2px solid red';" />`;
                 container.appendChild(div);
-            };
-            reader.readAsDataURL(file);
+            }
         });
+        document.getElementById('imagePreviewContainer').style.display = hasUrl ? 'block' : 'none';
     }
 
-    function removeImage(index) {
-        selectedFiles.splice(index, 1);
-        updatePreviews();
-
-        const dataTransfer = new DataTransfer();
-        selectedFiles.forEach(file => dataTransfer.items.add(file));
-        document.getElementById('Images').files = dataTransfer.files;
-    }
-
-    // Form validation
+    // Form validation — chỉ bắt buộc Tên
     document.getElementById('productForm').addEventListener('submit', function (e) {
         const name = document.getElementById('Name').value.trim();
-        const description = document.getElementById('Description').value.trim();
-        const pricePerDay = parseFloat(document.getElementById('PricePerDay').value);
-        const depositAmount = parseFloat(document.getElementById('DepositAmount').value);
-
-        if (!name || !description) {
+        if (!name) {
             e.preventDefault();
-            alert('Vui lòng nhập tên và mô tả sản phẩm');
-            return false;
-        }
-
-        if (isNaN(pricePerDay) || pricePerDay <= 0) {
-            e.preventDefault();
-            alert('Giá cho thuê phải lớn hơn 0');
-            return false;
-        }
-
-        if (isNaN(depositAmount) || depositAmount < 0) {
-            e.preventDefault();
-            alert('Tiền cọc không hợp lệ');
+            alert('Vui lòng nhập tên sản phẩm');
             return false;
         }
     });

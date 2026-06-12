@@ -60,52 +60,7 @@ namespace OmniRentBackend.Controllers
             return View(booking);
         }
 
-        // GET: /AdminDashboard/CreateBooking
-        public async Task<IActionResult> CreateBooking()
-        {
-            ViewBag.Products = await _context.Products.Where(p => p.Status == "AVAILABLE").ToListAsync();
-            ViewBag.Renters = await _context.Users.ToListAsync(); // Lấy tất cả user
-            return View();
-        }
 
-        // POST: /AdminDashboard/CreateBooking
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateBooking([FromForm] string ProductId, [FromForm] string RenterId, [FromForm] DateTime StartDate, [FromForm] DateTime EndDate)
-        {
-            var product = await _context.Products.FindAsync(ProductId);
-            if (product == null || string.IsNullOrEmpty(RenterId))
-            {
-                ModelState.AddModelError("", "Dữ liệu không hợp lệ.");
-                ViewBag.Products = await _context.Products.Where(p => p.Status == "AVAILABLE").ToListAsync();
-                ViewBag.Renters = await _context.Users.ToListAsync();
-                return View();
-            }
-
-            double days = (EndDate - StartDate).TotalDays;
-            if (days <= 0) days = 1;
-            double totalPrice = days * product.PricePerDay;
-
-            var booking = new Booking
-            {
-                Id = Guid.NewGuid().ToString(),
-                ProductId = ProductId,
-                RenterId = RenterId,
-                StartDate = StartDate,
-                EndDate = EndDate,
-                TotalPrice = totalPrice,
-                Status = "APPROVED",
-                PaymentStatus = "UNPAID",
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            _context.Bookings.Add(booking);
-            product.Status = "RENTED";
-            
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Bookings));
-        }
 
         // GET: /AdminDashboard/EditBooking/5
         public async Task<IActionResult> EditBooking(string id)
@@ -125,16 +80,13 @@ namespace OmniRentBackend.Controllers
         // POST: /AdminDashboard/EditBooking/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditBooking(string id, [FromForm] DateTime StartDate, [FromForm] DateTime EndDate, [FromForm] string Status, [FromForm] string PaymentStatus, [FromForm] double TotalPrice)
+        public async Task<IActionResult> EditBooking(string id, [FromForm] string Status, [FromForm] string PaymentStatus)
         {
             var booking = await _context.Bookings.FindAsync(id);
             if (booking == null) return NotFound();
 
-            booking.StartDate = StartDate;
-            booking.EndDate = EndDate;
             booking.Status = Status;
             booking.PaymentStatus = PaymentStatus;
-            booking.TotalPrice = TotalPrice;
             booking.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -181,60 +133,50 @@ namespace OmniRentBackend.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateProduct(
             [FromForm] string Name,
-            [FromForm] string Description,
-            [FromForm] double PricePerDay,
-            [FromForm] double DepositAmount,
+            [FromForm] string? Description,
+            [FromForm] double? PricePerDay,
+            [FromForm] double? DepositAmount,
             [FromForm] string CategoryId,
-            [FromForm] string OwnerId,
-            [FromForm] string Status,
-            [FromForm] List<IFormFile>? Images)
+            [FromForm] string? OwnerId,
+            [FromForm] string? Status,
+            [FromForm] List<string>? ImageUrls)
         {
-            if (string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(Description))
+            if (string.IsNullOrWhiteSpace(Name))
             {
-                ModelState.AddModelError("", "Tên và mô tả sản phẩm là bắt buộc.");
+                ModelState.AddModelError("", "Tên sản phẩm là bắt buộc.");
                 ViewBag.Categories = await _context.Categories.Where(c => c.ParentId == null).ToListAsync();
                 ViewBag.Owners = await _context.Users.Where(u => u.Role == "OWNER").ToListAsync();
                 return View();
             }
 
             var category = await _context.Categories.FindAsync(CategoryId);
-            var owner = await _context.Users.FindAsync(OwnerId);
-
-            if (category == null || owner == null)
+            if (category == null)
             {
-                ModelState.AddModelError("", "Danh mục hoặc chủ sở hữu không tồn tại.");
+                ModelState.AddModelError("", "Danh mục không tồn tại.");
                 ViewBag.Categories = await _context.Categories.Where(c => c.ParentId == null).ToListAsync();
                 ViewBag.Owners = await _context.Users.Where(u => u.Role == "OWNER").ToListAsync();
                 return View();
             }
 
-            var imagesJson = "[]";
-            if (Images != null && Images.Count > 0)
-            {
-                var uploadedImages = new List<string>();
-                foreach (var image in Images)
-                {
-                    if (image.Length > 0 && IsValidImageFile(image))
-                    {
-                        var imageUrl = await SaveProductImageAsync(image);
-                        if (!string.IsNullOrEmpty(imageUrl))
-                        {
-                            uploadedImages.Add(imageUrl);
-                        }
-                    }
-                }
-                imagesJson = JsonSerializer.Serialize(uploadedImages);
-            }
+            // Build images JSON from URL list
+            var validUrls = (ImageUrls ?? new List<string>())
+                .Where(u => !string.IsNullOrWhiteSpace(u))
+                .ToList();
+            var imagesJson = JsonSerializer.Serialize(validUrls);
+
+            var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+                             ?? User.FindFirst("sub")?.Value 
+                             ?? string.Empty;
 
             var product = new Product
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = Name,
-                Description = Description,
-                PricePerDay = PricePerDay,
-                DepositAmount = DepositAmount,
+                Description = Description ?? string.Empty,
+                PricePerDay = PricePerDay ?? 0,
+                DepositAmount = DepositAmount ?? 0,
                 CategoryId = CategoryId,
-                OwnerId = OwnerId,
+                OwnerId = string.IsNullOrWhiteSpace(OwnerId) ? currentUserId : OwnerId,
                 ImagesJson = imagesJson,
                 Status = Status ?? "AVAILABLE",
                 CreatedAt = DateTime.UtcNow,
@@ -270,56 +212,51 @@ namespace OmniRentBackend.Controllers
         public async Task<IActionResult> EditProduct(
             string id,
             [FromForm] string Name,
-            [FromForm] string Description,
-            [FromForm] double PricePerDay,
-            [FromForm] double DepositAmount,
+            [FromForm] string? Description,
+            [FromForm] double? PricePerDay,
+            [FromForm] double? DepositAmount,
             [FromForm] string CategoryId,
-            [FromForm] string OwnerId,
-            [FromForm] string Status,
-            [FromForm] List<IFormFile>? NewImages,
-            [FromForm] string? RemovedImages)
+            [FromForm] string? OwnerId,
+            [FromForm] string? Status,
+            [FromForm] List<string>? ImageUrls)
         {
             var product = await _context.Products.FindAsync(id);
             if (product == null) return NotFound();
 
+            if (string.IsNullOrWhiteSpace(Name))
+            {
+                ModelState.AddModelError("", "Tên sản phẩm là bắt buộc.");
+                ViewBag.Categories = await _context.Categories.Where(c => c.ParentId == null).ToListAsync();
+                ViewBag.Owners = await _context.Users.Where(u => u.Role == "OWNER").ToListAsync();
+                return View(product);
+            }
+
+            var category = await _context.Categories.FindAsync(CategoryId);
+            if (category == null)
+            {
+                ModelState.AddModelError("", "Danh mục không tồn tại.");
+                ViewBag.Categories = await _context.Categories.Where(c => c.ParentId == null).ToListAsync();
+                ViewBag.Owners = await _context.Users.Where(u => u.Role == "OWNER").ToListAsync();
+                return View(product);
+            }
+
+            var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+                             ?? User.FindFirst("sub")?.Value 
+                             ?? string.Empty;
+
+            var validUrls = (ImageUrls ?? new List<string>())
+                .Where(u => !string.IsNullOrWhiteSpace(u))
+                .ToList();
+
             product.Name = Name;
-            product.Description = Description;
-            product.PricePerDay = PricePerDay;
-            product.DepositAmount = DepositAmount;
+            product.Description = Description ?? string.Empty;
+            product.PricePerDay = PricePerDay ?? 0;
+            product.DepositAmount = DepositAmount ?? 0;
             product.CategoryId = CategoryId;
-            product.OwnerId = OwnerId;
-            product.Status = Status;
+            product.OwnerId = string.IsNullOrWhiteSpace(OwnerId) ? currentUserId : OwnerId;
+            product.Status = Status ?? "AVAILABLE";
+            product.ImagesJson = JsonSerializer.Serialize(validUrls);
             product.UpdatedAt = DateTime.UtcNow;
-
-            // Handle image deletion
-            var currentImages = JsonSerializer.Deserialize<List<string>>(product.ImagesJson) ?? new List<string>();
-            if (!string.IsNullOrEmpty(RemovedImages))
-            {
-                var removedList = JsonSerializer.Deserialize<List<string>>(RemovedImages) ?? new List<string>();
-                foreach (var imageUrl in removedList)
-                {
-                    currentImages.Remove(imageUrl);
-                    await DeleteProductImageAsync(imageUrl);
-                }
-            }
-
-            // Handle new images
-            if (NewImages != null && NewImages.Count > 0)
-            {
-                foreach (var image in NewImages)
-                {
-                    if (image.Length > 0 && IsValidImageFile(image))
-                    {
-                        var imageUrl = await SaveProductImageAsync(image);
-                        if (!string.IsNullOrEmpty(imageUrl))
-                        {
-                            currentImages.Add(imageUrl);
-                        }
-                    }
-                }
-            }
-
-            product.ImagesJson = JsonSerializer.Serialize(currentImages);
 
             _context.Products.Update(product);
             await _context.SaveChangesAsync();

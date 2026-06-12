@@ -222,6 +222,8 @@ namespace OmniRentBackend.Models
 
         public string PaymentStatus { get; set; } = "UNPAID"; // UNPAID, PAID, REFUNDED
 
+        public string? RentalAddress { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
