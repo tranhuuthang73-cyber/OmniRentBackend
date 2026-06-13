@@ -10,165 +10,106 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Thanh toán đặt cọc — OmniRent</title>
 
-    <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-
-    <!-- Bootstrap & Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
     <style>
         :root {
-            --primary: #6C63FF;
-            --primary-hover: #5a52d5;
-            --secondary: #0f0c29;
-            --dark-bg: #1a1a3e;
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --text-main: #ffffff;
-            --text-muted: #a89fd8;
-            --border-color: rgba(255, 255, 255, 0.1);
-            --glass-bg: rgba(26, 26, 62, 0.85);
+            --primary:       #f59e0b;
+            --primary-hover: #d97706;
+            --primary-light: #fef3c7;
+            --navy:          #0f172a;
+            --navy-2:        #1e293b;
+            --text-main:     #000000;
+            --text-sub:      #333333;
+            --text-muted:    #666666;
+            --border:        #e2e8f0;
+            --body-bg:       #f8fafc;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, var(--secondary) 0%, var(--dark-bg) 100%);
+            background-color: var(--body-bg);
             color: var(--text-main);
             min-height: 100vh;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            margin: 0; padding: 0;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        .payment-container {
-            width: 100%;
-            max-width: 900px;
-            padding: 2rem 1rem;
-        }
+        .payment-container { width: 100%; max-width: 900px; padding: 2rem 1rem; position: relative; z-index: 1; }
 
         .payment-card {
-            background: var(--glass-bg);
-            border: 1px solid var(--border-color);
+            background: #ffffff;
+            border: 1px solid var(--border);
             border-radius: 28px;
             padding: 3rem;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
-            position: relative;
-            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(15,23,42,0.06);
+            position: relative; overflow: hidden;
         }
-
         .payment-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(108, 99, 255, 0.08), transparent 50%);
-            pointer-events: none;
-            z-index: 0;
+            content: ''; position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(245,158,11,0.06), transparent 50%);
+            pointer-events: none; z-index: 0;
         }
 
         .billing-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.8rem;
-            color: var(--text-muted);
-            font-size: 0.95rem;
+            display: flex; justify-content: space-between;
+            margin-bottom: 0.8rem; font-size: 0.95rem;
+            color: var(--text-sub);
         }
-
-        .billing-item.highlight {
-            color: white;
-            font-weight: 600;
-        }
+        .billing-item.highlight { color: var(--navy); font-weight: 700; }
 
         .total-box {
-            background: rgba(108, 99, 255, 0.1);
-            border: 1px solid rgba(108, 99, 255, 0.3);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-top: 1.5rem;
+            background: var(--primary-light);
+            border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 16px; padding: 1.5rem; margin-top: 1.5rem;
         }
 
         .qr-placeholder {
-            width: 200px;
-            height: 200px;
-            background: white;
-            border-radius: 16px;
-            padding: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 200px; height: 200px;
+            background: white; border-radius: 16px;
+            padding: 10px; display: flex; align-items: center; justify-content: center;
+            border: 1.5px solid var(--border);
+            box-shadow: 0 10px 24px rgba(15,23,42,0.05);
             margin: 0 auto;
         }
-
-        .qr-placeholder img {
-            max-width: 100%;
-            height: auto;
-        }
+        .qr-placeholder img { max-width: 100%; height: auto; }
 
         .btn-pay-custom {
-            background: #43e97b;
-            color: #0f0c29;
-            border: none;
-            border-radius: 50px;
-            padding: 1rem 2rem;
-            font-weight: 700;
-            font-size: 1.1rem;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
-            width: 100%;
+            background: #22c55e;
+            color: #fff; border: none; border-radius: 50px;
+            padding: 1rem 2rem; font-weight: 700; font-size: 1.1rem;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(34,197,94,0.3);
+            width: 100%; position: relative; z-index: 2;
         }
-
         .btn-pay-custom:hover {
-            background: #38d36c;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(67, 233, 123, 0.5);
+            background: #16a34a; transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34,197,94,0.4);
         }
 
         /* Success Animation */
         .success-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(15, 12, 41, 0.98);
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.5s ease;
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(5px);
+            z-index: 10; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: all 0.4s ease;
         }
-
-        .success-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
+        .success-overlay.show { opacity: 1; visibility: visible; }
         .checkmark-circle {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: rgba(67, 233, 123, 0.1);
-            border: 3px solid #43e97b;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3.5rem;
-            color: #43e97b;
+            width: 100px; height: 100px; border-radius: 50%;
+            background: #dcfce7; border: 3px solid #22c55e;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3.5rem; color: #22c55e;
             margin-bottom: 2rem;
             animation: popCheckmark 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
         }
-
         @@keyframes popCheckmark {
             0% { transform: scale(0); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
@@ -177,35 +118,31 @@
 </head>
 <body>
 
-    <div class="payment-container z-1">
+    <div class="payment-container">
         <div class="payment-card">
             <!-- Success state -->
             <div id="successOverlay" class="success-overlay">
-                <div class="checkmark-circle">
-                    <i class="bi bi-check-lg"></i>
-                </div>
-                <h2 class="fw-bold mb-2">Thanh toán thành công!</h2>
-                <p class="text-muted text-center max-width-400">Đơn thuê của bạn đã được thanh toán cọc và chuyển sang trạng thái chờ nhận tài sản.</p>
-                <div class="spinner-border text-primary mt-3" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <small class="text-muted mt-2">Đang chuyển hướng về danh sách đơn hàng...</small>
+                <div class="checkmark-circle"><i class="bi bi-check-lg"></i></div>
+                <h2 class="fw-bold mb-2" style="color: #000000;">Thanh toán thành công!</h2>
+                <p class="text-center" style="color: #333333; max-width: 400px;">Đơn thuê của bạn đã được thanh toán cọc và chuyển sang trạng thái chờ nhận tài sản.</p>
+                <div class="spinner-border mt-3" style="color: var(--primary);" role="status"><span class="visually-hidden">Loading...</span></div>
+                <small class="mt-2" style="color: #666666;">Đang chuyển hướng về danh sách đơn hàng...</small>
             </div>
 
-            <div class="d-flex align-items-center justify-content-between border-bottom pb-4 mb-4" style="border-color: var(--border-color) !important;">
+            <div class="d-flex align-items-center justify-content-between border-bottom pb-4 mb-4" style="border-color: var(--border) !important; position: relative; z-index: 2;">
                 <div>
-                    <h2 class="fw-bold m-0"><i class="bi bi-shield-check text-primary"></i> Thanh toán đặt cọc</h2>
-                    <small class="text-muted">Mã giao dịch: @Model.Id</small>
+                    <h2 class="fw-bold m-0" style="color: #000000;"><i class="bi bi-shield-check text-primary"></i> Thanh toán đặt cọc</h2>
+                    <small style="color: #666666;">Mã giao dịch: @Model.Id</small>
                 </div>
-                <a href="/Home/ProductDetails/@Model.ProductId" class="btn btn-sm btn-outline-secondary text-white"><i class="bi bi-x-lg"></i> Hủy bỏ</a>
+                <a href="/Home/ProductDetails/@Model.ProductId" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-lg"></i> Hủy bỏ</a>
             </div>
 
-            <div id="paymentError" class="alert alert-danger d-none" role="alert"></div>
+            <div id="paymentError" class="alert alert-danger d-none" role="alert" style="position: relative; z-index: 2;"></div>
 
-            <div class="row g-5">
+            <div class="row g-5" style="position: relative; z-index: 2;">
                 <!-- Left: Billing summary -->
-                <div class="col-md-6 border-end" style="border-color: var(--border-color) !important;">
-                    <h4 class="mb-4 fw-bold text-white"><i class="bi bi-receipt-cutoff text-primary"></i> Tóm tắt thuê đồ</h4>
+                <div class="col-md-6 border-end" style="border-color: var(--border) !important;">
+                    <h4 class="mb-4 fw-bold" style="color: #000000;"><i class="bi bi-receipt-cutoff text-primary"></i> Tóm tắt thuê đồ</h4>
 
                     <div class="billing-item highlight">
                         <span>Tài sản thuê</span>
@@ -224,19 +161,19 @@
                         <span>@Model.EndDate.ToString("dd/MM/yyyy")</span>
                     </div>
 
-                    <div class="p-3 my-4 rounded-4" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color);">
-                        <h6 class="text-white fw-bold mb-2"><i class="bi bi-geo-alt-fill text-danger"></i> Địa chỉ nhận tài sản:</h6>
-                        <p class="text-muted m-0" style="font-size: 0.95rem; line-height: 1.6;">@Model.RentalAddress</p>
+                    <div class="p-3 my-4 rounded-4" style="background: var(--body-bg); border: 1px solid var(--border);">
+                        <h6 class="fw-bold mb-2" style="color: #000000;"><i class="bi bi-geo-alt-fill text-danger"></i> Địa chỉ nhận tài sản:</h6>
+                        <p class="m-0" style="color: #333333; font-size: 0.95rem; line-height: 1.6;">@Model.RentalAddress</p>
                     </div>
 
                     <div class="total-box">
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-white font-weight-500">Tổng tiền thuê</span>
-                            <span class="text-white fw-bold">@Model.TotalPrice.ToString("N0")đ</span>
+                            <span style="color: #92400e; font-weight: 500;">Tổng tiền thuê</span>
+                            <span class="fw-bold" style="color: #78350f;">@Model.TotalPrice.ToString("N0")đ</span>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center pt-2 border-top" style="border-color: rgba(255, 255, 255, 0.1) !important;">
-                            <span class="text-white fw-bold">Số tiền cọc cần trả (100%)</span>
-                            <h3 class="text-warning fw-bold m-0">@((Model.Product?.DepositAmount ?? 0).ToString("N0"))đ</h3>
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top" style="border-color: rgba(245,158,11,0.2) !important;">
+                            <span class="fw-bold" style="color: #92400e;">Số tiền cọc cần trả (100%)</span>
+                            <h3 class="fw-bold m-0" style="color: #dc2626;">@((Model.Product?.DepositAmount ?? 0).ToString("N0"))đ</h3>
                         </div>
                     </div>
                 </div>
@@ -244,18 +181,17 @@
                 <!-- Right: Simulated payment interface -->
                 <div class="col-md-6 d-flex flex-column justify-content-between text-center">
                     <div>
-                        <h4 class="mb-4 fw-bold text-white"><i class="bi bi-qr-code text-primary"></i> Chuyển khoản QR ngân hàng</h4>
-                        <p class="text-muted mb-4" style="font-size: 0.9rem;">Quét mã QR sau để thanh toán tiền đặt cọc tự động qua ngân hàng.</p>
+                        <h4 class="mb-4 fw-bold" style="color: #000000;"><i class="bi bi-qr-code text-primary"></i> Chuyển khoản QR ngân hàng</h4>
+                        <p class="mb-4" style="color: #333333; font-size: 0.9rem;">Quét mã QR sau để thanh toán tiền đặt cọc tự động qua ngân hàng.</p>
                         
                         <div class="qr-placeholder mb-4">
-                            <!-- We can use a generated QR API mockup or direct SVG -->
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://omnirent.vn/pay/@Model.Id&color=0f0c29" alt="Mã thanh toán QR" />
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://omnirent.vn/pay/@Model.Id&color=0f172a" alt="Mã thanh toán QR" />
                         </div>
 
-                        <div class="text-muted" style="font-size: 0.85rem;">
-                            <div>Chủ tài khoản: <strong>OMNIRENT VIETNAM</strong></div>
-                            <div>Số tài khoản: <strong>19035678888999</strong> (Techcombank)</div>
-                            <div>Nội dung: <strong>OMNIRENT DEPOSIT @Model.Id.Substring(0, 8)</strong></div>
+                        <div style="color: #333333; font-size: 0.85rem;">
+                            <div>Chủ tài khoản: <strong style="color: #000000;">OMNIRENT VIETNAM</strong></div>
+                            <div>Số tài khoản: <strong style="color: #000000;">19035678888999</strong> (Techcombank)</div>
+                            <div>Nội dung: <strong style="color: #000000;">OMNIRENT DEPOSIT @Model.Id.Substring(0, 8)</strong></div>
                         </div>
                     </div>
 
@@ -282,35 +218,26 @@
             btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xác thực giao dịch...';
 
             try {
-                // Call pay-deposit API (PUT /bookings/{id}/pay-deposit)
-                const response = await fetch(`/bookings/${bookingId}/pay-deposit`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' }
+                const res = await fetch(`/bookings/${bookingId}/pay-deposit`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' }
                 });
 
-                if (response.ok) {
-                    // Show success checkmark transition
+                if (res.ok) {
                     successOverlay.classList.add('show');
-                    setTimeout(() => {
-                        window.location.href = '/Home/MyBookings';
-                    }, 3000);
+                    setTimeout(() => { window.location.href = '/Home/MyBookings'; }, 3000);
                 } else {
-                    const err = await response.json();
+                    const err = await res.json();
                     showError(err.message || 'Xác thực thanh toán thất bại.');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Xác nhận Đã thanh toán cọc';
+                    btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Xác nhận Đã thanh toán cọc';
                 }
             } catch (e) {
                 showError('Không thể kết nối máy chủ để kiểm tra giao dịch.');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Xác nhận Đã thanh toán cọc';
+                btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Xác nhận Đã thanh toán cọc';
             }
         }
-
         function showError(msg) {
-            const errorBox = document.getElementById('paymentError');
-            errorBox.innerText = msg;
-            errorBox.classList.remove('d-none');
+            const box = document.getElementById('paymentError');
+            box.innerText = msg; box.classList.remove('d-none');
         }
     </script>
 </body>

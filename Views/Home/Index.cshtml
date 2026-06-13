@@ -21,517 +21,749 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
     <style>
+        /* ============================================================
+           OMNIRENT — Light Theme  |  Amber Orange + Dark Navy
+           ============================================================ */
         :root {
-            --primary: #6C63FF;
-            --primary-hover: #5a52d5;
-            --secondary: #0f0c29;
-            --dark-bg: #1a1a3e;
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --text-main: #ffffff;
-            --text-muted: #a89fd8;
-            --border-color: rgba(255, 255, 255, 0.1);
-            --glass-bg: rgba(26, 26, 62, 0.85);
+            --primary:        #f59e0b;   /* Amber Orange — CTA chính */
+            --primary-hover:  #d97706;   /* Amber hover */
+            --primary-light:  #fef3c7;   /* Amber tint nhạt */
+            --navy:           #0f172a;   /* Dark Navy — navbar, text đậm */
+            --navy-2:         #1e293b;   /* Navy nhạt hơn */
+            --accent:         #0ea5e9;   /* Sky blue accent */
+            --body-bg:        #ffffff;
+            --section-alt:    #f8fafc;   /* Section nền nhạt xen kẽ */
+            --text-primary:   #0f172a;
+            --text-secondary: #475569;
+            --text-muted:     #94a3b8;
+            --border:         #e2e8f0;
+            --card-shadow:    0 1px 3px rgba(15,23,42,0.07), 0 8px 24px rgba(15,23,42,0.05);
         }
+
+        * { box-sizing: border-box; }
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, var(--secondary) 0%, var(--dark-bg) 100%);
-            color: var(--text-main);
+            background-color: var(--body-bg);
+            color: var(--text-primary);
             min-height: 100vh;
             margin: 0;
             padding: 0;
             overflow-x: hidden;
         }
 
-        /* Navbar */
+        /* ===================== NAVBAR ===================== */
         .navbar-custom {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border-color);
-            padding: 1rem 0;
+            background: var(--navy);
+            padding: 0.875rem 0;
             position: fixed;
             top: 0;
             width: 100%;
             z-index: 1000;
+            box-shadow: 0 1px 0 rgba(255,255,255,0.06);
         }
 
         .navbar-brand {
             font-weight: 800;
-            font-size: 1.5rem;
-            color: var(--text-main) !important;
+            font-size: 1.4rem;
+            color: #ffffff !important;
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            text-decoration: none;
         }
 
         .brand-icon {
             color: var(--primary);
-            font-size: 1.8rem;
+            font-size: 1.6rem;
         }
 
-        .nav-link {
-            color: var(--text-main) !important;
+        .nav-link-custom {
+            color: #cbd5e1 !important;
             font-weight: 500;
-            transition: color 0.3s;
+            font-size: 0.9rem;
+            padding: 0.5rem 0.85rem !important;
+            border-radius: 6px;
+            transition: all 0.2s;
+            text-decoration: none;
         }
 
-        .nav-link:hover {
-            color: var(--primary) !important;
+        .nav-link-custom:hover {
+            color: #ffffff !important;
+            background: rgba(255,255,255,0.08);
         }
 
-        .btn-outline-primary-custom {
-            color: var(--text-main);
-            border: 1px solid var(--primary);
-            border-radius: 50px;
-            padding: 0.5rem 1.5rem;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-
-        .btn-outline-primary-custom:hover {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 15px rgba(108, 99, 255, 0.4);
-        }
-
-        .btn-primary-custom {
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            padding: 0.5rem 1.5rem;
+        /* Navbar Buttons */
+        .btn-nav-outline {
+            color: #fff;
+            border: 1.5px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 0.45rem 1.1rem;
+            font-size: 0.85rem;
             font-weight: 600;
-            transition: all 0.3s;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .btn-nav-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(245,158,11,0.08);
         }
 
-        .btn-primary-custom:hover {
+        .btn-nav-primary {
+            background: var(--primary);
+            color: var(--navy) !important;
+            border: none;
+            border-radius: 8px;
+            padding: 0.45rem 1.2rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .btn-nav-primary:hover {
             background: var(--primary-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(108, 99, 255, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245,158,11,0.4);
         }
 
-        /* Hero Section */
-        .hero-section {
-            padding: 180px 0 100px;
+        .cart-icon {
+            color: #cbd5e1;
+            font-size: 1.25rem;
+            text-decoration: none;
             position: relative;
+            transition: color 0.2s;
+        }
+        .cart-icon:hover { color: var(--primary); }
+
+        /* ===================== HERO ===================== */
+        .hero-section {
+            padding: 160px 0 90px;
+            background: var(--navy);
+            position: relative;
+            overflow: hidden;
             text-align: center;
         }
 
-        .hero-bg-orb {
+        /* Decorative circles */
+        .hero-section::before {
+            content: '';
             position: absolute;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, var(--primary), transparent 70%);
-            top: 10%;
-            left: 50%;
+            width: 600px; height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245,158,11,0.15), transparent 70%);
+            top: -100px; left: 50%;
             transform: translateX(-50%);
-            filter: blur(100px);
-            opacity: 0.2;
-            z-index: -1;
-            animation: pulseOrb 6s infinite alternate ease-in-out;
+            pointer-events: none;
+        }
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            border: 1px solid rgba(245,158,11,0.12);
+            bottom: -80px; right: 10%;
+            pointer-events: none;
         }
 
-        @@keyframes pulseOrb {
-            0% { transform: translateX(-50%) scale(1); opacity: 0.15; }
-            100% { transform: translateX(-50%) scale(1.1); opacity: 0.25; }
+        .hero-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(245,158,11,0.15);
+            border: 1px solid rgba(245,158,11,0.3);
+            color: var(--primary);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 0.35rem 0.9rem;
+            border-radius: 50px;
+            margin-bottom: 1.25rem;
+            text-transform: uppercase;
         }
 
         .hero-title {
-            font-size: 4rem;
+            font-size: 3.8rem;
             font-weight: 800;
-            margin-bottom: 1.5rem;
-            background: linear-gradient(90deg, #fff 0%, #a89fd8 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            line-height: 1.2;
+            color: #ffffff;
+            line-height: 1.15;
+            margin-bottom: 1.25rem;
+            letter-spacing: -0.5px;
+        }
+
+        .hero-title .highlight {
+            color: var(--primary);
         }
 
         .hero-subtitle {
-            font-size: 1.25rem;
-            color: var(--text-muted);
-            max-width: 600px;
-            margin: 0 auto 3rem;
+            font-size: 1.1rem;
+            color: #94a3b8;
+            max-width: 580px;
+            margin: 0 auto 2.5rem;
+            line-height: 1.7;
         }
 
-        /* Search Bar */
+        /* Search box */
         .search-box {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 50px;
-            padding: 0.5rem;
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 6px 6px 6px 1.25rem;
             display: flex;
-            max-width: 700px;
+            align-items: center;
+            max-width: 660px;
             margin: 0 auto;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+        }
+
+        .search-icon {
+            color: #94a3b8;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            margin-right: 0.5rem;
         }
 
         .search-input {
             background: transparent;
             border: none;
-            color: white;
-            padding: 1rem 1.5rem;
+            color: var(--text-primary);
+            padding: 0.75rem 0.5rem;
             width: 100%;
             outline: none;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
         }
-
-        .search-input::placeholder {
-            color: var(--text-muted);
-        }
+        .search-input::placeholder { color: #94a3b8; }
 
         .btn-search {
             background: var(--primary);
-            color: white;
+            color: var(--navy);
             border: none;
-            border-radius: 40px;
-            padding: 0 2rem;
-            font-weight: 600;
-            transition: all 0.3s;
+            border-radius: 10px;
+            padding: 0.75rem 1.75rem;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
-
         .btn-search:hover {
             background: var(--primary-hover);
-            box-shadow: 0 4px 15px rgba(108, 99, 255, 0.4);
+            box-shadow: 0 4px 15px rgba(245,158,11,0.4);
         }
 
-        /* Section Titles */
-        .section-title {
-            font-size: 2.5rem;
+        /* Hero stats */
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 3.5rem;
+        }
+        .hero-stat-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+        .hero-stat-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===================== SECTIONS ===================== */
+        .section-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--primary-light);
+            color: #92400e;
+            font-size: 0.72rem;
             font-weight: 700;
+            letter-spacing: 0.6px;
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .section-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--text-primary);
             margin-bottom: 0.5rem;
+            letter-spacing: -0.3px;
         }
 
         .section-subtitle {
-            color: var(--text-muted);
-            margin-bottom: 3rem;
+            color: var(--text-secondary);
+            font-size: 1rem;
         }
 
-        /* Categories */
+        /* ===================== CATEGORIES ===================== */
         .category-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 2rem 1.5rem;
+            background: #fff;
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
+            padding: 1.75rem 1.25rem;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
             cursor: pointer;
             height: 100%;
-            backdrop-filter: blur(5px);
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .category-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--primary);
+            box-shadow: 0 12px 30px rgba(245,158,11,0.15);
+            color: inherit;
+            text-decoration: none;
         }
 
         .category-card.active-category {
             border-color: var(--primary);
-            background: rgba(108, 99, 255, 0.2);
-            box-shadow: 0 10px 30px rgba(108, 99, 255, 0.3);
-            transform: translateY(-5px);
+            background: var(--primary-light);
+            box-shadow: 0 8px 24px rgba(245,158,11,0.2);
+            transform: translateY(-4px);
         }
 
-        .category-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary);
-            background: rgba(108, 99, 255, 0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        .category-icon-wrap {
+            width: 60px;
+            height: 60px;
+            border-radius: 14px;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            transition: all 0.25s;
         }
-
-        .category-icon {
-            font-size: 2.5rem;
+        .category-card:hover .category-icon-wrap,
+        .category-card.active-category .category-icon-wrap {
+            background: var(--primary);
+        }
+        .category-icon-wrap i {
+            font-size: 1.5rem;
             color: var(--primary);
-            margin-bottom: 1rem;
+            transition: color 0.25s;
+        }
+        .category-card:hover .category-icon-wrap i,
+        .category-card.active-category .category-icon-wrap i {
+            color: var(--navy);
         }
 
         .category-name {
-            font-weight: 600;
-            font-size: 1.2rem;
+            font-weight: 700;
+            font-size: 0.95rem;
             margin: 0;
+            color: var(--text-primary);
         }
 
-        /* Products */
+        /* ===================== PRODUCT CARDS ===================== */
         .product-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
+            background: #fff;
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
             overflow: hidden;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
             height: 100%;
             display: flex;
             flex-direction: column;
+            text-decoration: none;
+            color: inherit;
         }
 
         .product-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-            border-color: rgba(255,255,255,0.2);
+            transform: translateY(-6px);
+            box-shadow: 0 16px 40px rgba(15,23,42,0.12);
+            border-color: #cbd5e1;
+            color: inherit;
+            text-decoration: none;
         }
 
         .product-img-wrapper {
             position: relative;
-            padding-top: 65%; /* Aspect ratio */
+            padding-top: 62%;
             overflow: hidden;
-            background: #2a2a4a;
+            background: #f1f5f9;
         }
 
         .product-img {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             object-fit: cover;
-            transition: transform 0.5s ease;
+            transition: transform 0.4s ease;
         }
 
-        .product-card:hover .product-img {
-            transform: scale(1.05);
-        }
+        .product-card:hover .product-img { transform: scale(1.05); }
 
         .product-badge {
             position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(5px);
-            padding: 0.4rem 0.8rem;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: #dcfce7;
+            color: #15803d;
+            padding: 0.25rem 0.7rem;
             border-radius: 50px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #43e97b;
-            border: 1px solid rgba(67, 233, 123, 0.3);
+            font-size: 0.72rem;
+            font-weight: 700;
+            border: 1px solid #bbf7d0;
         }
 
         .product-content {
-            padding: 1.5rem;
+            padding: 1.25rem;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
         }
 
         .product-category {
-            font-size: 0.85rem;
-            color: var(--primary);
-            font-weight: 600;
+            font-size: 0.72rem;
+            color: #92400e;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 0.5rem;
+            letter-spacing: 0.6px;
+            background: var(--primary-light);
+            display: inline-block;
+            padding: 0.2rem 0.55rem;
+            border-radius: 4px;
+            margin-bottom: 0.65rem;
         }
 
         .product-title {
-            font-size: 1.25rem;
+            font-size: 1rem;
             font-weight: 700;
-            margin-bottom: 1rem;
-            color: white;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            line-height: 1.45;
         }
 
         .product-footer {
             margin-top: auto;
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
-            border-top: 1px solid var(--border-color);
-            padding-top: 1.2rem;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            padding-top: 0.9rem;
         }
 
         .product-price {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 800;
-            color: white;
+            color: var(--text-primary);
         }
 
         .product-price span {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             font-weight: 400;
             color: var(--text-muted);
         }
 
-        .product-owner {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-
         .owner-avatar {
-            width: 24px;
-            height: 24px;
+            width: 28px; height: 28px;
             border-radius: 50%;
-            background: var(--primary);
+            background: var(--navy);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 0.7rem;
+            font-weight: 700;
             color: white;
         }
 
-        /* Footer */
+        /* ===================== SECTION: WHY US ===================== */
+        .feature-card {
+            padding: 1.75rem;
+            border-radius: 16px;
+            background: #fff;
+            border: 1.5px solid var(--border);
+            height: 100%;
+            transition: all 0.25s;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--card-shadow);
+            border-color: var(--primary);
+        }
+        .feature-icon {
+            width: 50px; height: 50px;
+            border-radius: 12px;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        .feature-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+        .feature-desc  { font-size: 0.85rem; color: var(--text-secondary); margin: 0; }
+
+        /* ===================== CTA BANNER ===================== */
+        .cta-banner {
+            background: var(--navy);
+            border-radius: 20px;
+            padding: 3.5rem 2.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .cta-banner::before {
+            content: '';
+            position: absolute;
+            width: 400px; height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245,158,11,0.12), transparent 70%);
+            top: -100px; right: -100px;
+            pointer-events: none;
+        }
+        .cta-banner h2 { font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 0.75rem; }
+        .cta-banner p  { color: #94a3b8; font-size: 1rem; margin-bottom: 2rem; }
+
+        .btn-cta-primary {
+            background: var(--primary);
+            color: var(--navy);
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            padding: 0.85rem 2rem;
+            font-size: 0.95rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s;
+        }
+        .btn-cta-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245,158,11,0.4);
+            color: var(--navy);
+        }
+        .btn-cta-outline {
+            border: 1.5px solid rgba(255,255,255,0.25);
+            color: #fff;
+            font-weight: 600;
+            border-radius: 10px;
+            padding: 0.85rem 2rem;
+            font-size: 0.95rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s;
+        }
+        .btn-cta-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(245,158,11,0.08);
+        }
+
+        /* ===================== FOOTER ===================== */
         footer {
-            background: rgba(0,0,0,0.3);
-            border-top: 1px solid var(--border-color);
+            background: var(--navy);
+            border-top: 1px solid rgba(255,255,255,0.06);
             padding: 4rem 0 2rem;
             margin-top: 5rem;
         }
 
         .footer-brand {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: 800;
-            margin-bottom: 1rem;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.75rem;
         }
 
-        .footer-text {
-            color: var(--text-muted);
-            max-width: 300px;
-        }
+        .footer-text { color: #64748b; max-width: 280px; font-size: 0.875rem; line-height: 1.7; }
+        .footer-title { font-weight: 700; color: #e2e8f0; font-size: 0.85rem; margin-bottom: 1.25rem; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        .footer-title {
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            color: white;
-        }
+        .footer-links { list-style: none; padding: 0; margin: 0; }
+        .footer-links li { margin-bottom: 0.65rem; }
+        .footer-links a { color: #64748b; text-decoration: none; font-size: 0.875rem; transition: color 0.2s; }
+        .footer-links a:hover { color: var(--primary); }
 
-        .footer-links {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .footer-links li {
-            margin-bottom: 0.8rem;
-        }
-
-        .footer-links a {
-            color: var(--text-muted);
+        .social-icon {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.06);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 1rem;
             text-decoration: none;
-            transition: color 0.3s;
+            transition: all 0.2s;
         }
+        .social-icon:hover { background: var(--primary); color: var(--navy); }
 
-        .footer-links a:hover {
-            color: var(--primary);
-        }
-
+        /* ===================== RESPONSIVE ===================== */
         @@media (max-width: 768px) {
-            .hero-title { font-size: 2.5rem; }
-            .hero-section { padding: 140px 0 60px; }
-            .search-box { flex-direction: column; border-radius: 20px; padding: 1rem; gap: 1rem; }
-            .btn-search { padding: 1rem; border-radius: 10px; }
+            .hero-title { font-size: 2.4rem; }
+            .hero-section { padding: 130px 0 60px; }
+            .hero-stats { gap: 1.5rem; }
+            .search-box { flex-direction: column; border-radius: 14px; padding: 0.75rem; gap: 0.5rem; }
+            .btn-search { padding: 0.85rem; border-radius: 8px; width: 100%; }
+            .section-title { font-size: 1.75rem; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Navbar -->
+    <!-- ======================== NAVBAR ======================== -->
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container">
             <a class="navbar-brand" href="/">
                 <i class="bi bi-building-fill brand-icon"></i> OmniRent
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <i class="bi bi-list text-white fs-2"></i>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto">
+                <ul class="navbar-nav mx-auto gap-1">
                     <li class="nav-item">
-                        <a class="nav-link" href="/">Trang chủ</a>
+                        <a class="nav-link-custom" href="/">Trang chủ</a>
                     </li>
                     @if (User.Identity != null && User.Identity.IsAuthenticated)
                     {
                         <li class="nav-item">
-                            <a class="nav-link" href="/Home/MyBookings">Đơn hàng của tôi</a>
+                            <a class="nav-link-custom" href="/Home/MyBookings">Đơn hàng của tôi</a>
                         </li>
                     }
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Khám phá</a>
+                        <a class="nav-link-custom" href="#">Khám phá</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Về chúng tôi</a>
+                        <a class="nav-link-custom" href="#">Về chúng tôi</a>
                     </li>
                 </ul>
-                <div class="d-flex gap-3 mt-3 mt-lg-0 align-items-center">
-                    <a href="/Home/Cart" class="position-relative text-white me-3 d-flex align-items-center" style="font-size: 1.3rem; text-decoration: none;">
+                <div class="d-flex gap-2 mt-3 mt-lg-0 align-items-center">
+                    <!-- Cart -->
+                    <a href="/Home/Cart" class="cart-icon position-relative me-1">
                         <i class="bi bi-cart3"></i>
-                        <span id="cartBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem; display: none;">0</span>
+                        <span id="cartBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; display: none;">0</span>
                     </a>
 
                     @if (User.Identity != null && User.Identity.IsAuthenticated)
                     {
-                        <span class="text-white fw-bold me-2">Xin chào, @User.Identity.Name</span>
-                        
+                        <span style="color:#94a3b8; font-size:0.82rem;">Xin chào, <strong style="color:#e2e8f0;">@User.Identity.Name</strong></span>
                         @if (User.IsInRole("ADMIN"))
                         {
-                            <a href="/AdminDashboard/Bookings" class="btn btn-outline-primary-custom">Trang Quản trị</a>
+                            <a href="/AdminDashboard/Bookings" class="btn-nav-outline">
+                                <i class="bi bi-grid"></i> Quản trị
+                            </a>
                         }
-
                         <form action="/Account/Logout" method="post" class="d-inline m-0">
                             @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-primary-custom">Đăng xuất</button>
+                            <button type="submit" class="btn-nav-primary">Đăng xuất</button>
                         </form>
                     }
                     else
                     {
-                        <a href="/Account/Login" class="btn btn-outline-primary-custom">Đăng nhập</a>
-                        <a href="/Account/Register" class="btn btn-primary-custom">Đăng ký</a>
+                        <a href="/Account/Login" class="btn-nav-outline">Đăng nhập</a>
+                        <a href="/Account/Register" class="btn-nav-primary"><i class="bi bi-person-plus"></i> Đăng ký</a>
                     }
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Hero Section -->
+    <!-- ======================== HERO ======================== -->
     <section class="hero-section">
-        <div class="hero-bg-orb"></div>
-        <div class="container">
-            <h1 class="hero-title">Thuê mọi thứ bạn cần<br />Dễ dàng & Nhanh chóng</h1>
-            <p class="hero-subtitle">Khám phá hàng ngàn tài sản, thiết bị và dịch vụ chất lượng cao từ cộng đồng OmniRent. Tiết kiệm chi phí, tối đa hóa giá trị.</p>
-            
+        <div class="container position-relative">
+            <div class="hero-tag">
+                <i class="bi bi-stars"></i> Nền tảng cho thuê #1 Việt Nam
+            </div>
+            <h1 class="hero-title">
+                Thuê mọi thứ bạn cần<br />
+                <span class="highlight">Dễ dàng & Nhanh chóng</span>
+            </h1>
+            <p class="hero-subtitle">
+                Khám phá hàng ngàn tài sản, thiết bị và dịch vụ chất lượng cao từ cộng đồng OmniRent.
+                Tiết kiệm chi phí, tối đa hóa giá trị.
+            </p>
+
+            <!-- Search -->
             <div class="search-box">
-                <i class="bi bi-search ms-3 mt-3 text-muted"></i>
-                <input type="text" class="search-input" placeholder="Bạn muốn thuê gì hôm nay?" />
-                <button class="btn-search">Tìm kiếm</button>
+                <i class="bi bi-search search-icon"></i>
+                <input type="text" class="search-input" id="heroSearch" placeholder="Bạn muốn thuê gì hôm nay?" />
+                <button class="btn-search" onclick="handleSearch()">Tìm kiếm</button>
+            </div>
+
+            <!-- Stats -->
+            <div class="hero-stats">
+                <div class="text-center">
+                    <div class="hero-stat-value">2,400+</div>
+                    <div class="hero-stat-label">Sản phẩm</div>
+                </div>
+                <div class="text-center">
+                    <div class="hero-stat-value">1,800+</div>
+                    <div class="hero-stat-label">Người dùng</div>
+                </div>
+                <div class="text-center">
+                    <div class="hero-stat-value">98%</div>
+                    <div class="hero-stat-label">Hài lòng</div>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Categories Section -->
-    <section class="py-5">
+    <!-- ======================== CATEGORIES ======================== -->
+    <section class="py-5" style="background: var(--section-alt);">
         <div class="container">
             <div class="text-center mb-5">
+                <div class="section-tag"><i class="bi bi-grid-fill"></i> Danh mục</div>
                 <h2 class="section-title">Danh mục nổi bật</h2>
                 <p class="section-subtitle">Khám phá các loại tài sản phong phú trên OmniRent</p>
             </div>
-            
+
             <div class="row g-4 justify-content-center">
                 @if (Model.Categories != null && Model.Categories.Any())
                 {
                     foreach (var category in Model.Categories)
                     {
                         <div class="col-6 col-md-4 col-lg-3">
-                            <a href="/?categoryId=@category.Id" style="text-decoration: none; color: inherit;">
-                                <div class="category-card @(ViewBag.SelectedCategoryId == category.Id ? "active-category" : "")">
-                                    <i class="bi bi-grid-fill category-icon"></i>
-                                    <h3 class="category-name">@category.Name</h3>
+                            <a href="/?categoryId=@category.Id" class="category-card @(ViewBag.SelectedCategoryId == category.Id ? "active-category" : "")">
+                                <div class="category-icon-wrap">
+                                    <i class="bi bi-grid-fill"></i>
                                 </div>
+                                <h3 class="category-name">@category.Name</h3>
                             </a>
                         </div>
                     }
                 }
                 else
                 {
-                    <!-- Placeholder categories if DB is empty -->
-                    var mockCategories = new[] { 
-                        new { Icon = "bi-car-front-fill", Name = "Xe cộ" },
+                    var mockCategories = new[]
+                    {
+                        new { Icon = "bi-car-front-fill",   Name = "Xe cộ" },
                         new { Icon = "bi-house-heart-fill", Name = "Bất động sản" },
-                        new { Icon = "bi-camera-fill", Name = "Thiết bị điện tử" },
-                        new { Icon = "bi-tools", Name = "Dụng cụ cơ khí" }
+                        new { Icon = "bi-camera-fill",      Name = "Thiết bị điện tử" },
+                        new { Icon = "bi-tools",            Name = "Dụng cụ cơ khí" },
                     };
-                    
                     foreach (var cat in mockCategories)
                     {
                         <div class="col-6 col-md-4 col-lg-3">
                             <div class="category-card">
-                                <i class="bi @cat.Icon category-icon"></i>
+                                <div class="category-icon-wrap">
+                                    <i class="bi @cat.Icon"></i>
+                                </div>
                                 <h3 class="category-name">@cat.Name</h3>
                             </div>
                         </div>
@@ -541,16 +773,19 @@
         </div>
     </section>
 
-    <!-- Featured Products Section -->
-    <section class="py-5 mb-5">
+    <!-- ======================== PRODUCTS ======================== -->
+    <section class="py-5">
         <div class="container">
-            <div class="d-flex justify-content-between align-items-end mb-5">
+            <div class="d-flex justify-content-between align-items-end mb-5 flex-wrap gap-3">
                 <div>
+                    <div class="section-tag"><i class="bi bi-box-seam"></i> Sản phẩm</div>
                     @if (ViewBag.SelectedCategoryId != null)
                     {
                         var selectedCat = Model.Categories.FirstOrDefault(c => c.Id == ViewBag.SelectedCategoryId);
                         <h2 class="section-title">Sản phẩm: @selectedCat?.Name</h2>
-                        <a href="/" class="btn btn-sm btn-outline-secondary mt-2 text-white"><i class="bi bi-arrow-left"></i> Xem tất cả danh mục</a>
+                        <a href="/" style="font-size:0.82rem; color:var(--text-secondary); text-decoration:none;">
+                            <i class="bi bi-arrow-left"></i> Xem tất cả danh mục
+                        </a>
                     }
                     else
                     {
@@ -558,7 +793,9 @@
                         <p class="section-subtitle mb-0">Các tài sản vừa được đăng cho thuê</p>
                     }
                 </div>
-                <a href="#" class="text-link" style="color: var(--primary); text-decoration: none; font-weight: 500;">Xem tất cả <i class="bi bi-arrow-right"></i></a>
+                <a href="#" style="color:var(--primary); text-decoration:none; font-weight:600; font-size:0.9rem;">
+                    Xem tất cả <i class="bi bi-arrow-right"></i>
+                </a>
             </div>
 
             <div class="row g-4">
@@ -567,35 +804,33 @@
                     foreach (var product in Model.FeaturedProducts)
                     {
                         <div class="col-12 col-md-6 col-lg-3">
-                            <a href="/Home/ProductDetails/@product.Id" style="text-decoration: none; color: inherit; display: block; height: 100%;">
-                                <div class="product-card">
-                                    <div class="product-img-wrapper">
-                                        <div class="product-badge">Có sẵn</div>
-                                        @{
-                                            var firstImage = "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80"; // Default
-                                            try {
-                                                if (!string.IsNullOrEmpty(product.ImagesJson)) {
-                                                    var images = System.Text.Json.JsonSerializer.Deserialize<List<string>>(product.ImagesJson);
-                                                    if (images != null && images.Any()) {
-                                                        firstImage = images.First();
-                                                    }
-                                                }
-                                            } catch { }
+                            <a href="/Home/ProductDetails/@product.Id" class="product-card">
+                                <div class="product-img-wrapper">
+                                    <span class="product-badge">Có sẵn</span>
+                                    @{
+                                        var firstImage = "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80";
+                                        try
+                                        {
+                                            if (!string.IsNullOrEmpty(product.ImagesJson))
+                                            {
+                                                var imgs = System.Text.Json.JsonSerializer.Deserialize<List<string>>(product.ImagesJson);
+                                                if (imgs != null && imgs.Any()) { firstImage = imgs.First(); }
+                                            }
                                         }
-                                        <img src="@firstImage" alt="@product.Name" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80'" />
-                                    </div>
-                                    <div class="product-content">
-                                        <div class="product-category">@(product.Category?.Name ?? "Chung")</div>
-                                        <h3 class="product-title">@product.Name</h3>
-                                        <div class="product-footer">
-                                            <div class="product-price">
-                                                @product.PricePerDay.ToString("N0")đ <span>/ ngày</span>
-                                            </div>
-                                            <div class="product-owner" title="@(product.Owner?.FullName ?? "Người dùng")">
-                                                <div class="owner-avatar">
-                                                    @((product.Owner?.FullName ?? "U").Substring(0, 1).ToUpper())
-                                                </div>
-                                            </div>
+                                        catch { }
+                                    }
+                                    <img src="@firstImage" alt="@product.Name" class="product-img"
+                                         onerror="this.src='https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80'" />
+                                </div>
+                                <div class="product-content">
+                                    <div class="product-category">@(product.Category?.Name ?? "Chung")</div>
+                                    <h3 class="product-title">@product.Name</h3>
+                                    <div class="product-footer">
+                                        <div class="product-price">
+                                            @product.PricePerDay.ToString("N0")đ <span>/ ngày</span>
+                                        </div>
+                                        <div class="owner-avatar" title="@(product.Owner?.FullName ?? "Người dùng")">
+                                            @((product.Owner?.FullName ?? "U").Substring(0, 1).ToUpper())
                                         </div>
                                     </div>
                                 </div>
@@ -605,25 +840,81 @@
                 }
                 else
                 {
-                    <!-- Mock data if DB is empty to show aesthetics -->
-                    <div class="col-12 text-center text-muted py-5">
-                        <i class="bi bi-box-seam fs-1 mb-3 d-block"></i>
-                        <p>Chưa có sản phẩm nào được đăng.</p>
+                    <div class="col-12 text-center py-5" style="color:var(--text-muted);">
+                        <i class="bi bi-box-seam" style="font-size:2.5rem; display:block; margin-bottom:0.75rem;"></i>
+                        <p style="font-size:0.9rem;">Chưa có sản phẩm nào được đăng.</p>
                     </div>
                 }
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- ======================== WHY US ======================== -->
+    <section class="py-5" style="background: var(--section-alt);">
+        <div class="container">
+            <div class="text-center mb-5">
+                <div class="section-tag"><i class="bi bi-shield-check"></i> Lý do chọn chúng tôi</div>
+                <h2 class="section-title">Tại sao chọn OmniRent?</h2>
+                <p class="section-subtitle">An toàn, minh bạch và tiện lợi hơn bao giờ hết</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="bi bi-shield-check-fill"></i></div>
+                        <div class="feature-title">An toàn & Bảo mật</div>
+                        <p class="feature-desc">Mọi giao dịch được mã hóa và bảo vệ. Người thuê và cho thuê đều được xác minh danh tính.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+                        <div class="feature-title">Nhanh chóng & Dễ dàng</div>
+                        <p class="feature-desc">Đặt thuê chỉ trong vài phút. Quy trình đơn giản, thanh toán linh hoạt, nhận hàng nhanh chóng.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="bi bi-people-fill"></i></div>
+                        <div class="feature-title">Cộng đồng tin cậy</div>
+                        <p class="feature-desc">Hệ thống đánh giá minh bạch, điểm tin cậy rõ ràng giúp bạn chọn đúng người để giao dịch.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ======================== CTA ======================== -->
+    <section class="py-5">
+        <div class="container">
+            <div class="cta-banner">
+                <h2>Bắt đầu cho thuê ngay hôm nay</h2>
+                <p>Tham gia cùng hàng ngàn người dùng đang tận dụng OmniRent để kiếm thêm thu nhập.</p>
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a href="/Account/Register" class="btn-cta-primary">
+                        <i class="bi bi-person-plus"></i> Đăng ký miễn phí
+                    </a>
+                    <a href="#" class="btn-cta-outline">
+                        <i class="bi bi-play-circle"></i> Tìm hiểu thêm
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ======================== FOOTER ======================== -->
     <footer>
         <div class="container">
             <div class="row g-5">
                 <div class="col-lg-4">
-                    <div class="footer-brand text-white">
+                    <div class="footer-brand">
                         <i class="bi bi-building-fill" style="color: var(--primary);"></i> OmniRent
                     </div>
                     <p class="footer-text">Nền tảng kết nối người thuê và người cho thuê nhanh chóng, an toàn và minh bạch nhất hiện nay.</p>
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="#" class="social-icon"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="social-icon"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="social-icon"><i class="bi bi-twitter-x"></i></a>
+                    </div>
                 </div>
                 <div class="col-lg-2 col-md-4">
                     <h4 class="footer-title">Khám phá</h4>
@@ -642,15 +933,15 @@
                     </ul>
                 </div>
                 <div class="col-lg-4 col-md-4">
-                    <h4 class="footer-title">Theo dõi chúng tôi</h4>
-                    <div class="d-flex gap-3">
-                        <a href="#" style="color: var(--text-muted); font-size: 1.5rem;"><i class="bi bi-facebook"></i></a>
-                        <a href="#" style="color: var(--text-muted); font-size: 1.5rem;"><i class="bi bi-instagram"></i></a>
-                        <a href="#" style="color: var(--text-muted); font-size: 1.5rem;"><i class="bi bi-twitter-x"></i></a>
-                    </div>
+                    <h4 class="footer-title">Liên hệ</h4>
+                    <ul class="footer-links">
+                        <li><i class="bi bi-envelope me-2" style="color:var(--primary)"></i>support@omnirent.vn</li>
+                        <li><i class="bi bi-telephone me-2" style="color:var(--primary)"></i>1800 000 000</li>
+                        <li><i class="bi bi-geo-alt me-2" style="color:var(--primary)"></i>Hồ Chí Minh, Việt Nam</li>
+                    </ul>
                 </div>
             </div>
-            <div class="text-center mt-5 pt-4 border-top" style="border-color: var(--border-color) !important; color: var(--text-muted); font-size: 0.9rem;">
+            <div class="text-center mt-5 pt-4" style="border-top: 1px solid rgba(255,255,255,0.06); color: #475569; font-size: 0.82rem;">
                 &copy; @DateTime.Now.Year OmniRent. Mọi quyền được bảo lưu.
             </div>
         </div>
@@ -658,19 +949,25 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Cart badge
         function updateCartBadge() {
             let cart = JSON.parse(localStorage.getItem('cart')) || [];
             let badge = document.getElementById('cartBadge');
             if (badge) {
-                if (cart.length > 0) {
-                    badge.innerText = cart.length;
-                    badge.style.display = 'inline-block';
-                } else {
-                    badge.style.display = 'none';
-                }
+                badge.innerText = cart.length;
+                badge.style.display = cart.length > 0 ? 'inline-block' : 'none';
             }
         }
         document.addEventListener('DOMContentLoaded', updateCartBadge);
+
+        // Search
+        function handleSearch() {
+            const q = document.getElementById('heroSearch').value.trim();
+            if (q) window.location.href = '/?search=' + encodeURIComponent(q);
+        }
+        document.getElementById('heroSearch').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') handleSearch();
+        });
     </script>
 </body>
 </html>
