@@ -3,38 +3,143 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
-<div class="row g-4">
-    <div class="col-12">
-        <div class="card card-custom p-4 bg-primary text-white border-0 shadow-sm" style="background: linear-gradient(135deg, #6C63FF 0%, #483d8b 100%);">
-            <h2 class="fw-bold mb-3">Chào mừng trở lại, Admin! 👋</h2>
-            <p class="fs-5 mb-0" style="opacity: 0.9;">Đây là trung tâm điều khiển của hệ thống OmniRent. Hãy quản lý mọi hoạt động cho thuê và người dùng tại đây.</p>
-        </div>
-    </div>
-    
+<style>
+    .welcome-banner {
+        background: linear-gradient(135deg, #1a56db 0%, #0ea5e9 100%);
+        border-radius: 14px;
+        padding: 2rem 2.5rem;
+        color: white;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .welcome-banner::after {
+        content: '';
+        position: absolute;
+        right: -30px;
+        top: -30px;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.07);
+    }
+    .welcome-banner h2 {
+        font-size: 1.45rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+    }
+    .welcome-banner p {
+        font-size: 0.9rem;
+        opacity: 0.88;
+        margin: 0;
+        max-width: 580px;
+    }
+
+    .stat-card {
+        background: #fff;
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: 14px;
+        padding: 1.5rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        transition: box-shadow 0.2s, transform 0.2s;
+        text-decoration: none;
+        color: inherit;
+    }
+    .stat-card:hover {
+        box-shadow: 0 8px 24px rgba(15,23,42,0.1);
+        transform: translateY(-3px);
+        color: inherit;
+        text-decoration: none;
+    }
+    .stat-card .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+    }
+    .stat-card .stat-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--text-muted, #94a3b8);
+        margin-bottom: 0.25rem;
+    }
+    .stat-card .stat-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-primary, #0f172a);
+        margin-bottom: 0.75rem;
+    }
+    .stat-card .stat-desc {
+        font-size: 0.78rem;
+        color: var(--text-muted, #94a3b8);
+        margin-bottom: 1.25rem;
+        flex: 1;
+    }
+    .stat-card .stat-btn {
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 0.35rem 0.85rem;
+        border-radius: 7px;
+        border: 1.5px solid;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .icon-blue  { background: #dbeafe; color: #1a56db; }
+    .icon-green { background: #dcfce7; color: #16a34a; }
+    .icon-slate { background: #f1f5f9; color: #64748b; }
+    .btn-blue  { border-color: #1a56db; color: #1a56db; }
+    .btn-blue:hover  { background: #1a56db; color: white; }
+    .btn-green { border-color: #16a34a; color: #16a34a; }
+    .btn-green:hover { background: #16a34a; color: white; }
+    .btn-slate { border-color: #94a3b8; color: #94a3b8; pointer-events: none; }
+</style>
+
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+    <h2>Chào mừng trở lại, Admin! 👋</h2>
+    <p>Đây là trung tâm điều khiển của hệ thống OmniRent. Hãy quản lý mọi hoạt động cho thuê và người dùng tại đây.</p>
+</div>
+
+<div class="row g-3">
     <div class="col-md-4">
-        <div class="card card-custom p-4 text-center border-0 shadow-sm h-100">
-            <div class="display-4 text-primary mb-2"><i class="bi bi-receipt"></i></div>
-            <h5 class="fw-bold text-muted">Đơn Hàng</h5>
-            <p class="mb-3">Quản lý và xét duyệt các đơn thuê đồ từ hệ thống.</p>
-            <a href="/AdminDashboard/Bookings" class="btn btn-outline-primary mt-auto">Đi tới Đơn hàng</a>
-        </div>
+        <a href="/AdminDashboard/Bookings" class="stat-card">
+            <div class="stat-icon icon-blue"><i class="bi bi-receipt"></i></div>
+            <div class="stat-title">Quản lý</div>
+            <div class="stat-label">Đơn Hàng</div>
+            <div class="stat-desc">Xem, duyệt và cập nhật trạng thái các đơn thuê trong hệ thống.</div>
+            <span class="stat-btn btn-blue"><i class="bi bi-arrow-right"></i> Đi tới Đơn hàng</span>
+        </a>
     </div>
 
     <div class="col-md-4">
-        <div class="card card-custom p-4 text-center border-0 shadow-sm h-100">
-            <div class="display-4 text-success mb-2"><i class="bi bi-box-seam"></i></div>
-            <h5 class="fw-bold text-muted">Sản Phẩm</h5>
-            <p class="mb-3">Quản lý sản phẩm cho thuê, thêm, sửa, xóa và upload ảnh.</p>
-            <a href="/AdminDashboard/Products" class="btn btn-outline-success mt-auto">Đi tới Sản phẩm</a>
-        </div>
+        <a href="/AdminDashboard/Products" class="stat-card">
+            <div class="stat-icon icon-green"><i class="bi bi-box-seam"></i></div>
+            <div class="stat-title">Quản lý</div>
+            <div class="stat-label">Sản Phẩm</div>
+            <div class="stat-desc">Thêm, chỉnh sửa và xóa sản phẩm cho thuê, quản lý hình ảnh.</div>
+            <span class="stat-btn btn-green"><i class="bi bi-arrow-right"></i> Đi tới Sản phẩm</span>
+        </a>
     </div>
 
     <div class="col-md-4">
-        <div class="card card-custom p-4 text-center border-0 shadow-sm h-100 opacity-75">
-            <div class="display-4 text-secondary mb-2"><i class="bi bi-people"></i></div>
-            <h5 class="fw-bold text-muted">Người Dùng</h5>
-            <p class="mb-3">Quản lý khách thuê và chủ sở hữu tài sản.</p>
-            <button class="btn btn-outline-secondary mt-auto" disabled>Sắp ra mắt</button>
+        <div class="stat-card" style="opacity: 0.65;">
+            <div class="stat-icon icon-slate"><i class="bi bi-people"></i></div>
+            <div class="stat-title">Quản lý</div>
+            <div class="stat-label">Người Dùng</div>
+            <div class="stat-desc">Quản lý khách thuê và chủ sở hữu tài sản trong hệ thống.</div>
+            <span class="stat-btn btn-slate"><i class="bi bi-clock"></i> Sắp ra mắt</span>
         </div>
     </div>
 </div>

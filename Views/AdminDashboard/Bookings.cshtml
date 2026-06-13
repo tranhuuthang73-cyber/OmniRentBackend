@@ -5,56 +5,146 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
-<div class="card card-custom p-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="m-0 fw-bold">Danh sách Đơn hàng</h4>
-    </div>
+<style>
+    /* Status pills for bookings */
+    .bp-pending   { background: #fef9c3; color: #854d0e; }
+    .bp-approved  { background: #dbeafe; color: #1d4ed8; }
+    .bp-ongoing   { background: #dcfce7; color: #15803d; }
+    .bp-completed { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .bp-cancelled { background: #fef2f2; color: #dc2626; }
+    .bp-default   { background: #f1f5f9; color: #475569; }
 
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.3em 0.75em;
+        border-radius: 50px;
+        font-size: 0.72rem;
+        font-weight: 700;
+    }
+    .booking-id {
+        font-family: 'Courier New', monospace;
+        font-size: 0.75rem;
+        color: var(--text-muted, #94a3b8);
+        background: #f8fafc;
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        border: 1px solid #e2e8f0;
+    }
+    .price-col {
+        color: #16a34a;
+        font-weight: 700;
+        font-size: 0.875rem;
+    }
+    .btn-action {
+        width: 30px;
+        height: 30px;
+        border-radius: 7px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.78rem;
+        border: 1.5px solid;
+        transition: all 0.15s;
+        text-decoration: none;
+    }
+    .btn-view   { border-color: #cbd5e1; color: #475569; background: #f8fafc; }
+    .btn-view:hover   { background: #e2e8f0; color: #0f172a; }
+    .btn-edit   { border-color: #93c5fd; color: #1d4ed8; background: #eff6ff; }
+    .btn-edit:hover   { background: #1d4ed8; color: white; }
+    .btn-delete { border-color: #fca5a5; color: #dc2626; background: #fef2f2; }
+    .btn-delete:hover { background: #dc2626; color: white; }
+
+    .empty-state {
+        padding: 3rem 1rem;
+        text-align: center;
+        color: var(--text-muted, #94a3b8);
+    }
+    .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }
+    .empty-state p { font-size: 0.875rem; margin: 0; }
+</style>
+
+<!-- Page Header -->
+<div style="margin-bottom:1.5rem;">
+    <h4 style="font-size:1.2rem; font-weight:700; color:var(--text-primary); margin:0;">
+        <i class="bi bi-receipt me-2" style="color:var(--primary,#1a56db)"></i>Danh sách Đơn hàng
+    </h4>
+    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Xem và quản lý các đơn thuê trong hệ thống</div>
+</div>
+
+<div class="card-custom">
     <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead class="table-light">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
                 <tr>
-                    <th>Mã Đơn</th>
+                    <th style="padding-left:1.25rem;">Mã Đơn</th>
                     <th>Sản phẩm</th>
                     <th>Người thuê</th>
                     <th>Ngày Thuê</th>
                     <th>Ngày Trả</th>
                     <th>Tổng Tiền</th>
                     <th>Trạng thái</th>
-                    <th>Thao tác</th>
+                    <th style="width:100px; text-align:center;">Thao tác</th>
                 </tr>
             </thead>
             <tbody>
-                @if(Model != null && Model.Any())
+                @if (Model != null && Model.Any())
                 {
-                    foreach(var item in Model)
+                    foreach (var item in Model)
                     {
                         <tr>
-                            <td><small class="text-muted">@item.Id.Substring(0, 8)...</small></td>
-                            <td>
-                                <strong>@(item.Product?.Name ?? "N/A")</strong>
+                            <td style="padding-left:1.25rem;">
+                                <span class="booking-id">#@item.Id.Substring(0, 8)</span>
                             </td>
                             <td>
+                                <strong style="font-size:0.875rem; color:var(--text-primary);">@(item.Product?.Name ?? "N/A")</strong>
+                            </td>
+                            <td style="font-size:0.85rem; color:var(--text-secondary);">
                                 @(item.Renter?.FullName ?? "N/A")
                             </td>
-                            <td>@item.StartDate.ToString("dd/MM/yyyy")</td>
-                            <td>@item.EndDate.ToString("dd/MM/yyyy")</td>
-                            <td class="text-danger fw-bold">@item.TotalPrice.ToString("N0")đ</td>
+                            <td style="font-size:0.82rem;">@item.StartDate.ToString("dd/MM/yyyy")</td>
+                            <td style="font-size:0.82rem;">@item.EndDate.ToString("dd/MM/yyyy")</td>
+                            <td><span class="price-col">@item.TotalPrice.ToString("N0")đ</span></td>
                             <td>
-                                @if(item.Status == "PENDING") { <span class="badge bg-warning text-dark badge-status">Chờ duyệt</span> }
-                                else if(item.Status == "APPROVED") { <span class="badge bg-info badge-status">Đã duyệt</span> }
-                                else if(item.Status == "ONGOING") { <span class="badge bg-primary badge-status">Đang thuê</span> }
-                                else if(item.Status == "COMPLETED") { <span class="badge bg-success badge-status">Hoàn thành</span> }
-                                else if(item.Status == "CANCELLED" || item.Status == "REJECTED") { <span class="badge bg-danger badge-status">Đã hủy</span> }
-                                else { <span class="badge bg-secondary badge-status">@item.Status</span> }
+                                @if (item.Status == "PENDING")
+                                {
+                                    <span class="status-pill bp-pending"><i class="bi bi-clock"></i> Chờ duyệt</span>
+                                }
+                                else if (item.Status == "APPROVED")
+                                {
+                                    <span class="status-pill bp-approved"><i class="bi bi-check-circle"></i> Đã duyệt</span>
+                                }
+                                else if (item.Status == "ONGOING")
+                                {
+                                    <span class="status-pill bp-ongoing"><i class="bi bi-arrow-repeat"></i> Đang thuê</span>
+                                }
+                                else if (item.Status == "COMPLETED")
+                                {
+                                    <span class="status-pill bp-completed"><i class="bi bi-check-circle-fill"></i> Hoàn thành</span>
+                                }
+                                else if (item.Status == "CANCELLED" || item.Status == "REJECTED")
+                                {
+                                    <span class="status-pill bp-cancelled"><i class="bi bi-x-circle"></i> Đã hủy</span>
+                                }
+                                else
+                                {
+                                    <span class="status-pill bp-default">@item.Status</span>
+                                }
                             </td>
                             <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a href="/AdminDashboard/BookingDetails/@item.Id" class="btn btn-outline-secondary" title="Xem"><i class="bi bi-eye"></i></a>
-                                    <a href="/AdminDashboard/EditBooking/@item.Id" class="btn btn-outline-primary" title="Cập nhật trạng thái"><i class="bi bi-ui-checks"></i></a>
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <a href="/AdminDashboard/BookingDetails/@item.Id" class="btn-action btn-view" title="Xem chi tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="/AdminDashboard/EditBooking/@item.Id" class="btn-action btn-edit" title="Cập nhật trạng thái">
+                                        <i class="bi bi-ui-checks"></i>
+                                    </a>
                                     <form action="/AdminDashboard/DeleteBooking/@item.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa đơn hàng này?');">
                                         @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-outline-danger" title="Xóa"><i class="bi bi-trash"></i></button>
+                                        <button type="submit" class="btn-action btn-delete" title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
                                     </form>
                                 </div>
                             </td>
@@ -64,7 +154,12 @@
                 else
                 {
                     <tr>
-                        <td colspan="8" class="text-center py-4 text-muted">Chưa có đơn hàng nào.</td>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <i class="bi bi-inbox"></i>
+                                <p>Chưa có đơn hàng nào trong hệ thống.</p>
+                            </div>
+                        </td>
                     </tr>
                 }
             </tbody>

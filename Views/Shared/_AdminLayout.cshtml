@@ -4,119 +4,373 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Admin Dashboard</title>
-    
+
     <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
     <style>
+        /* ============================================
+           OMNIRENT ADMIN — Light Professional Theme
+           Palette: Navy Blue + Slate Gray + Clean White
+        ============================================ */
         :root {
-            --admin-bg: #f4f6f9;
-            --sidebar-bg: #212529;
-            --sidebar-text: #c2c7d0;
-            --sidebar-hover: #ffffff;
-            --primary-color: #6C63FF;
+            --primary:        #1a56db;      /* Royal blue – buttons, accents */
+            --primary-dark:   #1347c8;      /* Darker hover */
+            --primary-light:  #ebf0ff;      /* Soft blue tint for bg highlights */
+            --accent:         #0ea5e9;      /* Sky blue accent */
+            --sidebar-bg:     #0f172a;      /* Navy dark sidebar */
+            --sidebar-hover:  #1e293b;      /* Sidebar hover row */
+            --sidebar-text:   #94a3b8;      /* Muted slate text */
+            --sidebar-active: #e2e8f0;      /* Active nav text */
+            --sidebar-border: rgba(255,255,255,0.06);
+            --admin-bg:       #f1f5f9;      /* Light slate background */
+            --card-bg:        #ffffff;
+            --card-shadow:    0 1px 3px rgba(15,23,42,0.08), 0 4px 16px rgba(15,23,42,0.04);
+            --topbar-shadow:  0 1px 0 #e2e8f0;
+            --text-primary:   #0f172a;      /* Near-black */
+            --text-secondary: #475569;      /* Mid-gray */
+            --text-muted:     #94a3b8;      /* Light gray */
+            --border-color:   #e2e8f0;
+            --input-focus:    0 0 0 3px rgba(26,86,219,0.15);
+            --success:        #16a34a;
+            --danger:         #dc2626;
+            --warning:        #d97706;
         }
+
+        * { box-sizing: border-box; }
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--admin-bg);
+            color: var(--text-primary);
             margin: 0;
             padding: 0;
             display: flex;
             min-height: 100vh;
+            font-size: 14px;
+            line-height: 1.6;
         }
 
-        /* Sidebar */
+        /* ===================== SIDEBAR ===================== */
         .sidebar {
-            width: 250px;
+            width: 256px;
             background-color: var(--sidebar-bg);
-            color: var(--sidebar-text);
             position: fixed;
             height: 100vh;
             overflow-y: auto;
-            transition: all 0.3s;
+            transition: transform 0.3s ease;
             z-index: 1000;
+            display: flex;
+            flex-direction: column;
         }
 
         .sidebar-header {
-            padding: 1.5rem 1rem;
-            text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1.75rem 1.5rem 1.25rem;
+            border-bottom: 1px solid var(--sidebar-border);
         }
 
         .sidebar-header h4 {
-            color: white;
-            font-weight: 700;
+            color: #f8fafc;
+            font-weight: 800;
+            font-size: 1.15rem;
             margin: 0;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sidebar-header h4 .logo-icon {
+            width: 30px;
+            height: 30px;
+            background: var(--primary);
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: white;
+        }
+
+        .sidebar-header small {
+            color: var(--sidebar-text);
+            font-size: 0.72rem;
+            margin-top: 3px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .nav-section-label {
+            padding: 1.25rem 1.5rem 0.4rem;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #334155;
         }
 
         .nav-link {
             color: var(--sidebar-text);
-            padding: 1rem 1.5rem;
+            padding: 0.7rem 1.5rem;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            transition: all 0.3s;
+            gap: 0.7rem;
+            transition: all 0.2s ease;
+            border-radius: 0;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin: 1px 0.5rem;
+            border-radius: 8px;
         }
 
-        .nav-link:hover, .nav-link.active {
-            color: var(--sidebar-hover);
-            background-color: rgba(255,255,255,0.1);
+        .nav-link:hover {
+            color: #f1f5f9;
+            background-color: var(--sidebar-hover);
+            text-decoration: none;
+        }
+
+        .nav-link.active {
+            color: #ffffff;
+            background-color: var(--primary);
             text-decoration: none;
         }
 
         .nav-link i {
-            font-size: 1.2rem;
+            font-size: 1.05rem;
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
         }
 
-        /* Main Content */
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 1rem 0.5rem;
+            border-top: 1px solid var(--sidebar-border);
+        }
+
+        /* ===================== MAIN CONTENT ===================== */
         .main-content {
             flex-grow: 1;
-            margin-left: 250px;
+            margin-left: 256px;
             display: flex;
             flex-direction: column;
-            width: calc(100% - 250px);
+            min-height: 100vh;
+            width: calc(100% - 256px);
         }
 
         .topbar {
-            background-color: white;
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            background-color: var(--card-bg);
+            padding: 0.875rem 2rem;
+            box-shadow: var(--topbar-shadow);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 900;
+        }
+
+        .topbar h5 {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .admin-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
         }
 
         .content-body {
-            padding: 2rem;
+            padding: 1.75rem 2rem;
             flex-grow: 1;
         }
 
+        /* ===================== CARDS ===================== */
         .card-custom {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            border: none;
+            background: var(--card-bg);
+            border-radius: 14px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
         }
 
-        .badge-status {
-            padding: 0.5em 0.75em;
-            border-radius: 50px;
+        /* ===================== FORMS ===================== */
+        .form-label {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.82rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .form-control, .form-select {
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+            background-color: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: var(--input-focus);
+            outline: none;
+            color: var(--text-primary);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+        }
+
+        /* ===================== BUTTONS ===================== */
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(26,86,219,0.3);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            border-color: var(--success);
+            color: #fff;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .btn-success:hover {
+            background-color: #15803d;
+            border-color: #15803d;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(22,163,74,0.3);
+        }
+
+        .btn-secondary {
+            background-color: #f1f5f9;
+            border-color: var(--border-color);
+            color: var(--text-secondary);
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover {
+            background-color: #e2e8f0;
+            border-color: #cbd5e1;
+            color: var(--text-primary);
+        }
+
+        .btn-outline-danger {
+            color: var(--danger);
+            border-color: #fca5a5;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-outline-danger:hover {
+            background-color: #fef2f2;
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .btn-outline-secondary {
+            color: var(--text-secondary);
+            border-color: var(--border-color);
+            border-radius: 8px;
             font-weight: 500;
         }
+        .btn-outline-secondary:hover {
+            background-color: #f1f5f9;
+            border-color: #cbd5e1;
+            color: var(--text-primary);
+        }
+
+        /* ===================== BADGES ===================== */
+        .badge-status {
+            padding: 0.35em 0.8em;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.72rem;
+        }
+
+        /* ===================== TABLES ===================== */
+        .table {
+            color: var(--text-primary);
+        }
+        .table thead th {
+            background-color: #f8fafc;
+            color: var(--text-secondary);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.8rem 1rem;
+        }
+        .table tbody td {
+            padding: 0.85rem 1rem;
+            vertical-align: middle;
+            border-color: #f1f5f9;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+        .table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        /* ===================== TEXT UTILITIES ===================== */
+        .text-muted {
+            color: var(--text-muted) !important;
+        }
+        .text-danger {
+            color: var(--danger) !important;
+        }
+        .text-success {
+            color: var(--success) !important;
+        }
+
+        /* ===================== SCROLLBAR ===================== */
+        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .sidebar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
 
         @@media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-250px);
-            }
-            .main-content {
-                margin-left: 0;
-                width: 100%;
-            }
+            .sidebar { transform: translateX(-256px); }
+            .main-content { margin-left: 0; width: 100%; }
         }
     </style>
 </head>
@@ -124,16 +378,20 @@
     <!-- Sidebar -->
     <nav class="sidebar">
         <div class="sidebar-header">
-            <h4><i class="bi bi-building-fill text-primary"></i> OmniRent</h4>
-            <small class="text-muted">Admin Panel</small>
+            <h4>
+                <span class="logo-icon"><i class="bi bi-building-fill"></i></span>
+                OmniRent
+            </h4>
+            <small>Admin Panel</small>
         </div>
-        <div class="nav flex-column mt-3">
+        <div class="nav flex-column mt-2 px-0">
             @{
                 var currentPath = Context.Request.Path.Value ?? "";
                 var isDashboard = currentPath == "/AdminDashboard" || currentPath == "/AdminDashboard/";
                 var isBookings = currentPath.StartsWith("/AdminDashboard/Booking") || currentPath.StartsWith("/AdminDashboard/CreateBooking") || currentPath.StartsWith("/AdminDashboard/EditBooking");
                 var isProducts = currentPath.StartsWith("/AdminDashboard/Product") || currentPath.StartsWith("/AdminDashboard/CreateProduct") || currentPath.StartsWith("/AdminDashboard/EditProduct");
             }
+            <span class="nav-section-label">Menu chính</span>
             <a href="/AdminDashboard" class="nav-link @(isDashboard ? "active" : "")">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
@@ -143,7 +401,9 @@
             <a href="/AdminDashboard/Products" class="nav-link @(isProducts ? "active" : "")">
                 <i class="bi bi-box-seam"></i> Sản phẩm
             </a>
-            <a href="/" class="nav-link mt-auto border-top" style="border-color: rgba(255,255,255,0.1)!important;">
+        </div>
+        <div class="sidebar-footer">
+            <a href="/" class="nav-link">
                 <i class="bi bi-box-arrow-left"></i> Về trang chủ
             </a>
         </div>
@@ -152,9 +412,10 @@
     <!-- Main Content -->
     <div class="main-content">
         <header class="topbar">
-            <h5 class="m-0 fw-bold">@ViewData["Title"]</h5>
-            <div>
-                <span class="text-muted">Xin chào, Admin</span>
+            <h5>@ViewData["Title"]</h5>
+            <div class="topbar-right">
+                <span class="text-muted" style="font-size:0.82rem;">Xin chào, <strong style="color:var(--text-primary)">Admin</strong></span>
+                <div class="admin-avatar">AD</div>
             </div>
         </header>
 
@@ -168,3 +429,4 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+
