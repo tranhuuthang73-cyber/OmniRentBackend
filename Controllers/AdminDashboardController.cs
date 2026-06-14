@@ -123,7 +123,10 @@ namespace OmniRentBackend.Controllers
         // GET: /AdminDashboard/CreateProduct
         public async Task<IActionResult> CreateProduct()
         {
-            ViewBag.Categories = await _context.Categories.Where(c => c.ParentId == null).ToListAsync();
+            ViewBag.Categories = await _context.Categories
+                .Include(c => c.Subcategories)
+                .Where(c => c.ParentId == null)
+                .ToListAsync();
             ViewBag.Owners = await _context.Users.Where(u => u.Role == "OWNER").ToListAsync();
             return View();
         }
@@ -144,7 +147,10 @@ namespace OmniRentBackend.Controllers
             if (string.IsNullOrWhiteSpace(Name))
             {
                 ModelState.AddModelError("", "Tên sản phẩm là bắt buộc.");
-                ViewBag.Categories = await _context.Categories.Where(c => c.ParentId == null).ToListAsync();
+                ViewBag.Categories = await _context.Categories
+                    .Include(c => c.Subcategories)
+                    .Where(c => c.ParentId == null)
+                    .ToListAsync();
                 ViewBag.Owners = await _context.Users.Where(u => u.Role == "OWNER").ToListAsync();
                 return View();
             }
@@ -153,7 +159,10 @@ namespace OmniRentBackend.Controllers
             if (category == null)
             {
                 ModelState.AddModelError("", "Danh mục không tồn tại.");
-                ViewBag.Categories = await _context.Categories.Where(c => c.ParentId == null).ToListAsync();
+                ViewBag.Categories = await _context.Categories
+                    .Include(c => c.Subcategories)
+                    .Where(c => c.ParentId == null)
+                    .ToListAsync();
                 ViewBag.Owners = await _context.Users.Where(u => u.Role == "OWNER").ToListAsync();
                 return View();
             }
@@ -200,7 +209,10 @@ namespace OmniRentBackend.Controllers
 
             if (product == null) return NotFound();
 
-            ViewBag.Categories = await _context.Categories.Where(c => c.ParentId == null).ToListAsync();
+            ViewBag.Categories = await _context.Categories
+                .Include(c => c.Subcategories)
+                .Where(c => c.ParentId == null)
+                .ToListAsync();
             ViewBag.Owners = await _context.Users.Where(u => u.Role == "OWNER").ToListAsync();
 
             return View(product);
@@ -226,7 +238,10 @@ namespace OmniRentBackend.Controllers
             if (string.IsNullOrWhiteSpace(Name))
             {
                 ModelState.AddModelError("", "Tên sản phẩm là bắt buộc.");
-                ViewBag.Categories = await _context.Categories.Where(c => c.ParentId == null).ToListAsync();
+                ViewBag.Categories = await _context.Categories
+                    .Include(c => c.Subcategories)
+                    .Where(c => c.ParentId == null)
+                    .ToListAsync();
                 ViewBag.Owners = await _context.Users.Where(u => u.Role == "OWNER").ToListAsync();
                 return View(product);
             }
@@ -235,7 +250,10 @@ namespace OmniRentBackend.Controllers
             if (category == null)
             {
                 ModelState.AddModelError("", "Danh mục không tồn tại.");
-                ViewBag.Categories = await _context.Categories.Where(c => c.ParentId == null).ToListAsync();
+                ViewBag.Categories = await _context.Categories
+                    .Include(c => c.Subcategories)
+                    .Where(c => c.ParentId == null)
+                    .ToListAsync();
                 ViewBag.Owners = await _context.Users.Where(u => u.Role == "OWNER").ToListAsync();
                 return View(product);
             }

@@ -21,7 +21,11 @@ namespace OmniRentBackend.Controllers
         // GET /  hoặc  /Home/Index
         public async Task<IActionResult> Index(string? categoryId)
         {
-            var categories = await _context.Categories.ToListAsync();
+            var categories = await _context.Categories
+                .Include(c => c.Subcategories)
+                .Where(c => c.ParentId == null)
+                .ToListAsync();
+
             var query = _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Owner)
@@ -29,7 +33,17 @@ namespace OmniRentBackend.Controllers
 
             if (!string.IsNullOrEmpty(categoryId))
             {
-                query = query.Where(p => p.CategoryId == categoryId);
+                var category = await _context.Categories
+                    .Include(c => c.Subcategories)
+                    .FirstOrDefaultAsync(c => c.Id == categoryId);
+
+                var ids = new List<string> { categoryId };
+                if (category != null && category.Subcategories != null)
+                {
+                    ids.AddRange(category.Subcategories.Select(s => s.Id));
+                }
+
+                query = query.Where(p => ids.Contains(p.CategoryId));
                 ViewBag.SelectedCategoryId = categoryId;
             }
 

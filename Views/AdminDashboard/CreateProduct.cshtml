@@ -165,9 +165,17 @@
                     <option value="">-- Chọn danh mục --</option>
                     @if (categories != null && categories.Any())
                     {
-                        foreach (var cat in categories)
+                        foreach (var parent in categories)
                         {
-                            <option value="@cat.Id">@cat.Name</option>
+                            <optgroup label="@parent.Name">
+                                @if (parent.Subcategories != null && parent.Subcategories.Any())
+                                {
+                                    foreach (var sub in parent.Subcategories)
+                                    {
+                                        <option value="@sub.Id">@sub.Name</option>
+                                    }
+                                }
+                            </optgroup>
                         }
                     }
                 </select>

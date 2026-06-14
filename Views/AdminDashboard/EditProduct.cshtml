@@ -133,16 +133,24 @@
                     <option value="">-- Chọn danh mục --</option>
                     @if (categories != null && categories.Any())
                     {
-                        foreach (var cat in categories)
+                        foreach (var parent in categories)
                         {
-                            if (cat.Id == Model.CategoryId)
-                            {
-                                <option value="@cat.Id" selected>@cat.Name</option>
-                            }
-                            else
-                            {
-                                <option value="@cat.Id">@cat.Name</option>
-                            }
+                            <optgroup label="@parent.Name">
+                                @if (parent.Subcategories != null && parent.Subcategories.Any())
+                                {
+                                    foreach (var sub in parent.Subcategories)
+                                    {
+                                        if (sub.Id == Model.CategoryId)
+                                        {
+                                            <option value="@sub.Id" selected>@sub.Name</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@sub.Id">@sub.Name</option>
+                                        }
+                                    }
+                                }
+                            </optgroup>
                         }
                     }
                 </select>
