@@ -1,0 +1,180 @@
+@using OmniRentBackend.Models
+@model IEnumerable<Category>
+@{
+    ViewData["Title"] = "Quản lý Danh mục";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+    .page-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+    }
+    .page-subtitle {
+        font-size: 0.8rem;
+        color: #334155;
+        margin-top: 2px;
+        font-weight: 500;
+    }
+    .btn-create {
+        min-width: 168px;
+        padding: 0.55rem 0.9rem;
+        background: #1d4ed8 !important;
+        border-color: #1d4ed8 !important;
+        color: #ffffff !important;
+        font-weight: 800;
+        box-shadow: 0 8px 18px rgba(29,78,216,0.24);
+    }
+    .btn-create:hover {
+        background: #1e40af !important;
+        border-color: #1e40af !important;
+        color: #ffffff !important;
+    }
+    .actions-cell {
+        min-width: 150px;
+    }
+    .action-group {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.45rem;
+    }
+    .btn-action {
+        min-height: 34px;
+        padding: 0.45rem 0.65rem;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        font-size: 0.78rem;
+        font-weight: 800;
+        border: 1.5px solid;
+        transition: all 0.15s;
+        text-decoration: none;
+        line-height: 1;
+        cursor: pointer;
+    }
+    .btn-action i { font-size: 0.9rem; }
+    .btn-edit {
+        border-color: #1d4ed8;
+        color: #ffffff;
+        background: #1d4ed8;
+    }
+    .btn-edit:hover {
+        background: #1e40af;
+        border-color: #1e40af;
+        color: #ffffff;
+    }
+    .btn-delete {
+        border-color: #dc2626;
+        color: #dc2626;
+        background: #fef2f2;
+    }
+    .btn-delete:hover {
+        background: #dc2626;
+        border-color: #dc2626;
+        color: #ffffff;
+    }
+    .empty-state {
+        padding: 3rem 1rem;
+        text-align: center;
+        color: #64748b;
+    }
+    .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }
+</style>
+
+<div class="page-header">
+    <div>
+        <h4 class="page-title">
+            <i class="bi bi-tags me-2" style="color:var(--primary)"></i>Danh mục sản phẩm
+        </h4>
+        <div class="page-subtitle">Quản lý các danh mục và phân loại</div>
+    </div>
+    <a href="/AdminDashboard/CreateCategory" class="btn btn-primary btn-create">
+        <i class="bi bi-plus-lg"></i> Thêm danh mục
+    </a>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="padding-left:1.5rem;">Tên danh mục</th>
+                    <th>Danh mục cha</th>
+                    <th>Ngày tạo</th>
+                    <th class="actions-cell" style="text-align:right; padding-right:1.5rem;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td style="padding-left:1.5rem; font-weight:600;">@item.Name</td>
+                            <td>
+                                @if (item.Parent != null)
+                                {
+                                    <span style="color:#475569; font-size:0.85rem;"><i class="bi bi-arrow-return-right me-1"></i> @item.Parent.Name</span>
+                                }
+                                else
+                                {
+                                    <span style="color:#94a3b8; font-size:0.85rem;">-</span>
+                                }
+                            </td>
+                            <td style="color:#64748b; font-size:0.85rem;">@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="actions-cell" style="padding-right:1.5rem;">
+                                <div class="action-group">
+                                    <a href="/AdminDashboard/EditCategory/@item.Id" class="btn-action btn-edit" title="Chỉnh sửa">
+                                        <i class="bi bi-pencil-square"></i><span>Sửa</span>
+                                    </a>
+                                    <form method="post" action="/AdminDashboard/DeleteCategory/@item.Id" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa danh mục này?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn-action btn-delete" title="Xóa">
+                                            <i class="bi bi-trash"></i><span>Xóa</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <i class="bi bi-inbox"></i>
+                                <p>Chưa có danh mục nào. <a href="/AdminDashboard/CreateCategory" style="color:var(--primary)">Thêm danh mục đầu tiên</a>.</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -460,6 +460,7 @@
                 var isDashboard = currentPath == "/AdminDashboard" || currentPath == "/AdminDashboard/";
                 var isBookings = currentPath.StartsWith("/AdminDashboard/Booking") || currentPath.StartsWith("/AdminDashboard/CreateBooking") || currentPath.StartsWith("/AdminDashboard/EditBooking");
                 var isProducts = currentPath.StartsWith("/AdminDashboard/Product") || currentPath.StartsWith("/AdminDashboard/CreateProduct") || currentPath.StartsWith("/AdminDashboard/EditProduct");
+                var isCategories = currentPath.StartsWith("/AdminDashboard/Categor") || currentPath.StartsWith("/AdminDashboard/CreateCategor") || currentPath.StartsWith("/AdminDashboard/EditCategor");
             }
             <span class="nav-section-label">Menu chính</span>
             <a href="/AdminDashboard" class="nav-link @(isDashboard ? "active" : "")">
@@ -470,6 +471,9 @@
             </a>
             <a href="/AdminDashboard/Products" class="nav-link @(isProducts ? "active" : "")">
                 <i class="bi bi-box-seam"></i> Sản phẩm
+            </a>
+            <a href="/AdminDashboard/Categories" class="nav-link @(isCategories ? "active" : "")">
+                <i class="bi bi-tags"></i> Danh mục
             </a>
         </div>
         <div class="sidebar-footer">

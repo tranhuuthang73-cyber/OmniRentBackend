@@ -1,0 +1,103 @@
+@using OmniRentBackend.Models
+@{
+    ViewData["Title"] = "Thêm Danh mục mới";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var parentCategories = ViewBag.ParentCategories as List<Category>;
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <a href="/AdminDashboard/Categories" class="text-decoration-none text-muted mb-2 d-inline-block">
+            <i class="bi bi-arrow-left"></i> Quay lại danh sách
+        </a>
+        <h4 class="mb-0 fw-bold text-dark"><i class="bi bi-folder-plus text-primary me-2"></i>Thêm Danh mục mới</h4>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-xl-8">
+        <div class="card-custom p-4">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger mb-4">
+                    <ul class="mb-0">
+                        @foreach (var modelState in ViewData.ModelState.Values)
+                        {
+                            foreach (var error in modelState.Errors)
+                            {
+                                <li>@error.ErrorMessage</li>
+                            }
+                        }
+                    </ul>
+                </div>
+            }
+
+            <form method="post" action="/AdminDashboard/CreateCategory">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-4">
+                    <label for="Name" class="form-label">Tên danh mục <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="Name" name="Name" required placeholder="Nhập tên danh mục (VD: Xe máy, Laptop...)" onkeyup="generateSlug()" />
+                </div>
+
+                <input type="hidden" id="Slug" name="Slug" />
+
+                <div class="mb-4">
+                    <label for="ParentId" class="form-label">Danh mục cha (Tùy chọn)</label>
+                    <select class="form-select" id="ParentId" name="ParentId">
+                        <option value="">-- Không có (Danh mục gốc) --</option>
+                        @if (parentCategories != null)
+                        {
+                            foreach (var cat in parentCategories)
+                            {
+                                <option value="@cat.Id">@cat.Name</option>
+                            }
+                        }
+                    </select>
+                    <div class="form-text">Chọn danh mục cha nếu đây là danh mục con (Subcategory).</div>
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="/AdminDashboard/Categories" class="btn btn-secondary">Hủy</a>
+                    <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check2 me-1"></i> Lưu danh mục</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function removeVietnameseTones(str) {
+            str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+            str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+            str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+            str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+            str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+            str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+            str = str.replace(/đ/g, "d");
+            str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
+            str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
+            str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
+            str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|M/g, "O");
+            str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
+            str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
+            str = str.replace(/Đ/g, "D");
+            return str;
+        }
+
+        function generateSlug() {
+            let name = document.getElementById("Name").value;
+            let slug = removeVietnameseTones(name).toLowerCase();
+            slug = slug.replace(/[^a-z0-9\s-]/g, '');
+            slug = slug.replace(/\s+/g, '-');
+            slug = slug.replace(/-+/g, '-');
+            slug = slug.replace(/^-+|-+$/g, '');
+            
+            // Only auto-generate if user hasn't heavily modified it (we assume it's safe to update on empty or match)
+            document.getElementById("Slug").value = slug;
+        }
+    </script>
+}

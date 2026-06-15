@@ -1,0 +1,77 @@
+@using OmniRentBackend.Models
+@model Category
+@{
+    ViewData["Title"] = "Chỉnh sửa Danh mục";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var parentCategories = ViewBag.ParentCategories as List<Category>;
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <a href="/AdminDashboard/Categories" class="text-decoration-none text-muted mb-2 d-inline-block">
+            <i class="bi bi-arrow-left"></i> Quay lại danh sách
+        </a>
+        <h4 class="mb-0 fw-bold text-dark"><i class="bi bi-pencil-square text-primary me-2"></i>Chỉnh sửa Danh mục</h4>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-xl-8">
+        <div class="card-custom p-4">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger mb-4">
+                    <ul class="mb-0">
+                        @foreach (var modelState in ViewData.ModelState.Values)
+                        {
+                            foreach (var error in modelState.Errors)
+                            {
+                                <li>@error.ErrorMessage</li>
+                            }
+                        }
+                    </ul>
+                </div>
+            }
+
+            <form method="post" action="/AdminDashboard/EditCategory/@Model.Id">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-4">
+                    <label for="Name" class="form-label">Tên danh mục <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="Name" name="Name" value="@Model.Name" required placeholder="Nhập tên danh mục (VD: Xe máy, Laptop...)" />
+                </div>
+
+                <input type="hidden" id="Slug" name="Slug" value="@Model.Slug" />
+
+                <div class="mb-4">
+                    <label for="ParentId" class="form-label">Danh mục cha (Tùy chọn)</label>
+                    <select class="form-select" id="ParentId" name="ParentId">
+                        <option value="">-- Không có (Danh mục gốc) --</option>
+                        @if (parentCategories != null)
+                        {
+                            foreach (var cat in parentCategories)
+                            {
+                                if (Model.ParentId == cat.Id)
+                                {
+                                    <option value="@cat.Id" selected>@cat.Name</option>
+                                }
+                                else
+                                {
+                                    <option value="@cat.Id">@cat.Name</option>
+                                }
+                            }
+                        }
+                    </select>
+                    <div class="form-text">Chọn danh mục cha nếu đây là danh mục con (Subcategory).</div>
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="/AdminDashboard/Categories" class="btn btn-secondary">Hủy</a>
+                    <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check2 me-1"></i> Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
