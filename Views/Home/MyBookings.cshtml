@@ -18,88 +18,182 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
     <style>
-        :root {
-            --primary:       #f59e0b;
-            --primary-hover: #d97706;
-            --primary-light: #fef3c7;
-            --navy:          #0f172a;
-            --navy-2:        #1e293b;
-            --text-main:     #000000;
-            --text-sub:      #333333;
-            --text-muted:    #666666;
-            --border:        #e2e8f0;
-            --body-bg:       #f8fafc;
+        :root, [data-theme="light"] {
+            --primary:        #eab308; /* Premium Gold Yellow */
+            --primary-hover:  #ca8a04;
+            --primary-light:  #fef9c3;
+            --navy:           #09090b; /* Pure Obsidian Black */
+            --navy-2:         #18181b; /* Dark zinc */
+            --accent:         #eab308;
+            --body-bg:        #fafafa; /* Sleek light gray */
+            --section-alt:    #ffffff;
+            --text-primary:   #09090b;
+            --text-secondary: #4b5563;
+            --text-muted:     #9ca3af;
+            --border:         #e5e7eb;
+            --card-bg:        #ffffff;
+            --card-shadow:    0 4px 20px rgba(9,9,11,0.03);
+            --navbar-bg:      rgba(255, 255, 255, 0.85);
+            --navbar-shadow:  0 1px 2px rgba(9,9,11,0.05);
+            --footer-bg:      #09090b;
+            --footer-text:    #9ca3af;
+            --footer-heading:  #f3f4f6;
+            --footer-border:  #1f2937;
+            --tag-color:      #854d0e;
+        }
+
+        [data-theme="dark"] {
+            --primary:        #facc15; /* Vibrant Gold Yellow */
+            --primary-hover:  #eab308;
+            --primary-light:  rgba(250,204,21,0.1);
+            --navy:           #f3f4f6; /* Off-white text */
+            --navy-2:         #e5e7eb;
+            --accent:         #fbbf24;
+            --body-bg:        #09090b; /* Pure Black Background */
+            --section-alt:    #121214; /* Charcoal background */
+            --text-primary:   #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-muted:     #6b7280;
+            --border:         #1f2937;
+            --card-bg:        #18181b;
+            --card-shadow:    0 10px 30px rgba(0,0,0,0.3);
+            --navbar-bg:      rgba(9, 9, 11, 0.85);
+            --navbar-shadow:  0 1px 0 rgba(255,255,255,0.05);
+            --footer-bg:      #020203;
+            --footer-text:    #6b7280;
+            --footer-heading:  #f3f4f6;
+            --footer-border:  #18181b;
+            --tag-color:      #fde047;
         }
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--body-bg);
-            color: var(--text-main);
+            color: var(--text-primary);
             min-height: 100vh;
             margin: 0; padding: 0;
             overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         /* Navbar */
         .navbar-custom {
-            background: var(--navy);
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            padding: 1rem 0;
+            background: var(--navbar-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0.875rem 0;
             position: fixed;
             top: 0; width: 100%;
             z-index: 1000;
+            box-shadow: var(--navbar-shadow);
+            transition: all 0.3s ease;
         }
         .navbar-brand {
-            font-weight: 800; font-size: 1.5rem;
-            color: #ffffff !important;
+            font-weight: 800; font-size: 1.4rem;
+            color: var(--text-primary) !important;
             display: flex; align-items: center; gap: 0.5rem;
             text-decoration: none;
         }
-        .brand-icon { color: var(--primary); font-size: 1.8rem; }
+        .brand-icon { color: var(--primary); font-size: 1.6rem; }
         
-        .nav-link { color: #cbd5e1 !important; font-weight: 500; }
-        .nav-link:hover, .nav-link.active { color: #ffffff !important; }
+        .nav-link-custom {
+            color: var(--text-secondary) !important;
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 0.5rem 0.85rem !important;
+            border-radius: 6px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .nav-link-custom:hover, .nav-link-custom.active {
+            color: var(--primary) !important;
+            background: var(--primary-light);
+        }
 
-        .btn-outline-primary-custom {
-            color: #fff;
-            border: 1.5px solid rgba(255,255,255,0.25);
-            border-radius: 50px;
-            padding: 0.5rem 1.5rem;
+        .btn-nav-outline {
+            color: var(--text-secondary);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 0.45rem 1.1rem;
+            font-size: 0.85rem;
             font-weight: 600;
-            transition: all 0.2s;
             text-decoration: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
         }
-        .btn-outline-primary-custom:hover {
-            border-color: var(--primary); color: var(--primary);
-            background: rgba(245,158,11,0.08);
+        .btn-nav-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(245,158,11,0.06);
         }
 
-        .btn-primary-custom {
+        .btn-nav-primary {
             background: var(--primary);
-            color: var(--navy);
-            border: none; border-radius: 50px;
-            padding: 0.5rem 1.5rem;
+            color: var(--navy) !important;
+            border: none;
+            border-radius: 8px;
+            padding: 0.45rem 1.2rem;
+            font-size: 0.85rem;
             font-weight: 700;
-            transition: all 0.2s;
             text-decoration: none;
-            box-shadow: 0 4px 14px rgba(245,158,11,0.3);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
         }
-        .btn-primary-custom:hover {
-            background: var(--primary-hover); transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(245,158,11,0.4);
+        .btn-nav-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245,158,11,0.4);
         }
+
+        .cart-icon {
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            text-decoration: none;
+            position: relative;
+            transition: color 0.2s;
+        }
+        .cart-icon:hover { color: var(--primary); }
+
+        .theme-toggle {
+            background: transparent;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            width: 38px; height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            transition: all 0.25s;
+            flex-shrink: 0;
+        }
+        .theme-toggle:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+        .theme-toggle .bi-moon-fill { display: inline; }
+        .theme-toggle .bi-sun-fill { display: none; }
+        [data-theme="dark"] .theme-toggle .bi-moon-fill { display: none; }
+        [data-theme="dark"] .theme-toggle .bi-sun-fill { display: inline; }
 
         /* Content */
         .main-container { margin-top: 120px; padding-bottom: 80px; }
 
         .booking-card {
-            background: #ffffff;
-            border: 1px solid var(--border);
+            background: var(--card-bg);
+            border: 1.5px solid var(--border);
             border-radius: 20px;
             padding: 2rem;
             margin-bottom: 2rem;
-            transition: all 0.2s;
-            box-shadow: 0 4px 12px rgba(15,23,42,0.04);
+            transition: all 0.25s;
+            box-shadow: var(--card-shadow);
         }
         .booking-card:hover {
             border-color: var(--primary);
@@ -121,8 +215,78 @@
 
         /* Footer */
         footer {
-            background: var(--navy); border-top: 1px solid rgba(255,255,255,0.06);
-            padding: 4rem 0 2rem; margin-top: 5rem;
+            background: var(--footer-bg);
+            border-top: 1px solid var(--footer-border);
+            padding: 4rem 0 2rem;
+            margin-top: 5rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .footer-brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-text { color: #64748b; max-width: 280px; font-size: 0.875rem; line-height: 1.7; }
+        .footer-title { font-weight: 700; color: #e2e8f0; font-size: 0.85rem; margin-bottom: 1.25rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .footer-links { list-style: none; padding: 0; margin: 0; }
+        .footer-links li { margin-bottom: 0.65rem; }
+        .footer-links a { color: #64748b; text-decoration: none; font-size: 0.875rem; transition: color 0.2s; }
+        .footer-links a:hover { color: var(--primary); }
+
+        .social-icon {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.06);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .social-icon:hover { background: var(--primary); color: var(--navy); }
+
+        /* Star Rating in Modal */
+        .star-rating i {
+            cursor: pointer;
+            transition: color 0.15s ease-in-out;
+            color: #cbd5e1;
+        }
+        .star-rating i:hover,
+        .star-rating i.active {
+            color: var(--primary) !important;
+        }
+
+        .modal-content-custom {
+            background-color: var(--card-bg) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--text-primary) !important;
+            border-radius: 20px !important;
+            box-shadow: var(--card-shadow) !important;
+        }
+        .modal-header-custom {
+            border-bottom: 1px solid var(--border) !important;
+        }
+        .modal-footer-custom {
+            border-top: 1px solid var(--border) !important;
+        }
+        .form-control-custom {
+            background-color: var(--body-bg) !important;
+            color: var(--text-primary) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 12px !important;
+        }
+        .form-control-custom:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 0.25rem rgba(234, 179, 8, 0.25) !important;
         }
     </style>
 </head>
@@ -134,34 +298,49 @@
             <a class="navbar-brand" href="/">
                 <i class="bi bi-building-fill brand-icon"></i> OmniRent
             </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="bi bi-list fs-2" style="color:var(--text-primary)"></i>
+            </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item"><a class="nav-link" href="/">Trang chủ</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="/Home/MyBookings">Đơn hàng của tôi</a></li>
+                <ul class="navbar-nav mx-auto gap-1">
+                    <li class="nav-item">
+                        <a class="nav-link-custom" href="/">Trang chủ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom active" href="/Home/MyBookings">Đơn hàng của tôi</a>
+                    </li>
                 </ul>
-            </div>
-            <div class="ms-auto d-flex gap-3 align-items-center">
-                <a href="/Home/Cart" class="position-relative text-white me-3 d-flex align-items-center" style="font-size: 1.3rem; text-decoration: none;">
-                    <i class="bi bi-cart3"></i>
-                    <span id="cartBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem; display: none;">0</span>
-                </a>
+                <div class="d-flex gap-2 mt-3 mt-lg-0 align-items-center">
+                    <!-- Theme Toggle -->
+                    <button class="theme-toggle" id="themeToggle" title="Chuyển chế độ sáng/tối">
+                        <i class="bi bi-moon-fill"></i>
+                        <i class="bi bi-sun-fill"></i>
+                    </button>
 
-                @if (isAuthenticated) {
-                    <span class="text-white fw-bold d-none d-md-inline me-2">Xin chào, @User.Identity.Name</span>
-                    <form action="/Account/Logout" method="post" class="d-inline m-0">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-primary-custom">Đăng xuất</button>
-                    </form>
-                } else {
-                    <a href="/Account/Login?returnUrl=/Home/MyBookings" class="btn btn-outline-primary-custom">Đăng nhập</a>
-                }
+                    <!-- Cart -->
+                    <a href="/Home/Cart" class="cart-icon position-relative me-1">
+                        <i class="bi bi-cart3"></i>
+                        <span id="cartBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; display: none;">0</span>
+                    </a>
+
+                    @if (isAuthenticated) {
+                        <span class="d-none d-md-inline" style="color:var(--text-secondary); font-size:0.82rem;">Xin chào, <strong style="color:var(--text-primary);">@User.Identity.Name</strong></span>
+                        <form action="/Account/Logout" method="post" class="d-inline m-0">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn-nav-primary">Đăng xuất</button>
+                        </form>
+                    } else {
+                        <a href="/Account/Login?returnUrl=/Home/MyBookings" class="btn-nav-outline">Đăng nhập</a>
+                    }
+                </div>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
     <div class="container main-container">
-        <h2 class="mb-5 fw-bold" style="color: #000000;"><i class="bi bi-box-seam-fill text-primary"></i> Đơn thuê tài sản của bạn</h2>
+        <h2 class="mb-5 fw-bold" style="color: var(--text-primary);"><i class="bi bi-box-seam-fill text-primary"></i> Đơn thuê tài sản của bạn</h2>
 
         <div class="row">
             <div class="col-lg-10 mx-auto">
@@ -182,19 +361,19 @@
                                     <img src="@mainImg" alt="@(booking.Product?.Name ?? "Tài sản")" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80'" />
                                 </div>
                                 <div class="col-md-6">
-                                    <span class="badge mb-2" style="background: var(--body-bg); color: #333333; border: 1px solid var(--border);">Đơn thuê: #@booking.Id.Substring(0, 8)</span>
-                                    <h4 class="fw-bold mb-2" style="color: #000000;">@(booking.Product?.Name ?? "N/A")</h4>
+                                    <span class="badge mb-2" style="background: var(--body-bg); color: var(--text-primary); border: 1px solid var(--border);">Đơn thuê: #@booking.Id.Substring(0, 8)</span>
+                                    <h4 class="fw-bold mb-2" style="color: var(--text-primary);">@(booking.Product?.Name ?? "N/A")</h4>
                                     
-                                    <div class="mb-2" style="font-size: 0.95rem; color: #333333;">
+                                    <div class="mb-2" style="font-size: 0.95rem; color: var(--text-secondary);">
                                         <i class="bi bi-calendar3 text-primary me-2"></i> Thời gian: 
                                         <strong>@booking.StartDate.ToString("dd/MM/yyyy")</strong> đến <strong>@booking.EndDate.ToString("dd/MM/yyyy")</strong>
                                     </div>
-                                    <div class="mb-3" style="font-size: 0.95rem; color: #333333;">
+                                    <div class="mb-3" style="font-size: 0.95rem; color: var(--text-secondary);">
                                         <i class="bi bi-geo-alt-fill text-danger me-2"></i> Địa chỉ nhận: 
                                         <span>@booking.RentalAddress</span>
                                     </div>
 
-                                    <div class="d-flex flex-wrap gap-2">
+                                    <div class="d-flex flex-wrap gap-2 align-items-center">
                                         <!-- Booking Status -->
                                         @if (booking.Status == "PENDING") { <span class="badge bg-warning text-dark badge-status">Chờ duyệt</span> }
                                         else if (booking.Status == "APPROVED") { <span class="badge bg-info badge-status">Đã duyệt</span> }
@@ -211,39 +390,172 @@
                                 </div>
                                 <div class="col-md-3 text-md-end d-flex flex-column justify-content-between align-items-md-end">
                                     <div class="mb-3">
-                                        <small class="d-block" style="color: #333333;">Tổng chi phí thuê</small>
+                                        <small class="d-block" style="color: var(--text-secondary);">Tổng chi phí thuê</small>
                                         <h3 class="fw-bold m-0" style="color: var(--primary);">@booking.TotalPrice.ToString("N0")đ</h3>
                                     </div>
 
                                     @if (booking.PaymentStatus == "UNPAID" && booking.Status != "CANCELLED" && booking.Status != "REJECTED") {
-                                        <a href="/Home/Payment/@booking.Id" class="btn btn-primary-custom w-100 py-2">
+                                        <a href="/Home/Payment/@booking.Id" class="btn btn-nav-primary w-100 py-2 justify-content-center text-center">
                                             <i class="bi bi-wallet2"></i> Thanh toán cọc
                                         </a>
+                                    } else if (booking.Status == "COMPLETED") {
+                                        var hasReviewed = booking.Reviews != null && booking.Reviews.Any();
+                                        if (hasReviewed) {
+                                            <button class="btn btn-secondary py-2 px-3 rounded-pill fw-bold" style="background: var(--body-bg); border: 1.5px solid var(--border); color: var(--text-secondary); cursor: not-allowed;" disabled>
+                                                <i class="bi bi-check2-circle text-success"></i> Đã đánh giá
+                                            </button>
+                                        } else {
+                                            <button class="btn btn-nav-primary py-2 px-3 btn-review-trigger w-100 justify-content-center"
+                                                    data-booking-id="@booking.Id"
+                                                    data-product-name="@(booking.Product?.Name ?? "Sản phẩm")"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#reviewModal">
+                                                <i class="bi bi-star-fill"></i> Đánh giá sản phẩm
+                                            </button>
+                                        }
                                     }
                                 </div>
                             </div>
                         </div>
                     }
                 } else {
-                    <div class="text-center py-5 bg-white border rounded-4 shadow-sm" style="border-color: var(--border);">
-                        <i class="bi bi-inboxes fs-1 mb-3 d-block" style="color: #666666;"></i>
-                        <p class="fs-5" style="color: #333333;">Bạn chưa thực hiện bất kỳ giao dịch thuê tài sản nào.</p>
-                        <a href="/" class="btn btn-primary-custom px-4 py-2 mt-3">Trở về Trang chủ</a>
+                    <div class="text-center py-5 rounded-4 shadow-sm" style="background: var(--card-bg); border: 1px solid var(--border);">
+                        <i class="bi bi-inboxes fs-1 mb-3 d-block text-muted"></i>
+                        <p class="fs-5" style="color: var(--text-secondary);">Bạn chưa thực hiện bất kỳ giao dịch thuê tài sản nào.</p>
+                        <a href="/" class="btn-nav-primary px-4 py-2 mt-3">Trở về Trang chủ</a>
                     </div>
                 }
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
+    <!-- Review Modal -->
+    <div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-content-custom">
+                <div class="modal-header modal-header-custom">
+                    <h5 class="modal-title fw-bold" id="reviewModalLabel"><i class="bi bi-star-fill text-warning me-2"></i>Đánh giá sản phẩm</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="dark" aria-label="Close" onclick="bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide()"></button>
+                </div>
+                <form id="reviewForm">
+                    <div class="modal-body">
+                        <div id="reviewErrorAlert" class="alert alert-danger" style="display: none;"></div>
+                        <div id="reviewSuccessAlert" class="alert alert-success" style="display: none;"></div>
+
+                        <div class="mb-3">
+                            <span style="color: var(--text-secondary);">Bạn đang đánh giá cho: </span>
+                            <div id="modalProductName" class="fw-bold fs-5 mt-1" style="color: var(--primary);"></div>
+                            <input type="hidden" id="bookingIdInput" name="bookingId" />
+                        </div>
+
+                        <!-- Rating selection stars -->
+                        <div class="mb-4 text-center">
+                            <label class="form-label d-block text-center fw-bold mb-2">Mức độ hài lòng của bạn</label>
+                            <div class="star-rating d-flex gap-3 fs-2 justify-content-center">
+                                <i class="bi bi-star" data-value="1"></i>
+                                <i class="bi bi-star" data-value="2"></i>
+                                <i class="bi bi-star" data-value="3"></i>
+                                <i class="bi bi-star" data-value="4"></i>
+                                <i class="bi bi-star" data-value="5"></i>
+                            </div>
+                            <input type="hidden" id="ratingInput" name="rating" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="commentInput" class="form-label fw-bold">Nhận xét chi tiết</label>
+                            <textarea class="form-control form-control-custom" id="commentInput" rows="4" placeholder="Chia sẻ trải nghiệm sử dụng sản phẩm này của bạn (chất lượng, thái độ chủ đồ, thời gian giao nhận...)" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer modal-footer-custom">
+                        <button type="button" class="btn btn-secondary py-2 px-4 rounded-pill" onclick="bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide()">Hủy bỏ</button>
+                        <button type="submit" id="btnSubmitReview" class="btn-nav-primary py-2 px-4">Gửi đánh giá</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================== FOOTER ======================== -->
     <footer>
-        <div class="container text-center" style="color: #64748b; font-size: 0.9rem;">
-            &copy; @DateTime.Now.Year OmniRent. Mọi quyền được bảo lưu.
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-4">
+                    <div class="footer-brand">
+                        <i class="bi bi-building-fill" style="color: var(--primary);"></i> OmniRent
+                    </div>
+                    <p class="footer-text">Nền tảng kết nối người thuê và người cho thuê nhanh chóng, an toàn và minh bạch nhất hiện nay.</p>
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="#" class="social-icon"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="social-icon"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="social-icon"><i class="bi bi-twitter-x"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <h4 class="footer-title">Khám phá</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Tất cả tài sản</a></li>
+                        <li><a href="#">Danh mục nổi bật</a></li>
+                        <li><a href="#">Chủ cho thuê uy tín</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <h4 class="footer-title">Hỗ trợ</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Trung tâm trợ giúp</a></li>
+                        <li><a href="#">Quy định an toàn</a></li>
+                        <li><a href="#">Chính sách bảo mật</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 col-md-4">
+                    <h4 class="footer-title">Liên hệ</h4>
+                    <ul class="footer-links">
+                        <li><i class="bi bi-envelope me-2" style="color:var(--primary)"></i>support@omnirent.vn</li>
+                        <li><i class="bi bi-telephone me-2" style="color:var(--primary)"></i>1800 000 000</li>
+                        <li><i class="bi bi-geo-alt me-2" style="color:var(--primary)"></i>Hồ Chí Minh, Việt Nam</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="text-center mt-5 pt-4" style="border-top: 1px solid rgba(255,255,255,0.06); color: #475569; font-size: 0.82rem;">
+                &copy; @DateTime.Now.Year OmniRent. Mọi quyền được bảo lưu.
+            </div>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // =================== Theme Toggle ===================
+        (function() {
+            const root = document.documentElement;
+            const toggle = document.getElementById('themeToggle');
+            const storageKey = 'omnirent-theme';
+
+            function getPreferred() {
+                const saved = localStorage.getItem(storageKey);
+                if (saved) return saved;
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+
+            function applyTheme(theme) {
+                root.setAttribute('data-theme', theme);
+                localStorage.setItem(storageKey, theme);
+            }
+
+            applyTheme(getPreferred());
+
+            if (toggle) {
+                toggle.addEventListener('click', () => {
+                    const current = root.getAttribute('data-theme') || 'light';
+                    applyTheme(current === 'dark' ? 'light' : 'dark');
+                });
+            }
+
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                if (!localStorage.getItem(storageKey)) {
+                    applyTheme(e.matches ? 'dark' : 'light');
+                }
+            });
+        })();
+
         function updateCartBadge() {
             let cart = JSON.parse(localStorage.getItem('cart')) || [];
             let badge = document.getElementById('cartBadge');
@@ -254,6 +566,129 @@
             }
         }
         document.addEventListener('DOMContentLoaded', updateCartBadge);
+
+        // =================== Review Actions ===================
+        document.addEventListener('DOMContentLoaded', function() {
+            const stars = document.querySelectorAll('#reviewModal .star-rating i');
+            const ratingInput = document.getElementById('ratingInput');
+            const bookingIdInput = document.getElementById('bookingIdInput');
+            const modalProductName = document.getElementById('modalProductName');
+            const reviewButtons = document.querySelectorAll('.btn-review-trigger');
+
+            // Set up triggers
+            reviewButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const bookingId = this.getAttribute('data-booking-id');
+                    const productName = this.getAttribute('data-product-name');
+                    
+                    bookingIdInput.value = bookingId;
+                    modalProductName.innerText = productName;
+                    
+                    // Reset modal inputs
+                    ratingInput.value = '';
+                    document.getElementById('commentInput').value = '';
+                    highlightStars(0);
+                    
+                    document.getElementById('reviewErrorAlert').style.display = 'none';
+                    document.getElementById('reviewSuccessAlert').style.display = 'none';
+                });
+            });
+
+            // Star hover and select interactions
+            stars.forEach(star => {
+                star.addEventListener('mouseover', function() {
+                    const val = parseInt(this.getAttribute('data-value'));
+                    highlightStars(val);
+                });
+                
+                star.addEventListener('mouseout', function() {
+                    const currentVal = parseInt(ratingInput.value) || 0;
+                    highlightStars(currentVal);
+                });
+                
+                star.addEventListener('click', function() {
+                    const val = parseInt(this.getAttribute('data-value'));
+                    ratingInput.value = val;
+                    highlightStars(val);
+                });
+            });
+
+            function highlightStars(count) {
+                stars.forEach(star => {
+                    const val = parseInt(star.getAttribute('data-value'));
+                    if (val <= count) {
+                        star.classList.remove('bi-star');
+                        star.classList.add('bi-star-fill');
+                        star.style.color = 'var(--primary)';
+                    } else {
+                        star.classList.remove('bi-star-fill');
+                        star.classList.add('bi-star');
+                        star.style.color = '#cbd5e1';
+                    }
+                });
+            }
+
+            // Form Submit handler
+            const reviewForm = document.getElementById('reviewForm');
+            reviewForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const bookingId = bookingIdInput.value;
+                const rating = parseInt(ratingInput.value);
+                const comment = document.getElementById('commentInput').value.trim();
+                
+                if (!rating) {
+                    showError("Vui lòng chọn mức đánh giá sao!");
+                    return;
+                }
+                if (!comment) {
+                    showError("Vui lòng nhập nhận xét của bạn!");
+                    return;
+                }
+                
+                const submitBtn = document.getElementById('btnSubmitReview');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang gửi...';
+                
+                try {
+                    const response = await fetch('/review', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            bookingId: bookingId,
+                            rating: rating,
+                            comment: comment
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        document.getElementById('reviewSuccessAlert').innerText = "Đánh giá của bạn đã được gửi thành công!";
+                        document.getElementById('reviewSuccessAlert').style.display = 'block';
+                        document.getElementById('reviewErrorAlert').style.display = 'none';
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1200);
+                    } else {
+                        const errData = await response.json();
+                        showError(errData.message || "Đã xảy ra lỗi khi gửi đánh giá. Vui lòng thử lại.");
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = 'Gửi đánh giá';
+                    }
+                } catch (err) {
+                    showError("Lỗi kết nối mạng. Vui lòng thử lại sau.");
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = 'Gửi đánh giá';
+                }
+            });
+
+            function showError(msg) {
+                document.getElementById('reviewErrorAlert').innerText = msg;
+                document.getElementById('reviewErrorAlert').style.display = 'block';
+                document.getElementById('reviewSuccessAlert').style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>

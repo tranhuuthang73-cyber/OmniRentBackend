@@ -335,6 +335,14 @@ namespace OmniRentBackend.Services
                 matchedCategorySlug = "xe-dap";
             }
 
+            // Lọc danh sách sản phẩm theo category được phát hiện từ tên file (nếu có)
+            if (!string.IsNullOrEmpty(matchedCategorySlug))
+            {
+                products = products.Where(p => p.Category != null && 
+                           (p.Category.Slug == matchedCategorySlug || 
+                            (p.Category.Parent != null && p.Category.Parent.Slug == matchedCategorySlug))).ToList();
+            }
+
             var rand = new Random();
 
             foreach (var product in products)
@@ -370,8 +378,8 @@ namespace OmniRentBackend.Services
                             similarity = ComputeSimilarity(uploadedHash, uploadedBytes, productHash, productBytes);
                         }
 
-                        // Nếu khớp byte hoặc khớp từ khóa từ tên file gốc
-                        if (similarity >= 0.65)
+                        // Nếu khớp byte chính xác cao (ngưỡng 92% để loại bỏ JPEG false positives từ kích thước file)
+                        if (similarity >= 0.92)
                         {
                             results.Add(new
                             {
@@ -389,9 +397,7 @@ namespace OmniRentBackend.Services
                             isMatched = true;
                             break;
                         }
-                        else if (!string.IsNullOrEmpty(matchedCategorySlug) && product.Category != null &&
-                                 (product.Category.Slug == matchedCategorySlug || 
-                                  (product.Category.Parent != null && product.Category.Parent.Slug == matchedCategorySlug)))
+                        else if (!string.IsNullOrEmpty(matchedCategorySlug))
                         {
                             // Khớp từ khóa tên file: giả lập similarity thông minh ngẫu nhiên 82% -> 94%
                             double simulatedSimilarity = 82.0 + rand.NextDouble() * 12.0;
@@ -452,35 +458,48 @@ namespace OmniRentBackend.Services
                 .ToList();
 
             // Fallback gợi ý nếu không có kết quả nào khớp
-            if (sortedResults.Count == 0 && products.Count > 0)
+            if (sortedResults.Count == 0)
             {
-                var fallbackList = products.OrderByDescending(p => p.CreatedAt).Take(3).ToList();
-                foreach (var product in fallbackList)
+                if (!string.IsNullOrEmpty(matchedCategorySlug) && products.Count > 0)
                 {
-                    var imageUrls = JsonSerializer.Deserialize<List<string>>(product.ImagesJson);
-                    string matchedImage = imageUrls?.FirstOrDefault() ?? "";
-                    double randomSimilarity = 65.0 + rand.NextDouble() * 10.0; // 65% - 75% cho gợi ý phong cách tương tự
-                    
-                    sortedResults.Add(new
+                    // Chỉ gợi ý fallback khi xác định được danh mục (nhưng không có sản phẩm khớp chính xác)
+                    var fallbackList = products.OrderByDescending(p => p.CreatedAt).Take(3).ToList();
+                    foreach (var product in fallbackList)
                     {
-                        product.Id,
-                        product.Name,
-                        product.Description,
-                        product.PricePerDay,
-                        product.DepositAmount,
-                        categoryName = product.Category?.Name ?? "Tài sản",
-                        ownerName = product.Owner?.FullName ?? "Người dùng",
-                        matchedImage,
-                        similarity = Math.Round(randomSimilarity, 1),
-                        product.Status
-                    });
+                        var imageUrls = JsonSerializer.Deserialize<List<string>>(product.ImagesJson);
+                        string matchedImage = imageUrls?.FirstOrDefault() ?? "";
+                        double randomSimilarity = 65.0 + rand.NextDouble() * 10.0;
+                        
+                        sortedResults.Add(new
+                        {
+                            product.Id,
+                            product.Name,
+                            product.Description,
+                            product.PricePerDay,
+                            product.DepositAmount,
+                            categoryName = product.Category?.Name ?? "Tài sản",
+                            ownerName = product.Owner?.FullName ?? "Người dùng",
+                            matchedImage,
+                            similarity = Math.Round(randomSimilarity, 1),
+                            product.Status
+                        });
+                    }
+
+                    return new
+                    {
+                        success = true,
+                        message = "Không tìm thấy sản phẩm trùng khớp chính xác bằng ảnh. Dưới đây là các tài sản gợi ý phù hợp:",
+                        totalResults = sortedResults.Count,
+                        results = sortedResults
+                    };
                 }
 
+                // Nếu không phát hiện được danh mục và không có byte match
                 return new
                 {
                     success = true,
-                    message = "Không tìm thấy sản phẩm trùng khớp tuyệt đối. Dưới đây là các tài sản gợi ý phù hợp với phong cách của bạn:",
-                    totalResults = sortedResults.Count,
+                    message = "Không tìm thấy sản phẩm nào khớp với ảnh. Hãy thử chụp rõ hơn hoặc đặt tên file chứa từ khóa sản phẩm (ví dụ: laptop, xe_may, vay...)",
+                    totalResults = 0,
                     results = sortedResults
                 };
             }

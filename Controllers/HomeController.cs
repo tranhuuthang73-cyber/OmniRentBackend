@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OmniRentBackend.Data;
+using OmniRentBackend.Models;
 using OmniRentBackend.Models.ViewModels;
 
 namespace OmniRentBackend.Controllers
@@ -137,11 +138,44 @@ namespace OmniRentBackend.Controllers
             var bookings = await _context.Bookings
                 .Include(b => b.Product)
                     .ThenInclude(p => p!.Owner)
+                .Include(b => b.Reviews)
                 .Where(b => b.RenterId == userId)
                 .OrderByDescending(b => b.CreatedAt)
                 .ToListAsync();
 
             return View(bookings);
+        }
+
+        // GET /Home/CreateTestCompletedBooking
+        public async Task<IActionResult> CreateTestCompletedBooking()
+        {
+            var renter = await _context.Users.FirstOrDefaultAsync(u => u.Email == "renter@omnirent.com");
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.Status == "AVAILABLE");
+            if (renter == null || product == null)
+            {
+                return Content("Error: renter or product not found. Ensure DB is seeded.");
+            }
+
+            // Clean up any existing bookings for this product-renter combo to prevent clutter
+            var oldBookings = await _context.Bookings.Where(b => b.RenterId == renter.Id && b.ProductId == product.Id).ToListAsync();
+            _context.Bookings.RemoveRange(oldBookings);
+
+            var booking = new Booking
+            {
+                ProductId = product.Id,
+                RenterId = renter.Id,
+                StartDate = DateTime.UtcNow.AddDays(-3),
+                EndDate = DateTime.UtcNow.AddDays(-1),
+                TotalPrice = product.PricePerDay * 2,
+                Status = "COMPLETED",
+                PaymentStatus = "PAID",
+                RentalAddress = "123 Test Street, Ho Chi Minh City"
+            };
+
+            _context.Bookings.Add(booking);
+            await _context.SaveChangesAsync();
+
+            return Content($"Success: Created completed booking {booking.Id} for product {product.Name} (Renter: {renter.FullName})");
         }
     }
 }
