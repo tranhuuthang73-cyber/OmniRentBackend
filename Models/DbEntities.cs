@@ -26,6 +26,8 @@ namespace OmniRentBackend.Models
 
         public string? AvatarUrl { get; set; }
 
+        public string? Address { get; set; }
+
         public double RenterTrustScore { get; set; } = 80.0;
 
         public bool OwnerVerified { get; set; } = false;

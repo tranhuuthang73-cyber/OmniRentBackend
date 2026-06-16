@@ -1,0 +1,1029 @@
+@using OmniRentBackend.Models
+@using System.Security.Claims
+@model User
+@{
+    Layout = null;
+    var bookings = (List<Booking>)(ViewBag.Bookings ?? new List<Booking>());
+    var successMessage = TempData["SuccessMessage"] as string;
+    var isAuthenticated = User.Identity != null && User.Identity.IsAuthenticated;
+    var currentAvatar = Model.AvatarUrl ?? "";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trang cá nhân — OmniRent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <style>
+        :root, [data-theme="light"] {
+            --primary:        #eab308; /* Premium Gold Yellow */
+            --primary-hover:  #ca8a04;
+            --primary-light:  #fef9c3;
+            --navy:           #09090b; /* Pure Obsidian Black */
+            --navy-2:         #18181b; /* Dark zinc */
+            --accent:         #eab308;
+            --body-bg:        #fafafa; /* Sleek light gray */
+            --section-alt:    #ffffff;
+            --text-primary:   #09090b;
+            --text-secondary: #4b5563;
+            --text-muted:     #9ca3af;
+            --border:         #e5e7eb;
+            --card-bg:        #ffffff;
+            --card-shadow:    0 4px 20px rgba(9,9,11,0.03);
+            --navbar-bg:      rgba(255, 255, 255, 0.85);
+            --navbar-shadow:  0 1px 2px rgba(9,9,11,0.05);
+            --footer-bg:      #09090b;
+            --footer-text:    #9ca3af;
+            --footer-heading:  #f3f4f6;
+            --footer-border:  #1f2937;
+        }
+
+        [data-theme="dark"] {
+            --primary:        #facc15; /* Vibrant Gold Yellow */
+            --primary-hover:  #eab308;
+            --primary-light:  rgba(250,204,21,0.1);
+            --navy:           #f3f4f6; /* Off-white text */
+            --navy-2:         #e5e7eb;
+            --accent:         #fbbf24;
+            --body-bg:        #09090b; /* Pure Black Background */
+            --section-alt:    #121214; /* Charcoal background */
+            --text-primary:   #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-muted:     #6b7280;
+            --border:         #1f2937;
+            --card-bg:        #18181b;
+            --card-shadow:    0 10px 30px rgba(0,0,0,0.3);
+            --navbar-bg:      rgba(9, 9, 11, 0.85);
+            --navbar-shadow:  0 1px 0 rgba(255,255,255,0.05);
+            --footer-bg:      #020203;
+            --footer-text:    #6b7280;
+            --footer-heading:  #f3f4f6;
+            --footer-border:  #18181b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--body-bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            margin: 0; padding: 0;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Navbar */
+        .navbar-custom {
+            background: var(--navbar-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0.875rem 0;
+            position: fixed;
+            top: 0; width: 100%;
+            z-index: 1000;
+            box-shadow: var(--navbar-shadow);
+            transition: all 0.3s ease;
+        }
+        .navbar-brand {
+            font-weight: 800; font-size: 1.4rem;
+            color: var(--text-primary) !important;
+            display: flex; align-items: center; gap: 0.5rem;
+            text-decoration: none;
+        }
+        .brand-icon { color: var(--primary); font-size: 1.6rem; }
+        
+        .nav-link-custom {
+            color: var(--text-secondary) !important;
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 0.5rem 0.85rem !important;
+            border-radius: 6px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .nav-link-custom:hover {
+            color: var(--primary) !important;
+            background: var(--primary-light);
+        }
+
+        .btn-nav-outline {
+            color: var(--text-secondary);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 0.45rem 1.1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .btn-nav-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(245,158,11,0.06);
+        }
+
+        .btn-nav-primary {
+            background: var(--primary);
+            color: var(--navy) !important;
+            border: none;
+            border-radius: 8px;
+            padding: 0.45rem 1.2rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .btn-nav-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245,158,11,0.4);
+        }
+
+        .cart-icon {
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            text-decoration: none;
+            position: relative;
+            transition: color 0.2s;
+        }
+        .cart-icon:hover { color: var(--primary); }
+
+        .theme-toggle {
+            background: transparent;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            width: 38px; height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            transition: all 0.25s;
+            flex-shrink: 0;
+        }
+        .theme-toggle:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+        .theme-toggle .bi-moon-fill { display: inline; }
+        .theme-toggle .bi-sun-fill { display: none; }
+        [data-theme="dark"] .theme-toggle .bi-moon-fill { display: none; }
+        [data-theme="dark"] .theme-toggle .bi-sun-fill { display: inline; }
+
+        /* Content & Profile Layout */
+        .main-container { margin-top: 120px; padding-bottom: 80px; }
+
+        .profile-sidebar {
+            background: var(--card-bg);
+            border: 1.5px solid var(--border);
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+            position: sticky;
+            top: 120px;
+        }
+
+        .profile-avatar-wrapper {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            position: relative;
+            border: 3px solid var(--primary);
+            background: var(--body-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary);
+            overflow: hidden;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .profile-avatar-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-name {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .profile-role-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.35rem 0.85rem;
+            border-radius: 50px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1.25rem;
+        }
+        .role-renter { background: rgba(59,130,246,0.1); color: #3b82f6; }
+        .role-owner { background: rgba(234,179,8,0.1); color: var(--primary); }
+        .role-admin { background: rgba(239,68,68,0.1); color: #ef4444; }
+
+        .trust-score-container {
+            background: var(--body-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .profile-nav-tabs {
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2rem;
+            gap: 1.5rem;
+        }
+        .profile-nav-link {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 0.75rem 0.5rem;
+            border: none;
+            background: transparent;
+            position: relative;
+            transition: color 0.2s;
+        }
+        .profile-nav-link:hover {
+            color: var(--primary);
+        }
+        .profile-nav-link.active {
+            color: var(--primary);
+        }
+        .profile-nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 3px 3px 0 0;
+        }
+
+        .card-custom {
+            background: var(--card-bg);
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            padding: 2.25rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .booking-card {
+            background: var(--card-bg);
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.25s;
+            box-shadow: var(--card-shadow);
+        }
+        .booking-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 24px rgba(245,158,11,0.06);
+            transform: translateY(-2px);
+        }
+
+        .product-img {
+            width: 100%; height: 130px;
+            object-fit: cover; border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--body-bg);
+        }
+
+        .badge-status {
+            font-size: 0.8rem; padding: 0.45rem 0.9rem;
+            border-radius: 50px; font-weight: 700;
+        }
+
+        .form-label-custom {
+            font-weight: 700;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        .form-control-custom {
+            background: var(--body-bg) !important;
+            border: 1.5px solid var(--border) !important;
+            color: var(--text-primary) !important;
+            border-radius: 12px !important;
+            padding: 0.75rem 1rem !important;
+            font-size: 0.92rem !important;
+            transition: all 0.2s !important;
+        }
+        .form-control-custom:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px rgba(234,179,8,0.15) !important;
+        }
+
+        /* Star Rating in Modal */
+        .star-rating i {
+            cursor: pointer;
+            transition: color 0.15s ease-in-out;
+            color: #cbd5e1;
+        }
+        .star-rating i:hover,
+        .star-rating i.active {
+            color: var(--primary) !important;
+        }
+
+        .modal-content-custom {
+            background-color: var(--card-bg) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--text-primary) !important;
+            border-radius: 20px !important;
+            box-shadow: var(--card-shadow) !important;
+        }
+        .modal-header-custom {
+            border-bottom: 1px solid var(--border) !important;
+        }
+        .modal-footer-custom {
+            border-top: 1px solid var(--border) !important;
+        }
+
+        /* User dropdown */
+        .user-dropdown-btn {
+            background: transparent;
+            border: 0;
+            color: var(--text-primary);
+            padding: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            font-size: 0.88rem;
+        }
+
+        footer {
+            background: var(--footer-bg);
+            border-top: 1px solid var(--footer-border);
+            padding: 4rem 0 2rem;
+            margin-top: 5rem;
+            transition: background-color 0.3s ease;
+        }
+        .footer-brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.75rem;
+        }
+        .footer-text { color: #64748b; max-width: 280px; font-size: 0.875rem; line-height: 1.7; }
+        .footer-title { font-weight: 700; color: #e2e8f0; font-size: 0.85rem; margin-bottom: 1.25rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .footer-links { list-style: none; padding: 0; margin: 0; }
+        .footer-links li { margin-bottom: 0.65rem; }
+        .footer-links a { color: #64748b; text-decoration: none; font-size: 0.875rem; transition: color 0.2s; }
+        .footer-links a:hover { color: var(--primary); }
+        .social-icon {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.06);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .social-icon:hover { background: var(--primary); color: var(--navy); }
+    </style>
+</head>
+<body>
+
+    <!-- ======================== NAVBAR ======================== -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-building-fill brand-icon"></i> OmniRent
+            </a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto gap-1">
+                    <li class="nav-item">
+                        <a class="nav-link-custom py-2 px-3 d-inline-block rounded-3" href="/">Trang chủ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom py-2 px-3 d-inline-block rounded-3" href="/#productsSection">Khám phá</a>
+                    </li>
+                </ul>
+                <div class="d-flex gap-3 mt-3 mt-lg-0 align-items-center">
+                    <!-- Theme Toggle -->
+                    <button class="theme-toggle" id="themeToggle" title="Chuyển chế độ sáng/tối">
+                        <i class="bi bi-moon-fill"></i>
+                        <i class="bi bi-sun-fill"></i>
+                    </button>
+
+                    <!-- Cart -->
+                    <a href="/Home/Cart" class="cart-icon position-relative me-1">
+                        <i class="bi bi-cart3"></i>
+                        <span id="cartBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; display: none;">0</span>
+                    </a>
+
+                    @if (isAuthenticated)
+                    {
+                        <!-- User Profile Dropdown -->
+                        <div class="dropdown">
+                            <button class="user-dropdown-btn dropdown-toggle" type="button" id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="profile-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: var(--navy); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; overflow: hidden; border: 1.5px solid var(--primary);">
+                                    @if (!string.IsNullOrEmpty(currentAvatar))
+                                    {
+                                        <img src="@currentAvatar" alt="Avatar" style="width:100%; height:100%; object-fit:cover;" />
+                                    }
+                                    else
+                                    {
+                                        @Model.FullName.Substring(0, 1).ToUpper()
+                                    }
+                                </div>
+                                <span class="d-none d-md-inline">@Model.FullName</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end p-2 border-0" aria-labelledby="userMenuButton" style="background: var(--card-bg); box-shadow: var(--card-shadow); border-radius: 12px; min-width: 200px;">
+                                <li>
+                                    <a class="dropdown-item rounded-3 py-2 px-3 d-flex align-items-center gap-2 active" href="/Account/Profile" style="font-size: 0.85rem; font-weight: 500;">
+                                        <i class="bi bi-person-circle"></i> Trang cá nhân & Lịch sử
+                                    </a>
+                                </li>
+                                @if (User.IsInRole("OWNER"))
+                                {
+                                    <li>
+                                        <a class="dropdown-item rounded-3 py-2 px-3 d-flex align-items-center gap-2" href="/OwnerDashboard" style="color: var(--text-primary); font-size: 0.85rem; font-weight: 500;">
+                                            <i class="bi bi-house-door-fill text-primary"></i> Quản lý tài sản
+                                        </a>
+                                    </li>
+                                }
+                                @if (User.IsInRole("ADMIN"))
+                                {
+                                    <li>
+                                        <a class="dropdown-item rounded-3 py-2 px-3 d-flex align-items-center gap-2" href="/AdminDashboard/Bookings" style="color: var(--text-primary); font-size: 0.85rem; font-weight: 500;">
+                                            <i class="bi bi-shield-lock-fill text-primary"></i> Trang quản trị
+                                        </a>
+                                    </li>
+                                }
+                                <li><hr class="dropdown-divider" style="border-color: var(--border);"></li>
+                                <li>
+                                    <form action="/Account/Logout" method="post" class="m-0">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dropdown-item rounded-3 py-2 px-3 text-danger d-flex align-items-center gap-2 bg-transparent border-0 w-100 text-start" style="font-size: 0.85rem; font-weight: 600;">
+                                            <i class="bi bi-box-arrow-right"></i> Đăng xuất
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <a href="/Account/Login" class="btn-nav-outline">Đăng nhập</a>
+                        <a href="/Account/Register" class="btn-nav-primary"><i class="bi bi-person-plus"></i> Đăng ký</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ======================== MAIN LAYOUT ======================== -->
+    <div class="container main-container">
+        <!-- Toast Alerts -->
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="alert alert-success alert-dismissible fade show rounded-4 mb-4 border-0 p-3 shadow-sm" role="alert" style="background: rgba(16,185,129,0.1); color: #10b981;">
+                <i class="bi bi-check-circle-fill me-2"></i> @successMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="row g-4">
+            <!-- Left Panel: Profile Quick Info -->
+            <div class="col-lg-4">
+                <div class="profile-sidebar">
+                    <div class="profile-avatar-wrapper">
+                        @if (!string.IsNullOrEmpty(currentAvatar))
+                        {
+                            <img id="profileSidebarAvatar" src="@currentAvatar" alt="Avatar" />
+                        }
+                        else
+                        {
+                            <span>@Model.FullName.Substring(0, 1).ToUpper()</span>
+                        }
+                    </div>
+
+                    <h3 class="profile-name">@Model.FullName</h3>
+                    <div class="profile-role-badge role-@(Model.Role.ToLower())">
+                        @Model.Role
+                    </div>
+
+                    <div class="trust-score-container text-start">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Điểm uy tín</span>
+                            <span style="font-size: 0.95rem; font-weight: 800; color: var(--primary);">@Model.RenterTrustScore.ToString("F1") / 100</span>
+                        </div>
+                        <div class="progress" style="height: 6px; background: var(--border); border-radius: 10px;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: @(Model.RenterTrustScore)%; border-radius: 10px;" aria-valuenow="@Model.RenterTrustScore" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <small class="d-block mt-2 text-muted" style="font-size: 0.7rem; line-height: 1.4;">Điểm uy tín cao giúp bạn dễ dàng thuê tài sản giá trị mà không cần đặt cọc lớn.</small>
+                    </div>
+
+                    <div class="text-start" style="font-size: 0.85rem; border-top: 1px solid var(--border); padding-top: 1.25rem; color: var(--text-secondary);">
+                        <div class="mb-2"><i class="bi bi-envelope me-2 text-primary"></i> @Model.Email</div>
+                        @if (!string.IsNullOrEmpty(Model.Phone))
+                        {
+                            <div class="mb-2"><i class="bi bi-telephone me-2 text-primary"></i> @Model.Phone</div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Address))
+                        {
+                            <div><i class="bi bi-geo-alt me-2 text-danger"></i> @Model.Address</div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Tabs for details -->
+            <div class="col-lg-8">
+                <!-- Navigation Tabs -->
+                <div class="d-flex profile-nav-tabs">
+                    <button class="profile-nav-link active" id="tabRentalHistoryBtn" onclick="switchTab('rentalHistory')">
+                        <i class="bi bi-box-seam me-2"></i> Lịch sử thuê đồ
+                    </button>
+                    <button class="profile-nav-link" id="tabEditProfileBtn" onclick="switchTab('editProfile')">
+                        <i class="bi bi-person-gear me-2"></i> Thiết lập tài khoản
+                    </button>
+                </div>
+
+                <!-- Tab content 1: Rental History -->
+                <div id="tabRentalHistory" class="tab-pane-custom">
+                    @if (bookings.Any())
+                    {
+                        foreach (var booking in bookings)
+                        {
+                            <div class="booking-card">
+                                <div class="row g-4 align-items-center">
+                                    <div class="col-md-3">
+                                        @{
+                                            var imagesList = new List<string>();
+                                            try {
+                                                if (booking.Product != null && !string.IsNullOrEmpty(booking.Product.ImagesJson)) {
+                                                    imagesList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(booking.Product.ImagesJson) ?? new List<string>();
+                                                }
+                                            } catch { }
+                                            var mainImg = imagesList.Any() ? imagesList.First() : "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80";
+                                        }
+                                        <img src="@mainImg" alt="@(booking.Product?.Name ?? "Tài sản")" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80'" />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="badge mb-2" style="background: var(--body-bg); color: var(--text-primary); border: 1px solid var(--border);">Đơn thuê: #@booking.Id.Substring(0, 8)</span>
+                                        <h4 class="fw-bold mb-2" style="color: var(--text-primary);"><a href="/Home/ProductDetails/@booking.ProductId" style="text-decoration:none; color:inherit;">@(booking.Product?.Name ?? "N/A")</a></h4>
+                                        
+                                        <div class="mb-2" style="font-size: 0.9rem; color: var(--text-secondary);">
+                                            <i class="bi bi-calendar3 text-primary me-2"></i> Thời gian: 
+                                            <strong>@booking.StartDate.ToString("dd/MM/yyyy")</strong> đến <strong>@booking.EndDate.ToString("dd/MM/yyyy")</strong>
+                                        </div>
+                                        <div class="mb-3" style="font-size: 0.9rem; color: var(--text-secondary);">
+                                            <i class="bi bi-geo-alt-fill text-danger me-2"></i> Địa chỉ nhận: 
+                                            <span>@booking.RentalAddress</span>
+                                        </div>
+
+                                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                                            @if (booking.Status == "PENDING") { <span class="badge bg-warning text-dark badge-status">Chờ duyệt</span> }
+                                            else if (booking.Status == "APPROVED") { <span class="badge bg-info badge-status">Đã duyệt</span> }
+                                            else if (booking.Status == "ONGOING") { <span class="badge badge-status" style="background: var(--primary); color: #000000;">Đang thuê</span> }
+                                            else if (booking.Status == "COMPLETED") { <span class="badge bg-success badge-status">Hoàn thành</span> }
+                                            else if (booking.Status == "CANCELLED" || booking.Status == "REJECTED") { <span class="badge bg-danger badge-status">Đã hủy</span> }
+
+                                            @if (booking.PaymentStatus == "UNPAID") { <span class="badge bg-danger badge-status">Chưa thanh toán</span> }
+                                            else if (booking.PaymentStatus == "PAID") { <span class="badge bg-success badge-status">Đã đặt cọc</span> }
+                                            else if (booking.PaymentStatus == "REFUNDED") { <span class="badge bg-info badge-status">Đã hoàn tiền</span> }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 text-md-end d-flex flex-column justify-content-between align-items-md-end">
+                                        <div class="mb-3">
+                                            <small class="d-block" style="color: var(--text-secondary);">Tổng giá thuê</small>
+                                            <h3 class="fw-bold m-0" style="color: var(--primary);">@booking.TotalPrice.ToString("N0")đ</h3>
+                                        </div>
+
+                                        @if (booking.PaymentStatus == "UNPAID" && booking.Status != "CANCELLED" && booking.Status != "REJECTED")
+                                        {
+                                            <a href="/Home/Payment/@booking.Id" class="btn btn-nav-primary w-100 py-2 justify-content-center text-center">
+                                                <i class="bi bi-wallet2"></i> Thanh toán
+                                            </a>
+                                        }
+                                        else if (booking.Status == "COMPLETED")
+                                        {
+                                            var hasReviewed = booking.Reviews != null && booking.Reviews.Any();
+                                            if (hasReviewed)
+                                            {
+                                                <button class="btn btn-secondary py-2 px-3 rounded-pill fw-bold w-100" style="background: var(--body-bg); border: 1.5px solid var(--border); color: var(--text-secondary); cursor: not-allowed;" disabled>
+                                                    <i class="bi bi-check2-circle text-success"></i> Đã đánh giá
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-nav-primary py-2 px-3 btn-review-trigger w-100 justify-content-center"
+                                                        data-booking-id="@booking.Id"
+                                                        data-product-name="@(booking.Product?.Name ?? "Sản phẩm")"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#reviewModal">
+                                                    <i class="bi bi-star-fill"></i> Đánh giá
+                                                </button>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-5 rounded-4 shadow-sm" style="background: var(--card-bg); border: 1px solid var(--border);">
+                            <i class="bi bi-inboxes fs-1 mb-3 d-block text-muted"></i>
+                            <p class="fs-5" style="color: var(--text-secondary);">Bạn chưa thực hiện bất kỳ giao dịch thuê tài sản nào.</p>
+                            <a href="/" class="btn-nav-primary px-4 py-2 mt-3">Khám phá sản phẩm ngay</a>
+                        </div>
+                    }
+                </div>
+
+                <!-- Tab content 2: Edit Profile -->
+                <div id="tabEditProfile" class="tab-pane-custom card-custom" style="display: none;">
+                    <h4 class="fw-bold mb-4" style="color:var(--text-primary);"><i class="bi bi-person-gear text-primary"></i> Thông tin tài khoản</h4>
+                    
+                    <form action="/Account/UpdateProfile" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="FullName" class="form-label-custom">Họ và Tên <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-custom" id="FullName" name="FullName" value="@Model.FullName" required placeholder="Họ và tên đầy đủ của bạn">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">Email đăng nhập (Không thể đổi)</label>
+                                <input type="email" class="form-control form-control-custom" value="@Model.Email" readonly disabled style="cursor: not-allowed; opacity: 0.65;">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="Phone" class="form-label-custom">Số điện thoại liên hệ</label>
+                                <input type="tel" class="form-control form-control-custom" id="Phone" name="Phone" value="@Model.Phone" placeholder="Ví dụ: 0987654321">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="Address" class="form-label-custom">Địa chỉ giao nhận mặc định</label>
+                                <input type="text" class="form-control form-control-custom" id="Address" name="Address" value="@Model.Address" placeholder="Số nhà, Tên đường, Quận/Huyện, Tỉnh/Thành...">
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="AvatarFile" class="form-label-custom">Tải lên ảnh đại diện mới (.jpg, .png...)</label>
+                                <input type="file" class="form-control form-control-custom" id="AvatarFile" name="AvatarFile" accept="image/*" onchange="previewFileAvatar(this)">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="AvatarUrl" class="form-label-custom">Hoặc dán Link URL ảnh đại diện</label>
+                                <input type="text" class="form-control form-control-custom" id="AvatarUrl" name="AvatarUrl" value="@Model.AvatarUrl" placeholder="https://example.com/avatar.jpg" oninput="previewUrlAvatar(this)">
+                            </div>
+                        </div>
+
+                        <div class="text-center p-3 rounded-4 mb-4 d-flex align-items-center gap-3" id="avatarPreviewContainer" style="background: var(--body-bg); border: 1px solid var(--border); display: none !important;">
+                            <span style="font-size:0.8rem; font-weight:600; color:var(--text-secondary);">Xem trước avatar mới:</span>
+                            <img id="avatarPreviewImg" src="" alt="Preview" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--primary);" />
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button type="submit" class="btn btn-nav-primary px-4"><i class="bi bi-save2-fill me-2"></i>Lưu thông tin</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-content-custom">
+                <div class="modal-header modal-header-custom">
+                    <h5 class="modal-title fw-bold" id="reviewModalLabel"><i class="bi bi-star-fill text-warning me-2"></i>Đánh giá sản phẩm</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="dark" aria-label="Close" onclick="bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide()"></button>
+                </div>
+                <form id="reviewForm">
+                    <div class="modal-body">
+                        <div id="reviewErrorAlert" class="alert alert-danger" style="display: none;"></div>
+                        <div id="reviewSuccessAlert" class="alert alert-success" style="display: none;"></div>
+
+                        <div class="mb-3">
+                            <span style="color: var(--text-secondary);">Bạn đang đánh giá cho: </span>
+                            <div id="modalProductName" class="fw-bold fs-5 mt-1" style="color: var(--primary);"></div>
+                            <input type="hidden" id="bookingIdInput" name="bookingId" />
+                        </div>
+
+                        <!-- Rating selection stars -->
+                        <div class="mb-4 text-center">
+                            <label class="form-label d-block text-center fw-bold mb-2">Mức độ hài lòng của bạn</label>
+                            <div class="star-rating d-flex gap-3 fs-2 justify-content-center">
+                                <i class="bi bi-star" data-value="1"></i>
+                                <i class="bi bi-star" data-value="2"></i>
+                                <i class="bi bi-star" data-value="3"></i>
+                                <i class="bi bi-star" data-value="4"></i>
+                                <i class="bi bi-star" data-value="5"></i>
+                            </div>
+                            <input type="hidden" id="ratingInput" name="rating" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="commentInput" class="form-label fw-bold">Nhận xét chi tiết</label>
+                            <textarea class="form-control form-control-custom" id="commentInput" rows="4" placeholder="Chia sẻ trải nghiệm sử dụng sản phẩm này của bạn (chất lượng, thái độ chủ đồ, thời gian giao nhận...)" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer modal-footer-custom">
+                        <button type="button" class="btn btn-secondary py-2 px-4 rounded-pill" onclick="bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide()">Hủy bỏ</button>
+                        <button type="submit" id="btnSubmitReview" class="btn-nav-primary py-2 px-4">Gửi đánh giá</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================== FOOTER ======================== -->
+    <footer>
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-4">
+                    <div class="footer-brand">
+                        <i class="bi bi-building-fill" style="color: var(--primary);"></i> OmniRent
+                    </div>
+                    <p class="footer-text">Nền tảng kết nối người thuê và người cho thuê nhanh chóng, an toàn và minh bạch nhất hiện nay.</p>
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="#" class="social-icon"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="social-icon"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="social-icon"><i class="bi bi-twitter-x"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <h4 class="footer-title">Khám phá</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Tất cả tài sản</a></li>
+                        <li><a href="#">Danh mục nổi bật</a></li>
+                        <li><a href="#">Chủ cho thuê uy tín</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <h4 class="footer-title">Hỗ trợ</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Trung tâm trợ giúp</a></li>
+                        <li><a href="#">Quy định an toàn</a></li>
+                        <li><a href="#">Chính sách bảo mật</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 col-md-4">
+                    <h4 class="footer-title">Liên hệ</h4>
+                    <ul class="footer-links">
+                        <li><i class="bi bi-envelope me-2" style="color:var(--primary)"></i>support@omnirent.vn</li>
+                        <li><i class="bi bi-telephone me-2" style="color:var(--primary)"></i>1800 000 000</li>
+                        <li><i class="bi bi-geo-alt me-2" style="color:var(--primary)"></i>Hồ Chí Minh, Việt Nam</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="text-center mt-5 pt-4" style="border-top: 1px solid rgba(255,255,255,0.06); color: #475569; font-size: 0.82rem;">
+                &copy; @DateTime.Now.Year OmniRent. Mọi quyền được bảo lưu.
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // =================== Theme Toggle ===================
+        (function() {
+            const root = document.documentElement;
+            const toggle = document.getElementById('themeToggle');
+            const storageKey = 'omnirent-theme';
+
+            function getPreferred() {
+                const saved = localStorage.getItem(storageKey);
+                if (saved) return saved;
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+
+            function applyTheme(theme) {
+                root.setAttribute('data-theme', theme);
+                localStorage.setItem(storageKey, theme);
+            }
+
+            applyTheme(getPreferred());
+
+            if (toggle) {
+                toggle.addEventListener('click', () => {
+                    const current = root.getAttribute('data-theme') || 'light';
+                    applyTheme(current === 'dark' ? 'light' : 'dark');
+                });
+            }
+
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                if (!localStorage.getItem(storageKey)) {
+                    applyTheme(e.matches ? 'dark' : 'light');
+                }
+            });
+        })();
+
+        // =================== Cart Badge ===================
+        function updateCartBadge() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let badge = document.getElementById('cartBadge');
+            if (badge) {
+                if (cart.length > 0) {
+                    badge.innerText = cart.length; badge.style.display = 'inline-block';
+                } else { badge.style.display = 'none'; }
+            }
+        }
+        document.addEventListener('DOMContentLoaded', updateCartBadge);
+
+        // =================== Tabs switching ===================
+        function switchTab(tabId) {
+            const tabs = ['rentalHistory', 'editProfile'];
+            tabs.forEach(t => {
+                const link = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1) + 'Btn');
+                const content = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+                if (t === tabId) {
+                    link.classList.add('active');
+                    content.style.display = (t === 'editProfile') ? 'block' : 'block';
+                } else {
+                    link.classList.remove('active');
+                    content.style.display = 'none';
+                }
+            });
+        }
+
+        // =================== Avatar Preview ===================
+        function previewFileAvatar(input) {
+            const container = document.getElementById('avatarPreviewContainer');
+            const img = document.getElementById('avatarPreviewImg');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                    container.setAttribute('style', 'display: flex !important;');
+                }
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                container.setAttribute('style', 'display: none !important;');
+            }
+        }
+
+        function previewUrlAvatar(input) {
+            const container = document.getElementById('avatarPreviewContainer');
+            const img = document.getElementById('avatarPreviewImg');
+            const url = input.value.trim();
+            if (url) {
+                img.src = url;
+                container.setAttribute('style', 'display: flex !important;');
+            } else {
+                container.setAttribute('style', 'display: none !important;');
+            }
+        }
+
+        // =================== Review Actions ===================
+        document.addEventListener('DOMContentLoaded', function() {
+            const stars = document.querySelectorAll('#reviewModal .star-rating i');
+            const ratingInput = document.getElementById('ratingInput');
+            const bookingIdInput = document.getElementById('bookingIdInput');
+            const modalProductName = document.getElementById('modalProductName');
+            const reviewButtons = document.querySelectorAll('.btn-review-trigger');
+
+            // Set up triggers
+            reviewButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const bookingId = this.getAttribute('data-booking-id');
+                    const productName = this.getAttribute('data-product-name');
+                    
+                    bookingIdInput.value = bookingId;
+                    modalProductName.innerText = productName;
+                    
+                    // Reset modal inputs
+                    ratingInput.value = '';
+                    document.getElementById('commentInput').value = '';
+                    highlightStars(0);
+                    
+                    document.getElementById('reviewErrorAlert').style.display = 'none';
+                    document.getElementById('reviewSuccessAlert').style.display = 'none';
+                });
+            });
+
+            // Star hover and select interactions
+            stars.forEach(star => {
+                star.addEventListener('mouseover', function() {
+                    const val = parseInt(this.getAttribute('data-value'));
+                    highlightStars(val);
+                });
+                
+                star.addEventListener('mouseout', function() {
+                    const currentVal = parseInt(ratingInput.value) || 0;
+                    highlightStars(currentVal);
+                });
+                
+                star.addEventListener('click', function() {
+                    const val = parseInt(this.getAttribute('data-value'));
+                    ratingInput.value = val;
+                    highlightStars(val);
+                });
+            });
+
+            function highlightStars(count) {
+                stars.forEach(star => {
+                    const val = parseInt(star.getAttribute('data-value'));
+                    if (val <= count) {
+                        star.classList.remove('bi-star');
+                        star.classList.add('bi-star-fill');
+                        star.style.color = 'var(--primary)';
+                    } else {
+                        star.classList.remove('bi-star-fill');
+                        star.classList.add('bi-star');
+                        star.style.color = '#cbd5e1';
+                    }
+                });
+            }
+
+            // Form Submit handler
+            const reviewForm = document.getElementById('reviewForm');
+            reviewForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const bookingId = bookingIdInput.value;
+                const rating = parseInt(ratingInput.value);
+                const comment = document.getElementById('commentInput').value.trim();
+                
+                if (!rating) {
+                    showError("Vui lòng chọn mức đánh giá sao!");
+                    return;
+                }
+                if (!comment) {
+                    showError("Vui lòng nhập nhận xét của bạn!");
+                    return;
+                }
+                
+                const submitBtn = document.getElementById('btnSubmitReview');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang gửi...';
+                
+                try {
+                    const response = await fetch('/review', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            bookingId: bookingId,
+                            rating: rating,
+                            comment: comment
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        document.getElementById('reviewSuccessAlert').innerText = "Đánh giá của bạn đã được gửi thành công!";
+                        document.getElementById('reviewSuccessAlert').style.display = 'block';
+                        document.getElementById('reviewErrorAlert').style.display = 'none';
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1200);
+                    } else {
+                        const errData = await response.json();
+                        showError(errData.message || "Đã xảy ra lỗi khi gửi đánh giá. Vui lòng thử lại.");
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = 'Gửi đánh giá';
+                    }
+                } catch (err) {
+                    showError("Lỗi kết nối mạng. Vui lòng thử lại sau.");
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = 'Gửi đánh giá';
+                }
+            });
+
+            function showError(msg) {
+                document.getElementById('reviewErrorAlert').innerText = msg;
+                document.getElementById('reviewErrorAlert').style.display = 'block';
+                document.getElementById('reviewSuccessAlert').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

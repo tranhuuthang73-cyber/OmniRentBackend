@@ -127,23 +127,9 @@ namespace OmniRentBackend.Controllers
 
         // GET /Home/MyBookings
         [Authorize]
-        public async Task<IActionResult> MyBookings()
+        public IActionResult MyBookings()
         {
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            var bookings = await _context.Bookings
-                .Include(b => b.Product)
-                    .ThenInclude(p => p!.Owner)
-                .Include(b => b.Reviews)
-                .Where(b => b.RenterId == userId)
-                .OrderByDescending(b => b.CreatedAt)
-                .ToListAsync();
-
-            return View(bookings);
+            return RedirectToAction("Profile", "Account");
         }
 
         // GET /Home/CreateTestCompletedBooking

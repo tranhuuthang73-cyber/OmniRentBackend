@@ -191,6 +191,90 @@ namespace OmniRentBackend.Controllers
             return RedirectToAction("Index", "Home");
         }
 
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Profile()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return RedirectToAction("Login");
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return NotFound();
+
+            var bookings = await _context.Bookings
+                .Include(b => b.Product)
+                    .ThenInclude(p => p!.Owner)
+                .Include(b => b.Reviews)
+                .Where(b => b.RenterId == userId)
+                .OrderByDescending(b => b.CreatedAt)
+                .ToListAsync();
+
+            ViewBag.Bookings = bookings;
+            return View(user);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProfile(
+            [FromForm] string FullName,
+            [FromForm] string? Phone,
+            [FromForm] string? Address,
+            [FromForm] string? AvatarUrl,
+            Microsoft.AspNetCore.Http.IFormFile? AvatarFile)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return RedirectToAction("Login");
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return NotFound();
+
+            user.FullName = FullName;
+            user.Phone = Phone;
+            user.Address = Address;
+
+            // Handle Avatar uploading
+            if (AvatarFile != null && AvatarFile.Length > 0)
+            {
+                try
+                {
+                    var uploadsFolder = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot", "uploads", "avatars");
+                    if (!System.IO.Directory.Exists(uploadsFolder))
+                    {
+                        System.IO.Directory.CreateDirectory(uploadsFolder);
+                    }
+
+                    var fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(AvatarFile.FileName);
+                    var filePath = System.IO.Path.Combine(uploadsFolder, fileName);
+
+                    using (var fileStream = new System.IO.FileStream(filePath, System.IO.FileMode.Create))
+                    {
+                        await AvatarFile.CopyToAsync(fileStream);
+                    }
+
+                    user.AvatarUrl = $"/uploads/avatars/{fileName}";
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", $"Không thể tải lên ảnh đại diện: {ex.Message}");
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(AvatarUrl))
+            {
+                user.AvatarUrl = AvatarUrl.Trim();
+            }
+
+            user.UpdatedAt = DateTime.UtcNow;
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            // Refresh cookie to update claim name and avatar
+            await SignInUserAsync(user, false);
+
+            TempData["SuccessMessage"] = "Cập nhật thông tin cá nhân thành công.";
+            return RedirectToAction(nameof(Profile));
+        }
+
         private async Task SignInUserAsync(User user, bool isPersistent)
         {
             var claims = new List<Claim>
@@ -200,6 +284,11 @@ namespace OmniRentBackend.Controllers
                 new Claim(ClaimTypes.Name, user.FullName),
                 new Claim(ClaimTypes.Role, user.Role ?? "RENTER")
             };
+
+            if (!string.IsNullOrEmpty(user.AvatarUrl))
+            {
+                claims.Add(new Claim("AvatarUrl", user.AvatarUrl));
+            }
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(

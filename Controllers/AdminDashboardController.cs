@@ -307,8 +307,9 @@ namespace OmniRentBackend.Controllers
             }
 
             // Build images JSON from URL list
-            var validUrls = (ImageUrls ?? new List<string>())
+            var validUrls = Request.Form["ImageUrls"]
                 .Where(u => !string.IsNullOrWhiteSpace(u))
+                .Select(u => u.Trim())
                 .ToList();
             var imagesJson = JsonSerializer.Serialize(validUrls);
 
@@ -401,8 +402,9 @@ namespace OmniRentBackend.Controllers
                 return View(product);
             }
 
-            var validUrls = (ImageUrls ?? new List<string>())
+            var validUrls = Request.Form["ImageUrls"]
                 .Where(u => !string.IsNullOrWhiteSpace(u))
+                .Select(u => u.Trim())
                 .ToList();
 
             product.Name = Name;

@@ -1156,17 +1156,54 @@
 
                     @if (User.Identity != null && User.Identity.IsAuthenticated)
                     {
-                        <span style="color:var(--text-secondary); font-size:0.82rem;">Xin chào, <strong style="color:var(--text-primary);">@User.Identity.Name</strong></span>
-                        @if (User.IsInRole("ADMIN"))
-                        {
-                            <a href="/AdminDashboard/Bookings" class="btn-nav-outline">
-                                <i class="bi bi-grid"></i> Quản trị
-                            </a>
-                        }
-                        <form action="/Account/Logout" method="post" class="d-inline m-0">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn-nav-primary">Đăng xuất</button>
-                        </form>
+                        var userAvatar = User.FindFirst("AvatarUrl")?.Value;
+                        <div class="dropdown">
+                            <button class="btn dropdown-toggle d-flex align-items-center gap-2 border-0 bg-transparent p-0" type="button" id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false" style="color:var(--text-primary); font-size:0.9rem; font-weight:600;">
+                                <div class="profile-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: var(--navy); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; overflow: hidden; border: 1.5px solid var(--primary);">
+                                    @if (!string.IsNullOrEmpty(userAvatar))
+                                    {
+                                        <img src="@userAvatar" alt="Avatar" style="width:100%; height:100%; object-fit:cover;" />
+                                    }
+                                    else
+                                    {
+                                        @User.Identity.Name.Substring(0, 1).ToUpper()
+                                    }
+                                </div>
+                                <span class="d-none d-md-inline" style="color:var(--text-primary)">@User.Identity.Name</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end p-2 border-0" aria-labelledby="userMenuButton" style="background: var(--card-bg); box-shadow: var(--card-shadow); border-radius: 12px; min-width: 200px;">
+                                <li>
+                                    <a class="dropdown-item rounded-3 py-2 px-3 d-flex align-items-center gap-2" href="/Account/Profile" style="color: var(--text-primary); font-size: 0.85rem; font-weight: 500;">
+                                        <i class="bi bi-person-circle text-primary"></i> Trang cá nhân & Lịch sử
+                                    </a>
+                                </li>
+                                @if (User.IsInRole("OWNER"))
+                                {
+                                    <li>
+                                        <a class="dropdown-item rounded-3 py-2 px-3 d-flex align-items-center gap-2" href="/OwnerDashboard" style="color: var(--text-primary); font-size: 0.85rem; font-weight: 500;">
+                                            <i class="bi bi-house-door-fill text-primary"></i> Quản lý tài sản
+                                        </a>
+                                    </li>
+                                }
+                                @if (User.IsInRole("ADMIN"))
+                                {
+                                    <li>
+                                        <a class="dropdown-item rounded-3 py-2 px-3 d-flex align-items-center gap-2" href="/AdminDashboard/Bookings" style="color: var(--text-primary); font-size: 0.85rem; font-weight: 500;">
+                                            <i class="bi bi-shield-lock-fill text-primary"></i> Trang quản trị
+                                        </a>
+                                    </li>
+                                }
+                                <li><hr class="dropdown-divider" style="border-color: var(--border);"></li>
+                                <li>
+                                    <form action="/Account/Logout" method="post" class="m-0">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dropdown-item rounded-3 py-2 px-3 text-danger d-flex align-items-center gap-2 bg-transparent border-0 w-100 text-start" style="font-size: 0.85rem; font-weight: 600;">
+                                            <i class="bi bi-box-arrow-right"></i> Đăng xuất
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
                     }
                     else
                     {

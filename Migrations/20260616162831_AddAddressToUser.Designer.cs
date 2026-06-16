@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OmniRentBackend.Data;
 
@@ -10,9 +11,11 @@ using OmniRentBackend.Data;
 namespace OmniRentBackend.Migrations
 {
     [DbContext(typeof(OmniRentDbContext))]
-    partial class OmniRentDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260616162831_AddAddressToUser")]
+    partial class AddAddressToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
