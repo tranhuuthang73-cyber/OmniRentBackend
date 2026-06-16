@@ -141,7 +141,8 @@ namespace OmniRentBackend.Controllers
         [HttpGet]
         public async Task<IActionResult> GoogleLoginCallback(string? returnUrl = null)
         {
-            var authenticateResult = await HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
+            // Đọc thông tin user từ cookie tạm (ExternalCookie) do Google middleware tạo ra
+            var authenticateResult = await HttpContext.AuthenticateAsync("ExternalCookie");
             if (!authenticateResult.Succeeded)
                 return RedirectToAction("Login", new { returnUrl });
 
@@ -160,7 +161,7 @@ namespace OmniRentBackend.Controllers
                     Id = Guid.NewGuid().ToString(),
                     Email = email,
                     FullName = name ?? email,
-                    PasswordHash = null,
+                    PasswordHash = "GOOGLE_AUTH_" + Guid.NewGuid().ToString("N"), // Không có mật khẩu, đăng nhập qua Google
                     Role = "RENTER",
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
@@ -171,6 +172,8 @@ namespace OmniRentBackend.Controllers
                 await _context.SaveChangesAsync();
             }
 
+            // Xóa cookie tạm của Google, đăng nhập vào session chính (Cookies)
+            await HttpContext.SignOutAsync("ExternalCookie");
             await SignInUserAsync(user, false);
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))

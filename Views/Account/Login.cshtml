@@ -252,6 +252,54 @@
         }
         .text-link:hover { color: var(--primary-hover); text-decoration: underline; }
 
+        /* Google Login Button */
+        .btn-google {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
+            background: #ffffff;
+            cursor: pointer;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: background 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+        }
+        .btn-google:hover {
+            background: #f8fafc;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .btn-google img {
+            width: 20px;
+            height: 20px;
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 1.5rem 0 0.5rem 0;
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border);
+        }
+        .divider:not(:empty)::before {
+            margin-right: .5em;
+        }
+        .divider:not(:empty)::after {
+            margin-left: .5em;
+        }
+
         .mb-field { margin-bottom: 1.1rem; }
 
         /* Responsive */
@@ -321,6 +369,13 @@
                         <i class="bi bi-box-arrow-in-right me-1"></i> Đăng nhập
                     </button>
                 </form>
+
+                <div class="divider">HOẶC</div>
+
+                <a href="/Account/LoginWithGoogle?returnUrl=@System.Net.WebUtility.UrlEncode(returnUrl)" class="btn-google">
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google logo" />
+                    Đăng nhập bằng Google
+                </a>
 
                 <div class="text-center mt-4" style="font-size: 0.875rem; color: var(--text-sub);">
                     Chưa có tài khoản?
