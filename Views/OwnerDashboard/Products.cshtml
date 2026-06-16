@@ -1,0 +1,198 @@
+@using OmniRentBackend.Models
+@using System.Text.Json
+@model IEnumerable<Product>
+@{
+    ViewData["Title"] = "Quản lý sản phẩm";
+    Layout = "~/Views/Shared/_OwnerLayout.cshtml";
+}
+
+<style>
+    .product-thumbnail {
+        width: 46px;
+        height: 46px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e2e8f0);
+    }
+    .img-placeholder {
+        width: 46px;
+        height: 46px;
+        background-color: #f1f5f9;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        font-size: 1.1rem;
+        border: 1px solid #e2e8f0;
+    }
+    .product-name strong {
+        color: var(--text-primary, #0f172a);
+        font-size: 0.875rem;
+    }
+    .product-name small {
+        color: var(--text-muted, #94a3b8);
+        font-size: 0.72rem;
+    }
+    .price-highlight {
+        color: #16a34a;
+        font-weight: 700;
+        font-size: 0.875rem;
+    }
+    .deposit-text {
+        color: var(--text-secondary, #475569);
+        font-size: 0.85rem;
+    }
+
+    /* Status badges */
+    .badge-available    { background: #dcfce7; color: #15803d; }
+    .badge-rented       { background: #fef9c3; color: #854d0e; }
+    .badge-maintenance  { background: #e0f2fe; color: #0369a1; }
+    .badge-pending      { background: #f1f5f9; color: #475569; }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.3em 0.75em;
+        border-radius: 50px;
+        font-size: 0.72rem;
+        font-weight: 700;
+    }
+
+    /* Action buttons */
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        border-radius: 7px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        border: 1.5px solid;
+        transition: all 0.15s;
+        text-decoration: none;
+    }
+    .btn-edit { border-color: #fbbf24; color: #d97706; background: #fef9c3; }
+    .btn-edit:hover { background: #fbbf24; color: white; }
+    .btn-delete { border-color: #fca5a5; color: #dc2626; background: #fef2f2; }
+    .btn-delete:hover { background: #dc2626; color: white; }
+
+    /* Empty state */
+    .empty-state {
+        padding: 3rem 1rem;
+        text-align: center;
+        color: var(--text-muted, #94a3b8);
+    }
+    .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }
+    .empty-state p { font-size: 0.875rem; margin: 0; }
+</style>
+
+<!-- Page Header -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem;">
+    <div>
+        <h4 style="font-size:1.2rem; font-weight:700; color:var(--text-primary); margin:0;">
+            <i class="bi bi-box-seam me-2" style="color:var(--primary,#1a56db)"></i>Danh sách Sản phẩm của tôi
+        </h4>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Quản lý các sản phẩm bạn đang đăng cho thuê</div>
+    </div>
+    <a href="/OwnerDashboard/CreateProduct" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Đăng sản phẩm mới
+    </a>
+</div>
+
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="width:60px; padding-left:1.25rem;">Ảnh</th>
+                    <th>Tên Sản phẩm</th>
+                    <th>Danh mục</th>
+                    <th>Giá thuê/Ngày</th>
+                    <th>Tiền đặt cọc</th>
+                    <th>Trạng thái</th>
+                    <th style="width:90px; text-align:center;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        var images = JsonSerializer.Deserialize<List<string>>(item.ImagesJson ?? "[]") ?? new List<string>();
+                        var firstImage = images.FirstOrDefault();
+
+                        <tr>
+                            <td style="padding-left:1.25rem;">
+                                @if (!string.IsNullOrEmpty(firstImage))
+                                {
+                                    <img src="@firstImage" alt="@item.Name" class="product-thumbnail" />
+                                }
+                                else
+                                {
+                                    <div class="img-placeholder"><i class="bi bi-image"></i></div>
+                                }
+                            </td>
+                            <td>
+                                <div class="product-name">
+                                    <strong>@item.Name</strong><br />
+                                    <small>@(item.Description != null ? item.Description.Substring(0, Math.Min(55, item.Description.Length)) + "..." : "")</small>
+                                </div>
+                            </td>
+                            <td style="font-size:0.85rem; color:var(--text-secondary);">@(item.Category?.Name ?? "N/A")</td>
+                            <td><span class="price-highlight">@item.PricePerDay.ToString("N0")đ</span></td>
+                            <td><span class="deposit-text">@item.DepositAmount.ToString("N0")đ</span></td>
+                            <td>
+                                @if (item.Status == "AVAILABLE")
+                                {
+                                    <span class="status-pill badge-available"><i class="bi bi-check-circle-fill"></i> Có sẵn</span>
+                                }
+                                else if (item.Status == "RENTED")
+                                {
+                                    <span class="status-pill badge-rented"><i class="bi bi-box-arrow-up-right"></i> Đang thuê</span>
+                                }
+                                else if (item.Status == "MAINTENANCE")
+                                {
+                                    <span class="status-pill badge-maintenance"><i class="bi bi-tools"></i> Bảo trì</span>
+                                }
+                                else if (item.Status == "PENDING_APPROVAL")
+                                {
+                                    <span class="status-pill badge-pending"><i class="bi bi-clock"></i> Chờ duyệt</span>
+                                }
+                                else
+                                {
+                                    <span class="status-pill badge-pending">@item.Status</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <a href="/OwnerDashboard/EditProduct/@item.Id" class="btn-action btn-edit" title="Chỉnh sửa">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="post" action="/OwnerDashboard/DeleteProduct/@item.Id" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn-action btn-delete" title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <i class="bi bi-inbox"></i>
+                                <p>Bạn chưa đăng sản phẩm nào. <a href="/OwnerDashboard/CreateProduct" style="color:var(--primary)">Đăng sản phẩm đầu tiên</a>.</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

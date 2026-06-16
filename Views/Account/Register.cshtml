@@ -1,0 +1,278 @@
+@using OmniRentBackend.Models.ViewModels
+@model RegisterViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Đăng ký - OmniRent";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            --primary:       #f59e0b;
+            --primary-hover: #d97706;
+            --primary-light: #fef3c7;
+            --navy:          #0f172a;
+            --text-main:     #000000;
+            --text-sub:      #333333;
+            --text-muted:    #666666;
+            --border:        #e2e8f0;
+        }
+
+        html, body {
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #666666;
+        }
+
+        .register-page {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Left brand panel */
+        .register-panel-left {
+            flex: 0 0 40%;
+            background: var(--navy);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .register-panel-left::before {
+            content: '';
+            position: absolute;
+            width: 350px; height: 350px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245,158,11,0.15), transparent 65%);
+            top: -70px; right: -70px;
+            pointer-events: none;
+        }
+        .brand-logo {
+            width: 60px; height: 60px;
+            background: var(--primary);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 8px 24px rgba(245,158,11,0.4);
+        }
+        .brand-logo i { font-size: 1.6rem; color: var(--navy); }
+        .brand-name { font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: 0.4rem; }
+        .brand-tagline { color: #64748b; font-size: 0.875rem; text-align: center; max-width: 240px; line-height: 1.6; }
+        .brand-steps {
+            margin-top: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 100%;
+            max-width: 260px;
+        }
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .step-num {
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            background: rgba(245,158,11,0.2);
+            border: 1.5px solid rgba(245,158,11,0.4);
+            color: var(--primary);
+            font-size: 0.72rem;
+            font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .step-text { color: #94a3b8; font-size: 0.82rem; }
+
+        /* Right form */
+        .register-panel-right {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: #fff;
+            overflow-y: auto;
+        }
+
+        .register-card {
+            width: 100%;
+            max-width: 420px;
+            animation: fadeUp 0.4s ease both;
+        }
+        @@keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .register-card h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #000000;
+            margin-bottom: 0.3rem;
+        }
+        .register-card .subtitle {
+            color: #333333;
+            font-size: 0.875rem;
+            margin-bottom: 1.75rem;
+        }
+
+        /* Field */
+        .field-group { margin-bottom: 1rem; }
+        .field-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #333333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 0.35rem;
+        }
+        .form-control {
+            border: 1.5px solid var(--border) !important;
+            border-radius: 10px !important;
+            font-size: 0.9rem !important;
+            padding: 0.65rem 0.9rem !important;
+            color: var(--text-main) !important;
+            background: #fff !important;
+            transition: border-color 0.2s, box-shadow 0.2s !important;
+        }
+        .form-control:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px rgba(245,158,11,0.15) !important;
+        }
+        .form-control::placeholder { color: #cbd5e1 !important; }
+        .form-label { color: var(--text-sub) !important; font-size: 0.82rem !important; font-weight: 600 !important; }
+
+        /* Submit */
+        .btn-register {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #000000;
+            background: var(--primary);
+            cursor: pointer;
+            margin-top: 0.5rem;
+            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 14px rgba(245,158,11,0.35);
+        }
+        .btn-register:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(245,158,11,0.4);
+        }
+
+        /* Validation */
+        .text-danger { color: #dc2626 !important; font-size: 0.78rem; }
+        .alert-danger {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            border-radius: 10px;
+            color: #dc2626;
+            font-size: 0.875rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .text-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+        .text-link:hover { color: var(--primary-hover); text-decoration: underline; }
+
+        @@media (max-width: 768px) {
+            .register-panel-left { display: none; }
+            .register-panel-right { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-page">
+
+        <!-- Left Brand Panel -->
+        <div class="register-panel-left">
+            <div class="brand-logo"><i class="bi bi-building-fill"></i></div>
+            <div class="brand-name">OmniRent</div>
+            <div class="brand-tagline">Tham gia cộng đồng cho thuê hàng đầu Việt Nam</div>
+            <div class="brand-steps">
+                <div class="step-item">
+                    <div class="step-num">1</div>
+                    <div class="step-text">Tạo tài khoản miễn phí</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">2</div>
+                    <div class="step-text">Khám phá hàng ngàn sản phẩm</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">3</div>
+                    <div class="step-text">Thuê hoặc cho thuê dễ dàng</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Form Panel -->
+        <div class="register-panel-right">
+            <div class="register-card">
+                <h1>Tạo tài khoản</h1>
+                <p class="subtitle">Đăng ký để trải nghiệm đầy đủ tính năng OmniRent</p>
+
+                <form asp-action="Register" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert-danger" role="alert"></div>
+
+                    <div class="field-group">
+                        <label asp-for="FullName" class="form-label">Họ và tên</label>
+                        <input asp-for="FullName" class="form-control" placeholder="Nguyễn Văn A" />
+                        <span asp-validation-for="FullName" class="text-danger"></span>
+                    </div>
+
+                    <div class="field-group">
+                        <label asp-for="Email" class="form-label">Địa chỉ Email</label>
+                        <input asp-for="Email" class="form-control" placeholder="name@example.com" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="field-group">
+                        <label asp-for="Password" class="form-label">Mật khẩu</label>
+                        <input asp-for="Password" type="password" class="form-control" placeholder="Ít nhất 6 ký tự" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+
+                    <div class="field-group">
+                        <label asp-for="ConfirmPassword" class="form-label">Xác nhận mật khẩu</label>
+                        <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Nhập lại mật khẩu" />
+                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="btn-register">
+                        <i class="bi bi-person-check me-1"></i> Đăng ký ngay
+                    </button>
+
+                    <div class="text-center mt-3" style="font-size:0.875rem; color:var(--text-sub);">
+                        Đã có tài khoản?
+                        <a asp-action="Login" class="text-link">Đăng nhập</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+</body>
+</html>

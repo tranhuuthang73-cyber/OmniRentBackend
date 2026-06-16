@@ -1,0 +1,198 @@
+@using OmniRentBackend.Models
+@model Booking
+@{
+    ViewData["Title"] = "Chi tiết Đơn hàng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .detail-card {
+        background: #fff;
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: 12px;
+        padding: 1.5rem;
+        height: 100%;
+    }
+    .detail-card .card-section-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        color: var(--text-muted, #94a3b8);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .detail-row {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0.75rem;
+    }
+    .detail-row:last-child { margin-bottom: 0; }
+    .detail-row label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--text-muted, #94a3b8);
+        margin-bottom: 0.15rem;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+    .detail-row span {
+        font-size: 0.875rem;
+        color: var(--text-primary, #0f172a);
+        font-weight: 500;
+    }
+    .price-big {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: #16a34a;
+    }
+    .booking-id-chip {
+        font-family: 'Courier New', monospace;
+        font-size: 0.8rem;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        color: var(--text-secondary);
+    }
+
+    /* Status & payment badges */
+    .bp-pending   { background: #fef9c3; color: #854d0e; }
+    .bp-approved  { background: #dbeafe; color: #1d4ed8; }
+    .bp-ongoing   { background: #dcfce7; color: #15803d; }
+    .bp-completed { background: #f0fdf4; color: #166534; }
+    .bp-cancelled { background: #fef2f2; color: #dc2626; }
+    .bp-default   { background: #f1f5f9; color: #475569; }
+    .pay-paid     { background: #dcfce7; color: #15803d; }
+    .pay-unpaid   { background: #fef9c3; color: #854d0e; }
+    .pay-refunded { background: #e0f2fe; color: #0369a1; }
+    .pay-default  { background: #f1f5f9; color: #475569; }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.35em 0.85em;
+        border-radius: 50px;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+</style>
+
+<!-- Page Header -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem;">
+    <div>
+        <h4 style="font-size:1.2rem; font-weight:700; color:var(--text-primary); margin:0; display:flex; align-items:center; gap:0.5rem;">
+            <i class="bi bi-receipt" style="color:var(--primary,#1a56db)"></i>
+            Chi tiết Đơn hàng
+            <span class="booking-id-chip">#@Model.Id</span>
+        </h4>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Đơn hàng &rsaquo; Chi tiết</div>
+    </div>
+    <a href="/AdminDashboard/Bookings" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<div class="row g-3">
+    <!-- Thông tin sản phẩm -->
+    <div class="col-md-6">
+        <div class="detail-card">
+            <div class="card-section-title">
+                <i class="bi bi-box-seam"></i> Thông tin Sản phẩm
+            </div>
+            <div class="detail-row">
+                <label>Tên sản phẩm</label>
+                <span>@(Model.Product?.Name ?? "N/A")</span>
+            </div>
+            <div class="detail-row">
+                <label>Chủ sở hữu</label>
+                <span>@(Model.Product?.Owner?.FullName ?? "N/A")</span>
+            </div>
+            <div class="detail-row">
+                <label>Email chủ</label>
+                <span>@(Model.Product?.Owner?.Email ?? "N/A")</span>
+            </div>
+            <div class="detail-row">
+                <label>Giá thuê / ngày</label>
+                <span style="color:#16a34a; font-weight:700;">@(Model.Product?.PricePerDay.ToString("N0") ?? "0")đ</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thông tin người thuê -->
+    <div class="col-md-6">
+        <div class="detail-card">
+            <div class="card-section-title">
+                <i class="bi bi-person-circle"></i> Thông tin Người thuê
+            </div>
+            <div class="detail-row">
+                <label>Họ tên</label>
+                <span>@(Model.Renter?.FullName ?? "N/A")</span>
+            </div>
+            <div class="detail-row">
+                <label>Email</label>
+                <span>@(Model.Renter?.Email ?? "N/A")</span>
+            </div>
+            <div class="detail-row">
+                <label>Điểm tin cậy</label>
+                <span>@(Model.Renter?.RenterTrustScore.ToString() ?? "N/A") / 100</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thông tin đơn hàng -->
+    <div class="col-12">
+        <div class="detail-card">
+            <div class="card-section-title">
+                <i class="bi bi-card-text"></i> Thông tin Đơn hàng
+            </div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="detail-row">
+                        <label>Ngày bắt đầu</label>
+                        <span>@Model.StartDate.ToString("dd/MM/yyyy")</span>
+                    </div>
+                    <div class="detail-row">
+                        <label>Ngày kết thúc</label>
+                        <span>@Model.EndDate.ToString("dd/MM/yyyy")</span>
+                    </div>
+                    <div class="detail-row">
+                        <label>Ngày tạo</label>
+                        <span>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="detail-row">
+                        <label>Trạng thái đơn</label>
+                        <span>
+                            @if (Model.Status == "PENDING") { <span class="status-pill bp-pending"><i class="bi bi-clock"></i> Chờ duyệt</span> }
+                            else if (Model.Status == "APPROVED") { <span class="status-pill bp-approved"><i class="bi bi-check-circle"></i> Đã duyệt</span> }
+                            else if (Model.Status == "ONGOING") { <span class="status-pill bp-ongoing"><i class="bi bi-arrow-repeat"></i> Đang thuê</span> }
+                            else if (Model.Status == "COMPLETED") { <span class="status-pill bp-completed"><i class="bi bi-check-circle-fill"></i> Hoàn thành</span> }
+                            else if (Model.Status == "CANCELLED" || Model.Status == "REJECTED") { <span class="status-pill bp-cancelled"><i class="bi bi-x-circle"></i> Đã hủy</span> }
+                            else { <span class="status-pill bp-default">@Model.Status</span> }
+                        </span>
+                    </div>
+                    <div class="detail-row">
+                        <label>Thanh toán</label>
+                        <span>
+                            @if (Model.PaymentStatus == "PAID") { <span class="status-pill pay-paid"><i class="bi bi-check-circle-fill"></i> Đã thanh toán</span> }
+                            else if (Model.PaymentStatus == "UNPAID") { <span class="status-pill pay-unpaid"><i class="bi bi-clock"></i> Chưa thanh toán</span> }
+                            else if (Model.PaymentStatus == "REFUNDED") { <span class="status-pill pay-refunded"><i class="bi bi-arrow-counterclockwise"></i> Đã hoàn tiền</span> }
+                            else { <span class="status-pill pay-default">@Model.PaymentStatus</span> }
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4 d-flex align-items-center">
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:1rem 1.25rem; width:100%;">
+                        <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#94a3b8; margin-bottom:0.25rem;">Tổng tiền</div>
+                        <div class="price-big">@Model.TotalPrice.ToString("N0")đ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

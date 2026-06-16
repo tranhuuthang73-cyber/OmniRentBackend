@@ -1,0 +1,148 @@
+@using OmniRentBackend.Models
+@model Booking
+@{
+    ViewData["Title"] = "Cập nhật Trạng thái Đơn hàng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .readonly-field {
+        background-color: #f8fafc !important;
+        color: var(--text-secondary, #475569) !important;
+        cursor: not-allowed;
+    }
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1.75rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--border-color, #e2e8f0);
+    }
+</style>
+
+<!-- Page Header -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem;">
+    <div>
+        <h4 style="font-size:1.2rem; font-weight:700; color:var(--text-primary); margin:0;">
+            <i class="bi bi-ui-checks me-2" style="color:var(--primary,#1a56db)"></i>Cập nhật Đơn hàng
+        </h4>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Đơn hàng &rsaquo; Cập nhật trạng thái</div>
+    </div>
+</div>
+
+<div class="card-custom p-4" style="max-width: 780px;">
+    <form method="post" action="/AdminDashboard/EditBooking/@Model.Id">
+        @Html.AntiForgeryToken()
+
+        <!-- Section: Thông tin cơ bản (readonly) -->
+        <div style="display:flex;align-items:center;gap:0.65rem;margin:0 0 1.1rem;">
+            <div style="width:28px;height:28px;background:#ebf0ff;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#1a56db;font-size:0.85rem;flex-shrink:0;"><i class="bi bi-info-circle"></i></div>
+            <span style="font-size:0.82rem;font-weight:700;color:var(--text-primary);">Thông tin đơn hàng</span>
+            <div style="flex:1;height:1px;background:#e2e8f0;"></div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <label class="form-label">Sản phẩm</label>
+                <input type="text" class="form-control readonly-field" value="@(Model.Product?.Name)" disabled>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Người thuê</label>
+                <input type="text" class="form-control readonly-field" value="@(Model.Renter?.FullName)" disabled>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Địa chỉ nhận tài sản cho thuê</label>
+            <textarea class="form-control readonly-field" rows="2" disabled>@Model.RentalAddress</textarea>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <label for="StartDate" class="form-label">Ngày thuê</label>
+                <input type="date" class="form-control readonly-field" id="StartDate" value="@Model.StartDate.ToString("yyyy-MM-dd")" disabled>
+            </div>
+            <div class="col-md-6">
+                <label for="EndDate" class="form-label">Ngày trả</label>
+                <input type="date" class="form-control readonly-field" id="EndDate" value="@Model.EndDate.ToString("yyyy-MM-dd")" disabled>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="TotalPrice" class="form-label">Tổng tiền (VNĐ)</label>
+            <input type="number" class="form-control readonly-field" id="TotalPrice" value="@Model.TotalPrice" disabled>
+        </div>
+
+        <!-- Section: Cập nhật trạng thái -->
+        <div style="display:flex;align-items:center;gap:0.65rem;margin:1.75rem 0 1.1rem;">
+            <div style="width:28px;height:28px;background:#ebf0ff;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#1a56db;font-size:0.85rem;flex-shrink:0;"><i class="bi bi-pencil-square"></i></div>
+            <span style="font-size:0.82rem;font-weight:700;color:var(--text-primary);">Cập nhật trạng thái</span>
+            <div style="flex:1;height:1px;background:#e2e8f0;"></div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <label for="Status" class="form-label">Trạng thái đơn hàng <span class="text-danger">*</span></label>
+                <select class="form-select" id="Status" name="Status" required>
+                    @{
+                        var bookingStatuses = new[]
+                        {
+                            ("PENDING",   "⏳ Chờ duyệt (PENDING)"),
+                            ("APPROVED",  "✅ Đã duyệt (APPROVED)"),
+                            ("ONGOING",   "🔄 Đang thuê (ONGOING)"),
+                            ("COMPLETED", "🏁 Hoàn thành (COMPLETED)"),
+                            ("CANCELLED", "❌ Đã hủy (CANCELLED)"),
+                        };
+                        foreach (var s in bookingStatuses)
+                        {
+                            if (Model.Status == s.Item1)
+                            {
+                                <option value="@s.Item1" selected>@s.Item2</option>
+                            }
+                            else
+                            {
+                                <option value="@s.Item1">@s.Item2</option>
+                            }
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="PaymentStatus" class="form-label">Trạng thái thanh toán <span class="text-danger">*</span></label>
+                <select class="form-select" id="PaymentStatus" name="PaymentStatus" required>
+                    @{
+                        var paymentStatuses = new[]
+                        {
+                            ("UNPAID",   "💳 Chưa thanh toán"),
+                            ("PAID",     "✅ Đã thanh toán"),
+                            ("REFUNDED", "↩️ Đã hoàn tiền"),
+                        };
+                        foreach (var p in paymentStatuses)
+                        {
+                            if (Model.PaymentStatus == p.Item1)
+                            {
+                                <option value="@p.Item1" selected>@p.Item2</option>
+                            }
+                            else
+                            {
+                                <option value="@p.Item1">@p.Item2</option>
+                            }
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+
+
+        <!-- Actions -->
+        <div class="form-actions">
+            <a href="/AdminDashboard/Bookings" class="btn btn-secondary">
+                <i class="bi bi-x"></i> Hủy
+            </a>
+            <button type="submit" class="btn btn-primary px-4">
+                <i class="bi bi-save"></i> Lưu thay đổi
+            </button>
+        </div>
+    </form>
+</div>

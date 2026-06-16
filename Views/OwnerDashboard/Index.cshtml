@@ -1,0 +1,187 @@
+@{
+    ViewData["Title"] = "Tổng quan";
+    Layout = "~/Views/Shared/_OwnerLayout.cshtml";
+    var userName  = User.Identity?.Name ?? "";
+    var myProductsCount = ViewBag.MyProductsCount ?? 0;
+    var pendingBookingsCount = ViewBag.PendingBookingsCount ?? 0;
+    var totalRevenue = ViewBag.TotalRevenue ?? 0;
+}
+
+<style>
+    /* Info banner */
+    .info-banner {
+        background: var(--primary-light);
+        border: 1px solid rgba(245,158,11,0.3);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        color: #92400e;
+        font-size: 0.875rem;
+        display: flex; align-items: flex-start; gap: 0.6rem;
+        margin-bottom: 1.75rem;
+    }
+    .info-banner i { color: var(--primary); font-size: 1.05rem; flex-shrink: 0; margin-top: 1px; }
+    .info-banner strong { color: #78350f; }
+
+    /* Stat cards */
+    .stat-card {
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 1.4rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: var(--card-shadow);
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(15,23,42,0.1);
+    }
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+    .stat-card .stat-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1;
+    }
+    .stat-card .stat-label {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        margin-top: 0.2rem;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        font-weight: 600;
+    }
+
+    /* Quick actions */
+    .quick-action-card {
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 1.5rem;
+        text-align: center;
+        height: 100%;
+        transition: all 0.2s;
+        box-shadow: var(--card-shadow);
+    }
+    .quick-action-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--primary);
+        box-shadow: 0 8px 24px rgba(245,158,11,0.12);
+    }
+    .qa-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        background: var(--primary-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        color: var(--primary);
+        margin: 0 auto 0.9rem;
+    }
+    .qa-title { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.3rem; }
+    .qa-desc  { font-size: 0.78rem; color: var(--text-muted); margin: 0; }
+
+    .section-heading {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .section-heading i { color: var(--primary); }
+</style>
+
+<!-- Info banner -->
+<div class="info-banner" id="owner-info-banner">
+    <i class="bi bi-info-circle-fill"></i>
+    <span>Chào mừng quay lại, <strong>@userName</strong>! Tại đây bạn có thể quản lý sản phẩm cho thuê của riêng mình.</span>
+</div>
+
+<!-- Stat cards -->
+<div class="section-heading">
+    <i class="bi bi-bar-chart-fill"></i> Tổng quan tài sản
+</div>
+<div class="row g-3 mb-5" id="owner-stat-cards">
+    <div class="col-md-4 col-sm-6">
+        <div class="stat-card" id="stat-my-products">
+            <div class="stat-icon" style="background:#dcfce7;">
+                <i class="bi bi-box-seam-fill" style="color:#16a34a;"></i>
+            </div>
+            <div>
+                <div class="stat-value">@myProductsCount</div>
+                <div class="stat-label">Tài sản của tôi</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-6">
+        <div class="stat-card" id="stat-pending">
+            <div class="stat-icon" style="background:var(--primary-light);">
+                <i class="bi bi-hourglass-split" style="color:var(--primary);"></i>
+            </div>
+            <div>
+                <div class="stat-value">@pendingBookingsCount</div>
+                <div class="stat-label">Đơn chờ duyệt</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-6">
+        <div class="stat-card" id="stat-revenue">
+            <div class="stat-icon" style="background:#dbeafe;">
+                <i class="bi bi-currency-dollar" style="color:#1d4ed8;"></i>
+            </div>
+            <div>
+                <div class="stat-value">@totalRevenue.ToString("N0")đ</div>
+                <div class="stat-label">Doanh thu tạm tính</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick actions -->
+<div class="section-heading">
+    <i class="bi bi-lightning-fill"></i> Thao tác nhanh
+</div>
+<div class="row g-3">
+    <div class="col-md-4 col-6">
+        <a href="/OwnerDashboard/CreateProduct" class="text-decoration-none">
+            <div class="quick-action-card">
+                <div class="qa-icon"><i class="bi bi-plus-circle-fill"></i></div>
+                <div class="qa-title">Đăng tài sản mới</div>
+                <div class="qa-desc">Thêm sản phẩm cho thuê mới của bạn</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4 col-6">
+        <a href="/OwnerDashboard/Products" class="text-decoration-none">
+            <div class="quick-action-card">
+                <div class="qa-icon"><i class="bi bi-box-seam"></i></div>
+                <div class="qa-title">Quản lý tài sản</div>
+                <div class="qa-desc">Xem, sửa và xóa các sản phẩm hiện có</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4 col-6">
+        <a href="/" class="text-decoration-none">
+            <div class="quick-action-card">
+                <div class="qa-icon"><i class="bi bi-house-door-fill"></i></div>
+                <div class="qa-title">Quay lại Trang chủ</div>
+                <div class="qa-desc">Xem trang chủ hệ thống cho thuê</div>
+            </div>
+        </a>
+    </div>
+</div>

@@ -13,7 +13,7 @@ using OmniRentBackend.Models;
 namespace OmniRentBackend.Controllers
 {
     [ApiController]
-    [Route("auth")]
+    [Route("api/auth")]  // Đổi thành api/auth để tách biệt với MvcAuthController ([Route("auth")])
     public class AuthController : ControllerBase
     {
         private readonly OmniRentDbContext _context;

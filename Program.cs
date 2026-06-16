@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -9,37 +10,44 @@ using OmniRentBackend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Force listening on port 5285 to match the original NestJS backend
+// Force listening on port 5285
 builder.WebHost.UseUrls("http://0.0.0.0:5285");
 
-// 1. Configure EF Core Database Context (SQLite)
-// Use the local SQLite database path
-string dbPath = "Data Source=dev.db";
+// 1. Configure EF Core with SQL Server (connection string từ appsettings.json)
 builder.Services.AddDbContext<OmniRentDbContext>(options =>
-    options.UseSqlite(dbPath));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // 2. Add Custom Services
 builder.Services.AddScoped<AiService>();
 builder.Services.AddScoped<TrustService>();
 
-// 3. Add controllers and configure JSON options
-builder.Services.AddControllers()
+// 3. Add Controllers + Razor Views (MVC) and JSON options
+builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>
     {
-        // Prevent infinite loops on circular relational dependencies
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
 
-// 4. Configure SignalR for real-time chat and alerts
+// 4. SignalR
 builder.Services.AddSignalR();
 
-// 5. Configure JWT Authentication
+// 5. Authentication: Cookie + JWT
 var secret = builder.Configuration["Jwt:Secret"] ?? "OmniRentSuperSecretStartupJwtTokenKey2026!!!";
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+})
+.AddCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/Login";
+    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+    options.SlidingExpiration = true;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 })
 .AddJwtBearer(options =>
 {
@@ -57,7 +65,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// 6. Configure CORS to allow any origin (e.g. localhost:3000, 0.0.0.0:3000) with credentials
+// 6. CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
@@ -71,14 +79,16 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// 7. Seed Database on startup if tables are empty
+// 7. Seed database (gọi đồng bộ an toàn)
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<OmniRentDbContext>();
-        await DbSeeder.SeedAsync(context);
+        // Đảm bảo database đã được tạo (tự động nếu chưa có)
+        context.Database.Migrate(); // Chạy migration nếu có
+        Task.Run(async () => await DbSeeder.SeedAsync(context)).GetAwaiter().GetResult();
         Console.WriteLine("Database check and seeding completed successfully.");
     }
     catch (Exception ex)
@@ -88,17 +98,15 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseCors("CorsPolicy");
-
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<OmniRentBackend.Middleware.PermissionMiddleware>();
 
-// Map route endpoints
 app.MapControllers();
-
-// Map SignalR Hub
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapHub<ChatHub>("/hubs/chat");
-
-// Minimal status endpoint
-app.MapGet("/", () => new { name = "OmniRent C# ASP.NET Core Backend", status = "RUNNING" });
 
 app.Run();
