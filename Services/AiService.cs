@@ -267,7 +267,7 @@ namespace OmniRentBackend.Services
 
         /// <summary>
         /// Tìm kiếm thông minh bằng ảnh: Upload ảnh → So sánh với ảnh sản phẩm trong hệ thống
-        /// Sử dụng byte-hash comparison kết hợp phân tích từ khóa tên file và gợi ý fallback.
+        /// So sánh byte-hash cho ảnh local, tải ảnh ngoài để so sánh, kết hợp phân tích từ khóa tên file.
         /// </summary>
         public async Task<object> ImageSearchAsync(string uploadedImagePath, string originalFileName, string webRootPath)
         {
@@ -281,195 +281,179 @@ namespace OmniRentBackend.Services
 
             byte[] uploadedBytes = await File.ReadAllBytesAsync(uploadedImagePath);
             string uploadedHash = ComputeSimpleHash(uploadedBytes);
-            int uploadedSize = uploadedBytes.Length;
 
-            // Lấy tất cả sản phẩm có ảnh
+            // Lấy tất cả sản phẩm có ảnh — Include cả Category.Parent để lọc subcategory chính xác
             var products = await _context.Products
                 .Include(p => p.Category)
+                    .ThenInclude(c => c!.Parent)
                 .Include(p => p.Owner)
                 .Where(p => p.Status == "AVAILABLE")
                 .ToListAsync();
 
             // 1. Phân tích từ khóa từ tên file gốc để hỗ trợ rà soát thông minh
             var lowerFileName = originalFileName.ToLower();
-            string? matchedCategorySlug = null;
+            string? matchedCategorySlug = DetectCategoryFromFileName(lowerFileName);
 
-            if (lowerFileName.Contains("macbook") || lowerFileName.Contains("laptop") || lowerFileName.Contains("asus") || lowerFileName.Contains("dell") || lowerFileName.Contains("hp") || lowerFileName.Contains("thinkpad") || lowerFileName.Contains("computer") || lowerFileName.Contains("pc"))
-            {
-                matchedCategorySlug = "laptop";
-            }
-            else if (lowerFileName.Contains("sh") || lowerFileName.Contains("vespa") || lowerFileName.Contains("honda") || lowerFileName.Contains("yamaha") || lowerFileName.Contains("moto") || lowerFileName.Contains("xe-may") || lowerFileName.Contains("xe_may") || lowerFileName.Contains("xemay") || lowerFileName.Contains("scooter"))
-            {
-                matchedCategorySlug = "xe-may";
-            }
-            else if (lowerFileName.Contains("camera") || lowerFileName.Contains("sony") || lowerFileName.Contains("canon") || lowerFileName.Contains("nikon") || lowerFileName.Contains("lens") || lowerFileName.Contains("may-anh") || lowerFileName.Contains("may_anh") || lowerFileName.Contains("mayanh"))
-            {
-                matchedCategorySlug = "may-anh";
-            }
-            else if (lowerFileName.Contains("loa") || lowerFileName.Contains("speaker") || lowerFileName.Contains("sound") || lowerFileName.Contains("jbl") || lowerFileName.Contains("marshall") || lowerFileName.Contains("am-thanh") || lowerFileName.Contains("audio"))
-            {
-                matchedCategorySlug = "loa";
-            }
-            else if (lowerFileName.Contains("vay") || lowerFileName.Contains("dress") || lowerFileName.Contains("dam") || lowerFileName.Contains("vay-tiec") || lowerFileName.Contains("skirt"))
-            {
-                matchedCategorySlug = "vay-tiec";
-            }
-            else if (lowerFileName.Contains("vest") || lowerFileName.Contains("suit") || lowerFileName.Contains("com-le") || lowerFileName.Contains("comle"))
-            {
-                matchedCategorySlug = "vest";
-            }
-            else if (lowerFileName.Contains("cosplay") || lowerFileName.Contains("anime") || lowerFileName.Contains("costume") || lowerFileName.Contains("hoa-trang") || lowerFileName.Contains("genshin"))
-            {
-                matchedCategorySlug = "cosplay";
-            }
-            else if (lowerFileName.Contains("projector") || lowerFileName.Contains("may-chieu") || lowerFileName.Contains("may_chieu") || lowerFileName.Contains("maychieu"))
-            {
-                matchedCategorySlug = "may-chieu";
-            }
-            else if (lowerFileName.Contains("xe-dien") || lowerFileName.Contains("vinfast") || lowerFileName.Contains("xedien") || lowerFileName.Contains("ev"))
-            {
-                matchedCategorySlug = "xe-dien";
-            }
-            else if (lowerFileName.Contains("bicycle") || lowerFileName.Contains("xe-dap") || lowerFileName.Contains("xedap") || lowerFileName.Contains("dap"))
-            {
-                matchedCategorySlug = "xe-dap";
-            }
+            // 2. Phân tích từ khóa rút trích từ tên file (để so khớp tên sản phẩm)
+            var fileKeywords = lowerFileName
+                .Split(new[] { '_', '-', ' ', '.', '(', ')', '[', ']' }, StringSplitOptions.RemoveEmptyEntries)
+                .Where(w => w.Length > 2 && !_stopWords.Contains(w))
+                .ToList();
 
             // Lọc danh sách sản phẩm theo category được phát hiện từ tên file (nếu có)
+            List<Product> categoryFilteredProducts = products;
             if (!string.IsNullOrEmpty(matchedCategorySlug))
             {
-                products = products.Where(p => p.Category != null && 
-                           (p.Category.Slug == matchedCategorySlug || 
-                            (p.Category.Parent != null && p.Category.Parent.Slug == matchedCategorySlug))).ToList();
+                categoryFilteredProducts = products.Where(p => p.Category != null &&
+                    (p.Category.Slug == matchedCategorySlug ||
+                     (p.Category.Parent != null && p.Category.Parent.Slug == matchedCategorySlug))).ToList();
             }
 
-            var rand = new Random();
+            // Tạo HttpClient để tải ảnh bên ngoài
+            using var httpClient = new System.Net.Http.HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(8);
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "OmniRent/1.0");
 
-            foreach (var product in products)
+            // Cache ảnh đã tải về để tránh tải lại nhiều lần
+            var externalImageCache = new Dictionary<string, byte[]?>();
+
+            // 3. Pha 1: So sánh byte thực tế (local + external images)
+            foreach (var product in categoryFilteredProducts)
             {
                 try
                 {
                     var imageUrls = JsonSerializer.Deserialize<List<string>>(product.ImagesJson);
                     if (imageUrls == null || !imageUrls.Any()) continue;
 
-                    bool isMatched = false;
+                    double bestSimilarity = 0;
+                    string bestMatchedImage = imageUrls.First();
+
                     foreach (var imageUrl in imageUrls)
                     {
-                        // Xác định đường dẫn file trên server
-                        string filePath = "";
+                        byte[]? productBytes = null;
+
+                        // Ảnh local trên server
                         if (imageUrl.StartsWith("/uploads/") || imageUrl.StartsWith("/wwwroot/"))
                         {
-                            filePath = Path.Combine(webRootPath, imageUrl.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString()));
+                            var filePath = Path.Combine(webRootPath, imageUrl.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString()));
+                            if (File.Exists(filePath))
+                                productBytes = await File.ReadAllBytesAsync(filePath);
                         }
                         else if (imageUrl.StartsWith("uploads/"))
                         {
-                            filePath = Path.Combine(webRootPath, imageUrl.Replace("/", Path.DirectorySeparatorChar.ToString()));
+                            var filePath = Path.Combine(webRootPath, imageUrl.Replace("/", Path.DirectorySeparatorChar.ToString()));
+                            if (File.Exists(filePath))
+                                productBytes = await File.ReadAllBytesAsync(filePath);
                         }
-                        else
+                        // Ảnh bên ngoài (http/https) — tải về để so sánh
+                        else if (imageUrl.StartsWith("http://") || imageUrl.StartsWith("https://"))
                         {
-                            continue; // Bỏ qua URL bên ngoài
+                            if (!externalImageCache.TryGetValue(imageUrl, out productBytes))
+                            {
+                                try
+                                {
+                                    var response = await httpClient.GetAsync(imageUrl);
+                                    if (response.IsSuccessStatusCode)
+                                    {
+                                        var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
+                                        if (contentType.StartsWith("image/"))
+                                        {
+                                            productBytes = await response.Content.ReadAsByteArrayAsync();
+                                        }
+                                    }
+                                }
+                                catch { productBytes = null; }
+                                externalImageCache[imageUrl] = productBytes;
+                            }
                         }
 
-                        double similarity = 0;
-                        if (File.Exists(filePath))
+                        if (productBytes != null && productBytes.Length > 0)
                         {
-                            byte[] productBytes = await File.ReadAllBytesAsync(filePath);
                             string productHash = ComputeSimpleHash(productBytes);
-                            similarity = ComputeSimilarity(uploadedHash, uploadedBytes, productHash, productBytes);
-                        }
-
-                        // Nếu khớp byte chính xác cao (ngưỡng 92% để loại bỏ JPEG false positives từ kích thước file)
-                        if (similarity >= 0.92)
-                        {
-                            results.Add(new
+                            double sim = ComputeSimilarity(uploadedHash, uploadedBytes, productHash, productBytes);
+                            if (sim > bestSimilarity)
                             {
-                                product.Id,
-                                product.Name,
-                                product.Description,
-                                product.PricePerDay,
-                                product.DepositAmount,
-                                categoryName = product.Category?.Name ?? "Tài sản",
-                                ownerName = product.Owner?.FullName ?? "Người dùng",
-                                matchedImage = imageUrl,
-                                similarity = Math.Round(similarity * 100, 1),
-                                product.Status
-                            });
-                            isMatched = true;
-                            break;
-                        }
-                        else if (!string.IsNullOrEmpty(matchedCategorySlug))
-                        {
-                            // Khớp từ khóa tên file: giả lập similarity thông minh ngẫu nhiên 82% -> 94%
-                            double simulatedSimilarity = 82.0 + rand.NextDouble() * 12.0;
-                            results.Add(new
-                            {
-                                product.Id,
-                                product.Name,
-                                product.Description,
-                                product.PricePerDay,
-                                product.DepositAmount,
-                                categoryName = product.Category?.Name ?? "Tài sản",
-                                ownerName = product.Owner?.FullName ?? "Người dùng",
-                                matchedImage = imageUrl,
-                                similarity = Math.Round(simulatedSimilarity, 1),
-                                product.Status
-                            });
-                            isMatched = true;
-                            break;
+                                bestSimilarity = sim;
+                                bestMatchedImage = imageUrl;
+                            }
                         }
                     }
 
-                    // Nếu không khớp qua byte/category, nhưng tên sản phẩm chứa từ khóa trong tên file
-                    if (!isMatched && !string.IsNullOrEmpty(lowerFileName))
+                    // Chỉ thêm vào kết quả nếu similarity đủ cao (>= 50%)
+                    if (bestSimilarity >= 0.50)
                     {
-                        var words = lowerFileName.Split(new[] { '_', '-', ' ', '.' }, StringSplitOptions.RemoveEmptyEntries)
-                                                 .Where(w => w.Length > 2 && w != "search" && w != "png" && w != "jpg" && w != "jpeg" && w != "webp" && w != "gif");
-                        
-                        foreach (var word in words)
+                        results.Add(new
                         {
-                            if (product.Name.ToLower().Contains(word))
-                            {
-                                double nameSimilarity = 75.0 + rand.NextDouble() * 10.0;
-                                results.Add(new
-                                {
-                                    product.Id,
-                                    product.Name,
-                                    product.Description,
-                                    product.PricePerDay,
-                                    product.DepositAmount,
-                                    categoryName = product.Category?.Name ?? "Tài sản",
-                                    ownerName = product.Owner?.FullName ?? "Người dùng",
-                                    matchedImage = imageUrls.FirstOrDefault() ?? "",
-                                    similarity = Math.Round(nameSimilarity, 1),
-                                    product.Status
-                                });
-                                break;
-                            }
-                        }
+                            product.Id,
+                            product.Name,
+                            product.Description,
+                            product.PricePerDay,
+                            product.DepositAmount,
+                            categoryName = product.Category?.Name ?? "Tài sản",
+                            ownerName = product.Owner?.FullName ?? "Người dùng",
+                            matchedImage = bestMatchedImage,
+                            similarity = Math.Round(bestSimilarity * 100, 1),
+                            product.Status
+                        });
                     }
                 }
                 catch { continue; }
             }
 
-            // Sắp xếp theo độ tương đồng giảm dần
+            // 4. Pha 2: Nếu chưa có kết quả, thử matching bằng tên sản phẩm + từ khóa tên file
+            if (results.Count == 0 && fileKeywords.Count > 0)
+            {
+                // Tìm trong toàn bộ sản phẩm (không chỉ category-filtered)
+                foreach (var product in products)
+                {
+                    var productNameLower = product.Name.ToLower();
+                    int matchedKeywords = fileKeywords.Count(kw => productNameLower.Contains(kw));
+
+                    if (matchedKeywords > 0)
+                    {
+                        var imageUrls = new List<string>();
+                        try { imageUrls = JsonSerializer.Deserialize<List<string>>(product.ImagesJson) ?? new List<string>(); } catch { }
+
+                        // Tính similarity dựa trên tỷ lệ từ khóa khớp (thang 60-85%)
+                        double keywordRatio = (double)matchedKeywords / fileKeywords.Count;
+                        double nameSimilarity = 60.0 + keywordRatio * 25.0;
+
+                        results.Add(new
+                        {
+                            product.Id,
+                            product.Name,
+                            product.Description,
+                            product.PricePerDay,
+                            product.DepositAmount,
+                            categoryName = product.Category?.Name ?? "Tài sản",
+                            ownerName = product.Owner?.FullName ?? "Người dùng",
+                            matchedImage = imageUrls.FirstOrDefault() ?? "",
+                            similarity = Math.Round(nameSimilarity, 1),
+                            product.Status
+                        });
+                    }
+                }
+            }
+
+            // 5. Sắp xếp theo độ tương đồng giảm dần, loại trùng lặp bằng product Id
             var sortedResults = results
+                .GroupBy(r => ((dynamic)r).Id as string)
+                .Select(g => g.OrderByDescending(r => (double)((dynamic)r).similarity).First())
                 .OrderByDescending(r => ((dynamic)r).similarity)
                 .Take(10)
                 .ToList();
 
-            // Fallback gợi ý nếu không có kết quả nào khớp
+            // 6. Fallback gợi ý nếu không có kết quả nào khớp
             if (sortedResults.Count == 0)
             {
-                if (!string.IsNullOrEmpty(matchedCategorySlug) && products.Count > 0)
+                if (!string.IsNullOrEmpty(matchedCategorySlug) && categoryFilteredProducts.Count > 0)
                 {
-                    // Chỉ gợi ý fallback khi xác định được danh mục (nhưng không có sản phẩm khớp chính xác)
-                    var fallbackList = products.OrderByDescending(p => p.CreatedAt).Take(3).ToList();
+                    var fallbackList = categoryFilteredProducts.OrderByDescending(p => p.CreatedAt).Take(3).ToList();
                     foreach (var product in fallbackList)
                     {
-                        var imageUrls = JsonSerializer.Deserialize<List<string>>(product.ImagesJson);
-                        string matchedImage = imageUrls?.FirstOrDefault() ?? "";
-                        double randomSimilarity = 65.0 + rand.NextDouble() * 10.0;
-                        
+                        var imageUrls = new List<string>();
+                        try { imageUrls = JsonSerializer.Deserialize<List<string>>(product.ImagesJson) ?? new List<string>(); } catch { }
+
                         sortedResults.Add(new
                         {
                             product.Id,
@@ -479,8 +463,8 @@ namespace OmniRentBackend.Services
                             product.DepositAmount,
                             categoryName = product.Category?.Name ?? "Tài sản",
                             ownerName = product.Owner?.FullName ?? "Người dùng",
-                            matchedImage,
-                            similarity = Math.Round(randomSimilarity, 1),
+                            matchedImage = imageUrls.FirstOrDefault() ?? "",
+                            similarity = 50.0,
                             product.Status
                         });
                     }
@@ -494,11 +478,10 @@ namespace OmniRentBackend.Services
                     };
                 }
 
-                // Nếu không phát hiện được danh mục và không có byte match
                 return new
                 {
                     success = true,
-                    message = "Không tìm thấy sản phẩm nào khớp với ảnh. Hãy thử chụp rõ hơn hoặc đặt tên file chứa từ khóa sản phẩm (ví dụ: laptop, xe_may, vay...)",
+                    message = "Không tìm thấy sản phẩm nào khớp với ảnh. Hãy thử chụp rõ hơn hoặc tìm bằng từ khóa.",
                     totalResults = 0,
                     results = sortedResults
                 };
@@ -507,16 +490,52 @@ namespace OmniRentBackend.Services
             return new
             {
                 success = true,
-                message = sortedResults.Count > 0
-                    ? $"Tìm thấy {sortedResults.Count} sản phẩm khớp với ảnh của bạn!"
-                    : "Không tìm thấy sản phẩm nào khớp với ảnh. Hãy thử chụp rõ hơn hoặc tìm bằng từ khóa.",
+                message = $"Tìm thấy {sortedResults.Count} sản phẩm khớp với ảnh của bạn!",
                 totalResults = sortedResults.Count,
                 results = sortedResults
             };
         }
 
         /// <summary>
-        /// Tính hash đơn giản của file ảnh dựa trên byte content
+        /// Danh sách từ dừng (stop words) — bỏ qua khi trích xuất từ khóa từ tên file
+        /// </summary>
+        private static readonly HashSet<string> _stopWords = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "search", "png", "jpg", "jpeg", "webp", "gif", "bmp", "svg",
+            "image", "img", "photo", "pic", "picture", "file", "download",
+            "the", "and", "for", "with", "from", "new", "old", "temp"
+        };
+
+        /// <summary>
+        /// Phân tích tên file để xác định danh mục sản phẩm
+        /// </summary>
+        private string? DetectCategoryFromFileName(string lowerFileName)
+        {
+            if (lowerFileName.Contains("macbook") || lowerFileName.Contains("laptop") || lowerFileName.Contains("asus") || lowerFileName.Contains("dell") || lowerFileName.Contains("thinkpad") || lowerFileName.Contains("computer"))
+                return "laptop";
+            if (lowerFileName.Contains("vespa") || lowerFileName.Contains("honda") || lowerFileName.Contains("yamaha") || lowerFileName.Contains("moto") || lowerFileName.Contains("xe-may") || lowerFileName.Contains("xe_may") || lowerFileName.Contains("xemay") || lowerFileName.Contains("scooter"))
+                return "xe-may";
+            if (lowerFileName.Contains("camera") || lowerFileName.Contains("sony") || lowerFileName.Contains("canon") || lowerFileName.Contains("nikon") || lowerFileName.Contains("lens") || lowerFileName.Contains("may-anh") || lowerFileName.Contains("may_anh") || lowerFileName.Contains("mayanh"))
+                return "may-anh";
+            if (lowerFileName.Contains("loa") || lowerFileName.Contains("speaker") || lowerFileName.Contains("sound") || lowerFileName.Contains("jbl") || lowerFileName.Contains("marshall") || lowerFileName.Contains("audio"))
+                return "loa";
+            if (lowerFileName.Contains("vay") || lowerFileName.Contains("dress") || lowerFileName.Contains("dam") || lowerFileName.Contains("vay-tiec") || lowerFileName.Contains("skirt"))
+                return "vay-tiec";
+            if (lowerFileName.Contains("vest") || lowerFileName.Contains("suit") || lowerFileName.Contains("com-le") || lowerFileName.Contains("comle"))
+                return "vest";
+            if (lowerFileName.Contains("cosplay") || lowerFileName.Contains("anime") || lowerFileName.Contains("costume") || lowerFileName.Contains("hoa-trang") || lowerFileName.Contains("genshin"))
+                return "cosplay";
+            if (lowerFileName.Contains("projector") || lowerFileName.Contains("may-chieu") || lowerFileName.Contains("may_chieu") || lowerFileName.Contains("maychieu"))
+                return "may-chieu";
+            if (lowerFileName.Contains("xe-dien") || lowerFileName.Contains("vinfast") || lowerFileName.Contains("xedien"))
+                return "xe-dien";
+            if (lowerFileName.Contains("bicycle") || lowerFileName.Contains("xe-dap") || lowerFileName.Contains("xedap"))
+                return "xe-dap";
+            return null;
+        }
+
+        /// <summary>
+        /// Tính hash SHA-256 của file ảnh dựa trên byte content
         /// </summary>
         private string ComputeSimpleHash(byte[] data)
         {
@@ -528,7 +547,7 @@ namespace OmniRentBackend.Services
         }
 
         /// <summary>
-        /// Tính toán độ tương đồng giữa 2 ảnh dựa trên hash + kích thước byte
+        /// Tính toán độ tương đồng giữa 2 ảnh dựa trên hash + kích thước byte + byte sampling
         /// Hash giống = 100%, khác hash thì so sánh theo kích thước và byte sampling
         /// </summary>
         private double ComputeSimilarity(string hash1, byte[] data1, string hash2, byte[] data2)
@@ -543,9 +562,11 @@ namespace OmniRentBackend.Services
 
             // So sánh mẫu byte (sampling) — lấy ~200 điểm so sánh
             int samplePoints = Math.Min(200, Math.Min(data1.Length, data2.Length));
+            if (samplePoints == 0) return 0;
+            
             int matchCount = 0;
-            int step1 = data1.Length / samplePoints;
-            int step2 = data2.Length / samplePoints;
+            int step1 = Math.Max(1, data1.Length / samplePoints);
+            int step2 = Math.Max(1, data2.Length / samplePoints);
 
             for (int i = 0; i < samplePoints; i++)
             {
