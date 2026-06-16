@@ -196,6 +196,50 @@
         .text-link { color: var(--primary); text-decoration: none; font-weight: 600; }
         .text-link:hover { color: var(--primary-hover); text-decoration: underline; }
 
+        /* Google Button */
+        .btn-google {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
+            background: #ffffff;
+            cursor: pointer;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: background 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+        }
+        .btn-google:hover {
+            background: #f8fafc;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .btn-google img {
+            width: 20px;
+            height: 20px;
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 1.5rem 0 0.5rem 0;
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border);
+        }
+        .divider:not(:empty)::before { margin-right: .5em; }
+        .divider:not(:empty)::after { margin-left: .5em; }
+
         @@media (max-width: 768px) {
             .register-panel-left { display: none; }
             .register-panel-right { padding: 1.5rem; }
@@ -262,12 +306,19 @@
                     <button type="submit" class="btn-register">
                         <i class="bi bi-person-check me-1"></i> Đăng ký ngay
                     </button>
-
-                    <div class="text-center mt-3" style="font-size:0.875rem; color:var(--text-sub);">
-                        Đã có tài khoản?
-                        <a asp-action="Login" class="text-link">Đăng nhập</a>
-                    </div>
                 </form>
+
+                <div class="divider">HOẶC</div>
+
+                <a href="/Account/LoginWithGoogle" class="btn-google">
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google logo" />
+                    Đăng ký bằng Google
+                </a>
+
+                <div class="text-center mt-3" style="font-size:0.875rem; color:var(--text-sub);">
+                    Đã có tài khoản?
+                    <a asp-action="Login" class="text-link">Đăng nhập</a>
+                </div>
             </div>
         </div>
     </div>

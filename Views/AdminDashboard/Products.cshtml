@@ -8,47 +8,51 @@
 
 <style>
     .product-thumbnail {
-        width: 46px;
-        height: 46px;
+        width: 48px;
+        height: 48px;
         object-fit: cover;
         border-radius: 8px;
-        border: 1px solid var(--border-color, #e2e8f0);
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
     }
     .img-placeholder {
-        width: 46px;
-        height: 46px;
-        background-color: #f1f5f9;
+        width: 48px;
+        height: 48px;
+        background-color: #e8eef7;
         border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #94a3b8;
+        color: #64748b;
         font-size: 1.1rem;
-        border: 1px solid #e2e8f0;
+        border: 1px solid #cbd5e1;
     }
     .product-name strong {
-        color: var(--text-primary, #0f172a);
-        font-size: 0.875rem;
+        color: #0f172a;
+        font-size: 0.9rem;
+        font-weight: 800;
     }
     .product-name small {
-        color: var(--text-muted, #94a3b8);
-        font-size: 0.72rem;
+        color: #475569;
+        font-size: 0.74rem;
+        font-weight: 500;
     }
     .price-highlight {
-        color: #16a34a;
-        font-weight: 700;
+        color: #047857;
+        font-weight: 800;
         font-size: 0.875rem;
     }
     .deposit-text {
-        color: var(--text-secondary, #475569);
+        color: #334155;
         font-size: 0.85rem;
+        font-weight: 600;
     }
 
     /* Status badges */
-    .badge-available    { background: #dcfce7; color: #15803d; }
-    .badge-rented       { background: #fef9c3; color: #854d0e; }
-    .badge-maintenance  { background: #e0f2fe; color: #0369a1; }
-    .badge-pending      { background: #f1f5f9; color: #475569; }
+    .badge-available    { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+    .badge-rented       { background: #fef9c3; color: #854d0e; border-color: #fde68a; }
+    .badge-maintenance  { background: #e0f2fe; color: #075985; border-color: #bae6fd; }
+    .badge-pending      { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }
 
     .status-pill {
         display: inline-flex;
@@ -58,45 +62,125 @@
         border-radius: 50px;
         font-size: 0.72rem;
         font-weight: 700;
+        border: 1px solid transparent;
+        white-space: nowrap;
+    }
+
+    .products-page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .products-page-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+    }
+    .products-page-subtitle {
+        font-size: 0.8rem;
+        color: #334155;
+        margin-top: 2px;
+        font-weight: 500;
+    }
+    .btn-create-product {
+        min-width: 168px;
+        padding: 0.55rem 0.9rem;
+        background: #1d4ed8 !important;
+        border-color: #1d4ed8 !important;
+        color: #ffffff !important;
+        font-weight: 800;
+        box-shadow: 0 8px 18px rgba(29,78,216,0.24);
+    }
+    .btn-create-product:hover {
+        background: #1e40af !important;
+        border-color: #1e40af !important;
+        color: #ffffff !important;
+    }
+    .products-actions-cell {
+        min-width: 190px;
+    }
+    .product-action-group {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.45rem;
+        flex-wrap: wrap;
     }
 
     /* Action buttons */
     .btn-action {
-        width: 32px;
-        height: 32px;
-        border-radius: 7px;
+        min-height: 34px;
+        padding: 0.45rem 0.65rem;
+        border-radius: 8px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.8rem;
+        gap: 0.35rem;
+        font-size: 0.78rem;
+        font-weight: 800;
         border: 1.5px solid;
         transition: all 0.15s;
         text-decoration: none;
+        line-height: 1;
+        white-space: nowrap;
+        cursor: pointer;
     }
-    .btn-edit { border-color: #fbbf24; color: #d97706; background: #fef9c3; }
-    .btn-edit:hover { background: #fbbf24; color: white; }
-    .btn-delete { border-color: #fca5a5; color: #dc2626; background: #fef2f2; }
-    .btn-delete:hover { background: #dc2626; color: white; }
+    .btn-action i { font-size: 0.9rem; }
+    .btn-edit {
+        border-color: #1d4ed8;
+        color: #ffffff;
+        background: #1d4ed8;
+    }
+    .btn-edit:hover {
+        background: #1e40af;
+        border-color: #1e40af;
+        color: #ffffff;
+    }
+    .btn-delete {
+        border-color: #dc2626;
+        color: #dc2626;
+        background: #fef2f2;
+    }
+    .btn-delete:hover {
+        background: #dc2626;
+        border-color: #dc2626;
+        color: #ffffff;
+    }
 
     /* Empty state */
     .empty-state {
         padding: 3rem 1rem;
         text-align: center;
-        color: var(--text-muted, #94a3b8);
+        color: #64748b;
     }
     .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }
     .empty-state p { font-size: 0.875rem; margin: 0; }
+
+    @@media (max-width: 992px) {
+        .products-page-header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+        .btn-create-product {
+            width: 100%;
+        }
+        .products-actions-cell {
+            min-width: 165px;
+        }
+    }
 </style>
 
 <!-- Page Header -->
-<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem;">
+<div class="products-page-header">
     <div>
-        <h4 style="font-size:1.2rem; font-weight:700; color:var(--text-primary); margin:0;">
+        <h4 class="products-page-title">
             <i class="bi bi-box-seam me-2" style="color:var(--primary,#1a56db)"></i>Danh sách Sản phẩm
         </h4>
-        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Quản lý toàn bộ sản phẩm cho thuê</div>
+        <div class="products-page-subtitle">Quản lý toàn bộ sản phẩm cho thuê</div>
     </div>
-    <a href="/AdminDashboard/CreateProduct" class="btn btn-primary">
+    <a href="/AdminDashboard/CreateProduct" class="btn btn-primary btn-create-product">
         <i class="bi bi-plus-lg"></i> Thêm sản phẩm
     </a>
 </div>
@@ -113,7 +197,7 @@
                     <th>Giá/Ngày</th>
                     <th>Tiền cọc</th>
                     <th>Trạng thái</th>
-                    <th style="width:90px; text-align:center;">Thao tác</th>
+                    <th class="products-actions-cell" style="text-align:right;">Thao tác</th>
                 </tr>
             </thead>
             <tbody>
@@ -141,8 +225,8 @@
                                     <small>@(item.Description != null ? item.Description.Substring(0, Math.Min(55, item.Description.Length)) + "..." : "")</small>
                                 </div>
                             </td>
-                            <td style="font-size:0.85rem; color:var(--text-secondary);">@(item.Owner?.FullName ?? "N/A")</td>
-                            <td style="font-size:0.85rem; color:var(--text-secondary);">@(item.Category?.Name ?? "N/A")</td>
+                            <td style="font-size:0.85rem; color:#334155; font-weight:600;">@(item.Owner?.FullName ?? "N/A")</td>
+                            <td style="font-size:0.85rem; color:#334155; font-weight:600;">@(item.Category?.Name ?? "N/A")</td>
                             <td><span class="price-highlight">@item.PricePerDay.ToString("N0")đ</span></td>
                             <td><span class="deposit-text">@item.DepositAmount.ToString("N0")đ</span></td>
                             <td>
@@ -167,15 +251,15 @@
                                     <span class="status-pill badge-pending">@item.Status</span>
                                 }
                             </td>
-                            <td>
-                                <div class="d-flex gap-1 justify-content-center">
-                                    <a href="/AdminDashboard/EditProduct/@item.Id" class="btn-action btn-edit" title="Chỉnh sửa">
-                                        <i class="bi bi-pencil"></i>
+                            <td class="products-actions-cell">
+                                <div class="product-action-group">
+                                    <a href="/AdminDashboard/EditProduct/@item.Id" class="btn-action btn-edit" title="Chỉnh sửa" aria-label="Chỉnh sửa sản phẩm">
+                                        <i class="bi bi-pencil-square"></i><span>Chỉnh sửa</span>
                                     </a>
-                                    <form method="post" action="/AdminDashboard/DeleteProduct/@item.Id" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">
+                                    <form method="post" action="/AdminDashboard/DeleteProduct/@item.Id" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">
                                         @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn-action btn-delete" title="Xóa">
-                                            <i class="bi bi-trash"></i>
+                                        <button type="submit" class="btn-action btn-delete" title="Xóa" aria-label="Xóa sản phẩm">
+                                            <i class="bi bi-trash"></i><span>Xóa</span>
                                         </button>
                                     </form>
                                 </div>

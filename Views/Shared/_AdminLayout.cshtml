@@ -14,27 +14,28 @@
 
     <style>
         /* ============================================
-           OMNIRENT ADMIN — Light Professional Theme
-           Palette: Navy Blue + Slate Gray + Clean White */
+           OMNIRENT ADMIN - Light Professional Theme
+           Palette: Navy Blue + Slate Gray + Clean White
+           ============================================ */
         :root {
-            --primary:        #f59e0b;      /* Amber orange – buttons, accents */
-            --primary-dark:   #d97706;      /* Darker hover */
-            --primary-light:  #fef3c7;      /* Soft amber tint for bg highlights */
-            --accent:         #f59e0b;      /* Amber accent */
+            --primary:        #1d4ed8;      /* Main blue for buttons and active states */
+            --primary-dark:   #1e40af;
+            --primary-light:  #dbeafe;
+            --accent:         #0f766e;
             --sidebar-bg:     #0f172a;      /* Navy dark sidebar */
             --sidebar-hover:  #1e293b;      /* Sidebar hover row */
-            --sidebar-text:   #94a3b8;      /* Muted slate text */
-            --sidebar-active: #e2e8f0;      /* Active nav text */
+            --sidebar-text:   #dbe4f0;      /* Readable slate text */
+            --sidebar-active: #ffffff;      /* Active nav text */
             --sidebar-border: rgba(255,255,255,0.06);
-            --admin-bg:       #f8fafc;      /* Light slate background */
+            --admin-bg:       #f3f6fb;      /* Light slate background */
             --card-bg:        #ffffff;
             --card-shadow:    0 1px 3px rgba(15,23,42,0.08), 0 4px 16px rgba(15,23,42,0.04);
             --topbar-shadow:  0 1px 0 #e2e8f0;
             --text-primary:   #0f172a;      /* Near-black */
-            --text-secondary: #475569;      /* Mid-gray */
-            --text-muted:     #94a3b8;      /* Light gray */
+            --text-secondary: #334155;      /* High-contrast secondary text */
+            --text-muted:     #64748b;      /* Readable muted text */
             --border-color:   #e2e8f0;
-            --input-focus:    0 0 0 3px rgba(245,158,11,0.15);
+            --input-focus:    0 0 0 3px rgba(37,99,235,0.16);
             --success:        #16a34a;
             --danger:         #dc2626;
             --warning:        #d97706;
@@ -44,8 +45,10 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--admin-bg);
-            color: var(--text-primary);
+            background-color: #f3f6fb;
+            background-color: var(--admin-bg, #f3f6fb);
+            color: #0f172a;
+            color: var(--text-primary, #0f172a);
             margin: 0;
             padding: 0;
             display: flex;
@@ -57,7 +60,8 @@
         /* ===================== SIDEBAR ===================== */
         .sidebar {
             width: 256px;
-            background-color: #0f172a !important;
+            background-color: #0f172a;
+            background-color: var(--sidebar-bg, #0f172a);
             position: fixed;
             height: 100vh;
             overflow-y: auto;
@@ -69,11 +73,12 @@
 
         .sidebar-header {
             padding: 1.75rem 1.5rem 1.25rem;
-            border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            border-bottom-color: var(--sidebar-border, rgba(255,255,255,0.06));
         }
 
         .sidebar-header h4 {
-            color: #ffffff !important;
+            color: #f8fafc;
             font-weight: 800;
             font-size: 1.15rem;
             margin: 0;
@@ -86,17 +91,19 @@
         .sidebar-header h4 .logo-icon {
             width: 30px;
             height: 30px;
-            background: #f59e0b !important;
+            background: #1d4ed8;
+            background: var(--primary, #1d4ed8);
             border-radius: 8px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             font-size: 0.9rem;
-            color: #ffffff !important;
+            color: white;
         }
 
         .sidebar-header small {
-            color: #94a3b8 !important;
+            color: #dbe4f0;
+            color: var(--sidebar-text, #dbe4f0);
             font-size: 0.72rem;
             margin-top: 3px;
             display: block;
@@ -110,33 +117,38 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #475569 !important;
+            color: #cbd5e1;
         }
 
         .nav-link {
-            color: #94a3b8 !important;
+            color: #dbe4f0;
+            color: var(--sidebar-text, #dbe4f0);
             padding: 0.7rem 1.5rem;
             display: flex;
             align-items: center;
             gap: 0.7rem;
             transition: all 0.2s ease;
+            border-radius: 0;
             font-size: 0.875rem;
             font-weight: 500;
             margin: 1px 0.5rem;
             border-radius: 8px;
-            text-decoration: none !important;
         }
 
         .nav-link:hover {
-            color: #f1f5f9 !important;
-            background-color: #1e293b !important;
-            text-decoration: none !important;
+            color: #f1f5f9;
+            background-color: #1e293b;
+            background-color: var(--sidebar-hover, #1e293b);
+            text-decoration: none;
         }
 
         .nav-link.active {
-            color: #ffffff !important;
-            background-color: #f59e0b !important;
-            text-decoration: none !important;
+            color: #ffffff;
+            color: var(--sidebar-active, #ffffff);
+            background-color: #1d4ed8;
+            background-color: var(--primary, #1d4ed8);
+            text-decoration: none;
+            box-shadow: 0 8px 18px rgba(29,78,216,0.25);
         }
 
         .nav-link i {
@@ -149,7 +161,8 @@
         .sidebar-footer {
             margin-top: auto;
             padding: 1rem 0.5rem;
-            border-top: 1px solid rgba(255,255,255,0.06) !important;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            border-top-color: var(--sidebar-border, rgba(255,255,255,0.06));
         }
 
         /* ===================== MAIN CONTENT ===================== */
@@ -163,9 +176,11 @@
         }
 
         .topbar {
-            background-color: var(--card-bg);
+            background-color: #ffffff;
+            background-color: var(--card-bg, #ffffff);
             padding: 0.875rem 2rem;
-            box-shadow: var(--topbar-shadow);
+            box-shadow: 0 1px 0 #e2e8f0;
+            box-shadow: var(--topbar-shadow, 0 1px 0 #e2e8f0);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -177,7 +192,8 @@
         .topbar h5 {
             font-weight: 700;
             font-size: 1rem;
-            color: var(--text-primary);
+            color: #0f172a;
+            color: var(--text-primary, #0f172a);
             margin: 0;
         }
 
@@ -191,7 +207,8 @@
             width: 34px;
             height: 34px;
             border-radius: 50%;
-            background: var(--primary);
+            background: #1d4ed8;
+            background: var(--primary, #1d4ed8);
             color: white;
             display: flex;
             align-items: center;
@@ -201,30 +218,36 @@
         }
 
         .content-body {
-            padding: 1.75rem 2rem;
+            padding: 1.75rem 2rem 2.5rem;
             flex-grow: 1;
         }
 
         /* ===================== CARDS ===================== */
         .card-custom {
-            background: var(--card-bg);
-            border-radius: 14px;
-            box-shadow: var(--card-shadow);
-            border: 1px solid var(--border-color);
+            background: #ffffff;
+            background: var(--card-bg, #ffffff);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(15,23,42,0.08), 0 4px 16px rgba(15,23,42,0.04);
+            box-shadow: var(--card-shadow, 0 1px 3px rgba(15,23,42,0.08), 0 4px 16px rgba(15,23,42,0.04));
+            border: 1px solid #e2e8f0;
+            border-color: var(--border-color, #e2e8f0);
         }
 
         /* ===================== FORMS ===================== */
         .form-label {
-            color: var(--text-primary);
+            color: #0f172a;
+            color: var(--text-primary, #0f172a);
             font-weight: 600;
             font-size: 0.82rem;
             margin-bottom: 0.35rem;
         }
 
         .form-control, .form-select {
-            border: 1.5px solid var(--border-color);
+            border: 1.5px solid #cbd5e1;
+            border-color: var(--border-color, #cbd5e1);
             border-radius: 8px;
-            color: var(--text-primary);
+            color: #0f172a;
+            color: var(--text-primary, #0f172a);
             font-size: 0.875rem;
             padding: 0.5rem 0.75rem;
             background-color: #fff;
@@ -232,45 +255,68 @@
         }
 
         .form-control:focus, .form-select:focus {
-            border-color: var(--primary);
-            box-shadow: var(--input-focus);
+            border-color: #1d4ed8;
+            border-color: var(--primary, #1d4ed8);
+            box-shadow: 0 0 0 3px rgba(29,78,216,0.16);
+            box-shadow: var(--input-focus, 0 0 0 3px rgba(29,78,216,0.16));
             outline: none;
-            color: var(--text-primary);
+            color: #0f172a;
+            color: var(--text-primary, #0f172a);
         }
 
         .form-control::placeholder {
-            color: var(--text-muted);
+            color: #64748b;
+            color: var(--text-muted, #64748b);
         }
 
         .form-text {
             font-size: 0.75rem;
-            color: var(--text-muted);
+            color: #64748b;
+            color: var(--text-muted, #64748b);
             margin-top: 0.3rem;
         }
 
         /* ===================== BUTTONS ===================== */
         .btn-primary {
-            background-color: var(--primary);
-            border-color: var(--primary);
-            color: #fff;
-            font-weight: 600;
+            background-color: #1d4ed8;
+            background-color: var(--primary, #1d4ed8);
+            border-color: #1d4ed8;
+            border-color: var(--primary, #1d4ed8);
+            color: #ffffff !important;
+            font-weight: 700;
             border-radius: 8px;
             transition: all 0.2s;
+            min-height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            box-shadow: 0 6px 14px rgba(29,78,216,0.22);
         }
         .btn-primary:hover {
-            background-color: var(--primary-dark);
-            border-color: var(--primary-dark);
+            background-color: #1e40af;
+            background-color: var(--primary-dark, #1e40af);
+            border-color: #1e40af;
+            border-color: var(--primary-dark, #1e40af);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(26,86,219,0.3);
+            color: #ffffff !important;
+            box-shadow: 0 8px 18px rgba(29,78,216,0.28);
         }
 
         .btn-success {
-            background-color: var(--success);
-            border-color: var(--success);
-            color: #fff;
-            font-weight: 600;
+            background-color: #16a34a;
+            background-color: var(--success, #16a34a);
+            border-color: #16a34a;
+            border-color: var(--success, #16a34a);
+            color: #ffffff !important;
+            font-weight: 700;
             border-radius: 8px;
             transition: all 0.2s;
+            min-height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
         }
         .btn-success:hover {
             background-color: #15803d;
@@ -281,11 +327,18 @@
 
         .btn-secondary {
             background-color: #f1f5f9;
-            border-color: var(--border-color);
-            color: var(--text-secondary);
+            border-color: #cbd5e1;
+            border-color: var(--border-color, #cbd5e1);
+            color: #334155;
+            color: var(--text-secondary, #334155);
             font-weight: 600;
             border-radius: 8px;
             transition: all 0.2s;
+            min-height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
         }
         .btn-secondary:hover {
             background-color: #e2e8f0;
@@ -294,11 +347,17 @@
         }
 
         .btn-outline-danger {
-            color: var(--danger);
+            color: #dc2626;
+            color: var(--danger, #dc2626);
             border-color: #fca5a5;
             border-radius: 8px;
             font-weight: 500;
             transition: all 0.2s;
+            min-height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
         }
         .btn-outline-danger:hover {
             background-color: #fef2f2;
@@ -307,10 +366,17 @@
         }
 
         .btn-outline-secondary {
-            color: var(--text-secondary);
-            border-color: var(--border-color);
+            color: #334155;
+            color: var(--text-secondary, #334155);
+            border-color: #cbd5e1;
+            border-color: var(--border-color, #cbd5e1);
             border-radius: 8px;
             font-weight: 500;
+            min-height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
         }
         .btn-outline-secondary:hover {
             background-color: #f1f5f9;
@@ -328,32 +394,37 @@
 
         /* ===================== TABLES ===================== */
         .table {
-            color: var(--text-primary);
+            color: #0f172a;
+            color: var(--text-primary, #0f172a);
         }
         .table thead th {
-            background-color: #f8fafc;
-            color: var(--text-secondary);
+            background-color: #eef2f7;
+            color: #0f172a;
+            color: var(--text-primary, #0f172a);
             font-size: 0.72rem;
-            font-weight: 700;
+            font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid #cbd5e1;
+            border-bottom-color: var(--border-color, #cbd5e1);
             padding: 0.8rem 1rem;
         }
         .table tbody td {
             padding: 0.85rem 1rem;
             vertical-align: middle;
             border-color: #f1f5f9;
-            color: var(--text-primary);
+            color: #0f172a;
+            color: var(--text-primary, #0f172a);
             font-size: 0.875rem;
         }
         .table tbody tr:hover {
-            background-color: #f8fafc;
+            background-color: #f1f5f9;
         }
 
         /* ===================== TEXT UTILITIES ===================== */
         .text-muted {
-            color: var(--text-muted) !important;
+            color: #64748b !important;
+            color: var(--text-muted, #64748b) !important;
         }
         .text-danger {
             color: var(--danger) !important;
@@ -389,6 +460,7 @@
                 var isDashboard = currentPath == "/AdminDashboard" || currentPath == "/AdminDashboard/";
                 var isBookings = currentPath.StartsWith("/AdminDashboard/Booking") || currentPath.StartsWith("/AdminDashboard/CreateBooking") || currentPath.StartsWith("/AdminDashboard/EditBooking");
                 var isProducts = currentPath.StartsWith("/AdminDashboard/Product") || currentPath.StartsWith("/AdminDashboard/CreateProduct") || currentPath.StartsWith("/AdminDashboard/EditProduct");
+                var isCategories = currentPath.StartsWith("/AdminDashboard/Categor") || currentPath.StartsWith("/AdminDashboard/CreateCategor") || currentPath.StartsWith("/AdminDashboard/EditCategor");
             }
             <span class="nav-section-label">Menu chính</span>
             <a href="/AdminDashboard" class="nav-link @(isDashboard ? "active" : "")">
@@ -399,6 +471,9 @@
             </a>
             <a href="/AdminDashboard/Products" class="nav-link @(isProducts ? "active" : "")">
                 <i class="bi bi-box-seam"></i> Sản phẩm
+            </a>
+            <a href="/AdminDashboard/Categories" class="nav-link @(isCategories ? "active" : "")">
+                <i class="bi bi-tags"></i> Danh mục
             </a>
         </div>
         <div class="sidebar-footer">

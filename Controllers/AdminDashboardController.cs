@@ -107,6 +107,144 @@ namespace OmniRentBackend.Controllers
             return RedirectToAction(nameof(Bookings));
         }
 
+        // =============== CATEGORY MANAGEMENT ===============
+
+        // GET: /AdminDashboard/Categories
+        public async Task<IActionResult> Categories()
+        {
+            var categories = await _context.Categories
+                .Include(c => c.Parent)
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+            return View(categories);
+        }
+
+        // GET: /AdminDashboard/CreateCategory
+        public async Task<IActionResult> CreateCategory()
+        {
+            ViewBag.ParentCategories = await _context.Categories
+                .Where(c => c.ParentId == null)
+                .ToListAsync();
+            return View();
+        }
+
+        // POST: /AdminDashboard/CreateCategory
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateCategory([FromForm] string Name, [FromForm] string Slug, [FromForm] string? ParentId)
+        {
+            if (string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(Slug))
+            {
+                ModelState.AddModelError("", "Tên danh mục và Slug là bắt buộc.");
+                ViewBag.ParentCategories = await _context.Categories
+                    .Where(c => c.ParentId == null)
+                    .ToListAsync();
+                return View();
+            }
+
+            if (await _context.Categories.AnyAsync(c => c.Slug == Slug))
+            {
+                ModelState.AddModelError("", "Slug này đã tồn tại, vui lòng chọn Slug khác.");
+                ViewBag.ParentCategories = await _context.Categories
+                    .Where(c => c.ParentId == null)
+                    .ToListAsync();
+                return View();
+            }
+
+            var category = new Category
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = Name,
+                Slug = Slug,
+                ParentId = string.IsNullOrWhiteSpace(ParentId) ? null : ParentId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Categories.Add(category);
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Đã thêm danh mục thành công.";
+
+            return RedirectToAction(nameof(Categories));
+        }
+
+        // GET: /AdminDashboard/EditCategory/5
+        public async Task<IActionResult> EditCategory(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return NotFound();
+
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null) return NotFound();
+
+            ViewBag.ParentCategories = await _context.Categories
+                .Where(c => c.ParentId == null && c.Id != id)
+                .ToListAsync();
+            return View(category);
+        }
+
+        // POST: /AdminDashboard/EditCategory/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditCategory(string id, [FromForm] string Name, [FromForm] string Slug, [FromForm] string? ParentId)
+        {
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null) return NotFound();
+
+            if (string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(Slug))
+            {
+                ModelState.AddModelError("", "Tên danh mục và Slug là bắt buộc.");
+                ViewBag.ParentCategories = await _context.Categories
+                    .Where(c => c.ParentId == null && c.Id != id)
+                    .ToListAsync();
+                return View(category);
+            }
+
+            if (await _context.Categories.AnyAsync(c => c.Slug == Slug && c.Id != id))
+            {
+                ModelState.AddModelError("", "Slug này đã được sử dụng bởi danh mục khác.");
+                ViewBag.ParentCategories = await _context.Categories
+                    .Where(c => c.ParentId == null && c.Id != id)
+                    .ToListAsync();
+                return View(category);
+            }
+
+            category.Name = Name;
+            category.Slug = Slug;
+            category.ParentId = string.IsNullOrWhiteSpace(ParentId) ? null : ParentId;
+            category.UpdatedAt = DateTime.UtcNow;
+
+            _context.Categories.Update(category);
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Cập nhật danh mục thành công.";
+
+            return RedirectToAction(nameof(Categories));
+        }
+
+        // POST: /AdminDashboard/DeleteCategory/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteCategory(string id)
+        {
+            var category = await _context.Categories
+                .Include(c => c.Subcategories)
+                .Include(c => c.Products)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (category != null)
+            {
+                if (category.Subcategories.Any() || category.Products.Any())
+                {
+                    TempData["ErrorMessage"] = "Không thể xóa danh mục đang chứa danh mục con hoặc sản phẩm.";
+                    return RedirectToAction(nameof(Categories));
+                }
+
+                _context.Categories.Remove(category);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Đã xóa danh mục thành công.";
+            }
+            return RedirectToAction(nameof(Categories));
+        }
+
         // =============== PRODUCT MANAGEMENT ===============
 
         // GET: /AdminDashboard/Products
