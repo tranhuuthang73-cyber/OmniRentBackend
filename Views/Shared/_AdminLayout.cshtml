@@ -461,6 +461,7 @@
                 var isBookings = currentPath.StartsWith("/AdminDashboard/Booking") || currentPath.StartsWith("/AdminDashboard/CreateBooking") || currentPath.StartsWith("/AdminDashboard/EditBooking");
                 var isProducts = currentPath.StartsWith("/AdminDashboard/Product") || currentPath.StartsWith("/AdminDashboard/CreateProduct") || currentPath.StartsWith("/AdminDashboard/EditProduct");
                 var isCategories = currentPath.StartsWith("/AdminDashboard/Categor") || currentPath.StartsWith("/AdminDashboard/CreateCategor") || currentPath.StartsWith("/AdminDashboard/EditCategor");
+                var isUsers = currentPath.StartsWith("/AdminDashboard/Users") || currentPath.StartsWith("/AdminDashboard/UserDetails") || currentPath.StartsWith("/AdminDashboard/EditUser");
             }
             <span class="nav-section-label">Menu chính</span>
             <a href="/AdminDashboard" class="nav-link @(isDashboard ? "active" : "")">
@@ -474,6 +475,9 @@
             </a>
             <a href="/AdminDashboard/Categories" class="nav-link @(isCategories ? "active" : "")">
                 <i class="bi bi-tags"></i> Danh mục
+            </a>
+            <a href="/AdminDashboard/Users" class="nav-link" style="margin-left:0.5rem; padding:0.4rem 0.75rem; border-radius:6px; display:inline-flex; align-items:center; gap:0.5rem; width:auto;">
+                <i class="bi bi-people"></i> Người dùng
             </a>
         </div>
         <div class="sidebar-footer">

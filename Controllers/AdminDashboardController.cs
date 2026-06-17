@@ -33,6 +33,113 @@ namespace OmniRentBackend.Controllers
             return View();
         }
 
+        // =============== USER MANAGEMENT ===============
+
+        // GET: /AdminDashboard/Users
+        public async Task<IActionResult> Users()
+        {
+            var users = await _context.Users
+                .OrderByDescending(u => u.CreatedAt)
+                .ToListAsync();
+            return View(users);
+        }
+
+        // GET: /AdminDashboard/UserDetails/5
+        public async Task<IActionResult> UserDetails(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return NotFound();
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == id);
+
+            if (user == null) return NotFound();
+
+            return View(user);
+        }
+
+        // GET: /AdminDashboard/EditUser/5
+        public async Task<IActionResult> EditUser(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return NotFound();
+
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound();
+
+            return View(user);
+        }
+
+        // POST: /AdminDashboard/EditUser/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditUser(string id, [FromForm] string FullName, [FromForm] string? Phone, [FromForm] string Role, [FromForm] string? Address, [FromForm] bool? OwnerVerified)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound();
+
+            if (string.IsNullOrWhiteSpace(FullName))
+            {
+                ModelState.AddModelError("", "Họ và tên là bắt buộc.");
+                return View(user);
+            }
+
+            user.FullName = FullName;
+            user.Phone = Phone;
+            user.Role = Role;
+            user.Address = Address;
+            user.OwnerVerified = OwnerVerified ?? false;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Cập nhật người dùng thành công.";
+            return RedirectToAction(nameof(Users));
+        }
+
+        // POST: /AdminDashboard/DeleteUser/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteUser(string id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy người dùng.";
+                return RedirectToAction(nameof(Users));
+            }
+
+            try
+            {
+                // Xóa dữ liệu phụ thuộc trước để tránh lỗi FOREIGN KEY
+                var userRoles = await _context.UserRoles.Where(ur => ur.UserId == id).ToListAsync();
+                var notifications = await _context.Notifications.Where(n => n.UserId == id).ToListAsync();
+                var messages = await _context.Messages.Where(m => m.SenderId == id || m.ReceiverId == id).ToListAsync();
+                var reviews = await _context.Reviews.Where(r => r.UserId == id).ToListAsync();
+                var maintenanceLogs = await _context.MaintenanceLogs.Where(m => m.OwnerId == id).ToListAsync();
+                var bookings = await _context.Bookings.Where(b => b.RenterId == id).ToListAsync();
+                var products = await _context.Products.Where(p => p.OwnerId == id).ToListAsync();
+
+                _context.UserRoles.RemoveRange(userRoles);
+                _context.Notifications.RemoveRange(notifications);
+                _context.Messages.RemoveRange(messages);
+                _context.Reviews.RemoveRange(reviews);
+                _context.MaintenanceLogs.RemoveRange(maintenanceLogs);
+                _context.Bookings.RemoveRange(bookings);
+                _context.Products.RemoveRange(products);
+                _context.Users.Remove(user);
+
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Đã xóa người dùng và dữ liệu liên quan.";
+            }
+            catch (DbUpdateException ex)
+            {
+                TempData["ErrorMessage"] = "Không thể xóa người dùng vì dữ liệu liên quan tồn tại. Vui lòng xóa các liên kết trước.";
+                Console.WriteLine($"Delete user failed: {ex.Message}");
+            }
+
+            return RedirectToAction(nameof(Users));
+        }
+
         // GET: /AdminDashboard/Bookings
         public async Task<IActionResult> Bookings()
         {

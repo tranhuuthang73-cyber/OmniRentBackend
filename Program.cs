@@ -48,6 +48,7 @@ builder.Services.AddAuthentication(options =>
     options.SlidingExpiration = true;
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SameSite = SameSiteMode.Lax;
 })
 // Cookie tạm thời để lưu thông tin Google sau OAuth, trước khi tạo session chính
 .AddCookie("ExternalCookie", options =>
@@ -55,6 +56,8 @@ builder.Services.AddAuthentication(options =>
     options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.Name = ".AspNetCore.ExternalCookie";
 })
 .AddJwtBearer(options =>
 {
@@ -72,10 +75,17 @@ builder.Services.AddAuthentication(options =>
 .AddGoogle(options =>
 {
     var googleAuthNSection = builder.Configuration.GetSection("Authentication:Google");
+    
     options.ClientId = googleAuthNSection["ClientId"] ?? throw new InvalidOperationException("Google ClientId is missing.");
     options.ClientSecret = googleAuthNSection["ClientSecret"] ?? throw new InvalidOperationException("Google ClientSecret is missing.");
     // Lưu kết quả OAuth vào cookie tạm, không phải cookie chính
     options.SignInScheme = "ExternalCookie";
+    // Ensure correlation cookie settings are compatible with common browsers and local dev (HTTP)
+    options.CorrelationCookie.SameSite = SameSiteMode.Lax;
+    options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.CorrelationCookie.Name = ".AspNetCore.Correlation.Google";
+    // Explicit callback path (default is /signin-google) kept for clarity
+    options.CallbackPath = "/signin-google";
 });
 
 builder.Services.AddAuthorization();
@@ -114,6 +124,8 @@ using (var scope = app.Services.CreateScope())
 
 app.UseCors("CorsPolicy");
 app.UseStaticFiles();
+// Ensure cookie policy is applied so SameSite settings take effect for OAuth flow
+app.UseCookiePolicy(new CookiePolicyOptions { MinimumSameSitePolicy = SameSiteMode.Lax });
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<OmniRentBackend.Middleware.PermissionMiddleware>();

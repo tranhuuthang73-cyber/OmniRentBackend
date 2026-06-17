@@ -1,0 +1,39 @@
+@model OmniRentBackend.Models.User
+@{
+    ViewData["Title"] = "Thông tin Người dùng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h3>Thông tin Người dùng</h3>
+
+<dl class="row">
+    <dt class="col-sm-3">Email</dt>
+    <dd class="col-sm-9">@Model.Email</dd>
+
+    <dt class="col-sm-3">Họ & Tên</dt>
+    <dd class="col-sm-9">@Model.FullName</dd>
+
+    <dt class="col-sm-3">Số điện thoại</dt>
+    <dd class="col-sm-9">@Model.Phone</dd>
+
+    <dt class="col-sm-3">Vai trò</dt>
+    <dd class="col-sm-9">@Model.Role</dd>
+
+    <dt class="col-sm-3">Địa chỉ</dt>
+    <dd class="col-sm-9">@Model.Address</dd>
+
+    <dt class="col-sm-3">Xác thực chủ sở hữu</dt>
+    <dd class="col-sm-9">@(Model.OwnerVerified ? "Đã xác thực" : "Chưa")</dd>
+
+    <dt class="col-sm-3">Hoàn thành hồ sơ</dt>
+    <dd class="col-sm-9">@(Model.ProfileCompleted ? "Đã" : "Chưa")</dd>
+
+    <dt class="col-sm-3">Ngày tạo</dt>
+    <dd class="col-sm-9">@Model.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</dd>
+
+    <dt class="col-sm-3">Cập nhật</dt>
+    <dd class="col-sm-9">@Model.UpdatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</dd>
+</dl>
+
+<a class="btn btn-secondary" href="/AdminDashboard/Users">Quay lại</a>
+<a class="btn btn-primary" href="/AdminDashboard/EditUser/@Model.Id">Sửa</a>

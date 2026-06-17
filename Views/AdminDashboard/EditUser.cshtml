@@ -1,0 +1,70 @@
+@model OmniRentBackend.Models.User
+@{
+    ViewData["Title"] = "Sửa Người dùng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h3>Sửa Người dùng</h3>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">Có lỗi trong form. Vui lòng kiểm tra lại.</div>
+}
+
+<form method="post" action="/AdminDashboard/EditUser/@Model.Id">
+    @Html.AntiForgeryToken()
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input class="form-control" value="@Model.Email" disabled />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Họ & Tên</label>
+        <input name="FullName" class="form-control" value="@Model.FullName" required />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Số điện thoại</label>
+        <input name="Phone" class="form-control" value="@Model.Phone" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Vai trò</label>
+        @{
+            var roles = new[] { "ADMIN", "OWNER", "RENTER" };
+        }
+        <select name="Role" class="form-select">
+        @foreach (var r in roles)
+        {
+            if (r == Model.Role)
+            {
+                @:<option value="@r" selected>@r</option>
+            }
+            else
+            {
+                @:<option value="@r">@r</option>
+            }
+        }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Địa chỉ</label>
+        <input name="Address" class="form-control" value="@Model.Address" />
+    </div>
+
+    <div class="form-check mb-3">
+        @if (Model.OwnerVerified)
+        {
+            <input class="form-check-input" type="checkbox" name="OwnerVerified" id="ownerVerified" value="true" checked />
+        }
+        else
+        {
+            <input class="form-check-input" type="checkbox" name="OwnerVerified" id="ownerVerified" value="true" />
+        }
+        <label class="form-check-label" for="ownerVerified">Xác thực chủ sở hữu</label>
+    </div>
+
+    <button class="btn btn-primary" type="submit">Lưu</button>
+    <a class="btn btn-secondary" href="/AdminDashboard/Users">Hủy</a>
+</form>

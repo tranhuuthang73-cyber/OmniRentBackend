@@ -182,8 +182,34 @@ namespace OmniRentBackend.Controllers
                 return NotFound(new { message = "Không tìm thấy người dùng." });
             }
 
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            try
+            {
+                var userRoles = await _context.UserRoles.Where(ur => ur.UserId == id).ToListAsync();
+                var notifications = await _context.Notifications.Where(n => n.UserId == id).ToListAsync();
+                var messages = await _context.Messages.Where(m => m.SenderId == id || m.ReceiverId == id).ToListAsync();
+                var reviewsByUser = await _context.Reviews.Where(r => r.UserId == id).ToListAsync();
+                var maintenanceLogs = await _context.MaintenanceLogs.Where(m => m.OwnerId == id).ToListAsync();
+                var bookings = await _context.Bookings.Where(b => b.RenterId == id).ToListAsync();
+                var products = await _context.Products.Where(p => p.OwnerId == id).ToListAsync();
+                var productIds = products.Select(p => p.Id).ToList();
+                var reviewsOnProducts = await _context.Reviews.Where(r => productIds.Contains(r.ProductId)).ToListAsync();
+
+                _context.UserRoles.RemoveRange(userRoles);
+                _context.Notifications.RemoveRange(notifications);
+                _context.Messages.RemoveRange(messages);
+                _context.Reviews.RemoveRange(reviewsByUser);
+                _context.Reviews.RemoveRange(reviewsOnProducts);
+                _context.MaintenanceLogs.RemoveRange(maintenanceLogs);
+                _context.Bookings.RemoveRange(bookings);
+                _context.Products.RemoveRange(products);
+                _context.Users.Remove(user);
+
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                return BadRequest(new { message = "Không thể xóa người dùng vì dữ liệu liên quan còn tồn tại.", detail = ex.Message });
+            }
 
             return Ok(new { success = true });
         }

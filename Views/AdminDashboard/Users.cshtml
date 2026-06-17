@@ -1,0 +1,46 @@
+@model IEnumerable<OmniRentBackend.Models.User>
+@{
+    ViewData["Title"] = "Quản lý Người dùng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h3>Quản lý Người dùng</h3>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Họ & Tên</th>
+            <th>Điện thoại</th>
+            <th>Vai trò</th>
+            <th>Đăng ký</th>
+            <th>Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var user in Model)
+    {
+        <tr>
+            <td>@user.Email</td>
+            <td>@user.FullName</td>
+            <td>@user.Phone</td>
+            <td>@user.Role</td>
+            <td>@user.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+            <td>
+                <a class="btn btn-sm btn-outline-primary" href="/AdminDashboard/UserDetails/@user.Id">Xem</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/AdminDashboard/EditUser/@user.Id">Sửa</a>
+                <form method="post" action="/AdminDashboard/DeleteUser" style="display:inline-block;" onsubmit="return confirm('Bạn có chắc muốn xóa người này?');">
+                    <input type="hidden" name="id" value="@user.Id" />
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+                    @Html.AntiForgeryToken()
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
