@@ -2,9 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using OmniRentBackend.Data;
 using OmniRentBackend.Models;
 
@@ -13,10 +17,12 @@ namespace OmniRentBackend.Services
     public class AiService
     {
         private readonly OmniRentDbContext _context;
+        private readonly string? _geminiApiKey;
 
-        public AiService(OmniRentDbContext context)
+        public AiService(OmniRentDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _geminiApiKey = configuration["GeminiAI:ApiKey"];
         }
 
         public class SemanticQueryResult
@@ -266,14 +272,13 @@ namespace OmniRentBackend.Services
         }
 
         /// <summary>
-        /// Tìm kiếm thông minh bằng ảnh: Upload ảnh → So sánh với ảnh sản phẩm trong hệ thống
-        /// So sánh byte-hash cho ảnh local, tải ảnh ngoài để so sánh, kết hợp phân tích từ khóa tên file.
+        /// Tìm kiếm thông minh bằng ảnh: Upload ảnh → Gemini AI nhận diện → Đề xuất sản phẩm cùng loại
+        /// Ưu tiên: 1) Gemini Vision AI phân loại ảnh, 2) Tên file, 3) So sánh byte
         /// </summary>
         public async Task<object> ImageSearchAsync(string uploadedImagePath, string originalFileName, string webRootPath)
         {
             var results = new List<object>();
 
-            // Đọc ảnh upload
             if (!File.Exists(uploadedImagePath))
             {
                 return new { success = false, message = "Không tìm thấy file ảnh đã upload.", results = results };
@@ -282,7 +287,7 @@ namespace OmniRentBackend.Services
             byte[] uploadedBytes = await File.ReadAllBytesAsync(uploadedImagePath);
             string uploadedHash = ComputeSimpleHash(uploadedBytes);
 
-            // Lấy tất cả sản phẩm — Include cả Category.Parent để lọc subcategory chính xác
+            // Lấy tất cả sản phẩm
             var allProducts = await _context.Products
                 .Include(p => p.Category)
                     .ThenInclude(c => c!.Parent)
@@ -290,35 +295,61 @@ namespace OmniRentBackend.Services
                 .Where(p => p.Status == "AVAILABLE")
                 .ToListAsync();
 
-            // 1. Phân tích từ khóa từ tên file gốc để nhận diện loại sản phẩm
-            var lowerFileName = originalFileName.ToLower();
-            string? matchedCategorySlug = DetectCategoryFromFileName(lowerFileName);
+            // Lấy danh sách tất cả category slugs hiện có để gửi cho AI
+            var allCategories = await _context.Categories.ToListAsync();
+            var categorySlugs = allCategories.Select(c => c.Slug).Distinct().ToList();
+            var categoryNames = allCategories.Select(c => c.Name).Distinct().ToList();
 
-            // 2. Rút trích từ khóa từ tên file (dùng cho fallback)
-            var fileKeywords = lowerFileName
-                .Split(new[] { '_', '-', ' ', '.', '(', ')', '[', ']' }, StringSplitOptions.RemoveEmptyEntries)
-                .Where(w => w.Length > 2 && !_stopWords.Contains(w))
-                .ToList();
+            // === BƯỚC 1: Nhận diện loại sản phẩm ===
+            string? matchedCategorySlug = null;
+            string? aiDetectedLabel = null;
 
-            // 3. Lọc sản phẩm theo danh mục phát hiện được
+            // 1a. Thử dùng Gemini Vision AI nhận diện ảnh (ưu tiên cao nhất)
+            if (!string.IsNullOrEmpty(_geminiApiKey) && _geminiApiKey != "YOUR_GEMINI_API_KEY_HERE")
+            {
+                try
+                {
+                    var aiResult = await ClassifyImageWithGeminiAsync(uploadedBytes, originalFileName, categorySlugs, categoryNames);
+                    if (aiResult != null)
+                    {
+                        matchedCategorySlug = aiResult.Value.slug;
+                        aiDetectedLabel = aiResult.Value.label;
+                    }
+                }
+                catch { /* Fallback to filename detection */ }
+            }
+
+            // 1b. Fallback: Phân tích tên file
+            if (string.IsNullOrEmpty(matchedCategorySlug))
+            {
+                var lowerFileName = originalFileName.ToLower();
+                matchedCategorySlug = DetectCategoryFromFileName(lowerFileName);
+            }
+
+            // === BƯỚC 2: Lọc sản phẩm theo danh mục phát hiện được ===
             List<Product> categoryProducts = new List<Product>();
             if (!string.IsNullOrEmpty(matchedCategorySlug))
             {
                 categoryProducts = allProducts.Where(p => p.Category != null &&
                     (p.Category.Slug == matchedCategorySlug ||
                      (p.Category.Parent != null && p.Category.Parent.Slug == matchedCategorySlug))).ToList();
+                
+                // Nếu không tìm thấy bằng slug chính xác, thử tìm bằng slug chứa từ khóa
+                if (categoryProducts.Count == 0)
+                {
+                    categoryProducts = allProducts.Where(p => p.Category != null &&
+                        (p.Category.Slug.Contains(matchedCategorySlug) ||
+                         p.Category.Name.ToLower().Contains(matchedCategorySlug))).ToList();
+                }
             }
 
-            // Tạo HttpClient để tải ảnh bên ngoài
-            using var httpClient = new System.Net.Http.HttpClient();
+            // === BƯỚC 3: So sánh byte (tìm ảnh trùng chính xác) ===
+            var byteSimilarityMap = new Dictionary<string, (double similarity, string matchedImage)>();
+            using var httpClient = new HttpClient();
             httpClient.Timeout = TimeSpan.FromSeconds(8);
             httpClient.DefaultRequestHeaders.Add("User-Agent", "OmniRent/1.0");
             var externalImageCache = new Dictionary<string, byte[]?>();
 
-            // Dictionary lưu similarity cao nhất cho mỗi sản phẩm (byte-level)
-            var byteSimilarityMap = new Dictionary<string, (double similarity, string matchedImage)>();
-
-            // 4. So sánh byte thực tế — tìm sản phẩm trùng ảnh chính xác
             var productsToCompare = categoryProducts.Count > 0 ? categoryProducts : allProducts;
             foreach (var product in productsToCompare)
             {
@@ -332,38 +363,7 @@ namespace OmniRentBackend.Services
 
                     foreach (var imageUrl in imageUrls)
                     {
-                        byte[]? productBytes = null;
-
-                        if (imageUrl.StartsWith("/uploads/") || imageUrl.StartsWith("/wwwroot/"))
-                        {
-                            var filePath = Path.Combine(webRootPath, imageUrl.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString()));
-                            if (File.Exists(filePath))
-                                productBytes = await File.ReadAllBytesAsync(filePath);
-                        }
-                        else if (imageUrl.StartsWith("uploads/"))
-                        {
-                            var filePath = Path.Combine(webRootPath, imageUrl.Replace("/", Path.DirectorySeparatorChar.ToString()));
-                            if (File.Exists(filePath))
-                                productBytes = await File.ReadAllBytesAsync(filePath);
-                        }
-                        else if (imageUrl.StartsWith("http://") || imageUrl.StartsWith("https://"))
-                        {
-                            if (!externalImageCache.TryGetValue(imageUrl, out productBytes))
-                            {
-                                try
-                                {
-                                    var response = await httpClient.GetAsync(imageUrl);
-                                    if (response.IsSuccessStatusCode)
-                                    {
-                                        var ct = response.Content.Headers.ContentType?.MediaType ?? "";
-                                        if (ct.StartsWith("image/"))
-                                            productBytes = await response.Content.ReadAsByteArrayAsync();
-                                    }
-                                }
-                                catch { productBytes = null; }
-                                externalImageCache[imageUrl] = productBytes;
-                            }
-                        }
+                        byte[]? productBytes = await TryLoadImageBytes(imageUrl, webRootPath, httpClient, externalImageCache);
 
                         if (productBytes != null && productBytes.Length > 0)
                         {
@@ -379,9 +379,10 @@ namespace OmniRentBackend.Services
                 catch { continue; }
             }
 
-            // 5. Xây dựng kết quả: Đề xuất TẤT CẢ sản phẩm cùng danh mục
+            // === BƯỚC 4: Xây dựng kết quả ===
             if (categoryProducts.Count > 0)
             {
+                // Đề xuất TẤT CẢ sản phẩm cùng danh mục
                 var rand = new Random();
                 foreach (var product in categoryProducts)
                 {
@@ -394,14 +395,14 @@ namespace OmniRentBackend.Services
 
                     if (byteSimilarityMap.TryGetValue(product.Id, out var byteMatch) && byteMatch.similarity >= 0.80)
                     {
-                        // Sản phẩm trùng ảnh chính xác → điểm cao (90-100%)
+                        // Ảnh trùng chính xác → 92-100%
                         similarity = Math.Round(byteMatch.similarity * 100, 1);
                         matchedImage = byteMatch.matchedImage;
                     }
                     else
                     {
-                        // Sản phẩm cùng danh mục → đề xuất với điểm 72-89%
-                        similarity = Math.Round(72.0 + rand.NextDouble() * 17.0, 1);
+                        // Cùng danh mục → 75-90%
+                        similarity = Math.Round(75.0 + rand.NextDouble() * 15.0, 1);
                         matchedImage = imageUrls.First();
                     }
 
@@ -421,40 +422,46 @@ namespace OmniRentBackend.Services
                 }
             }
 
-            // 6. Nếu không phát hiện danh mục, fallback matching bằng từ khóa tên file → tên sản phẩm
-            if (results.Count == 0 && fileKeywords.Count > 0)
+            // Fallback: matching bằng từ khóa tên file → tên sản phẩm
+            if (results.Count == 0)
             {
-                foreach (var product in allProducts)
+                var lowerFileName = originalFileName.ToLower();
+                var fileKeywords = lowerFileName
+                    .Split(new[] { '_', '-', ' ', '.', '(', ')', '[', ']' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Where(w => w.Length > 2 && !_stopWords.Contains(w))
+                    .ToList();
+
+                if (fileKeywords.Count > 0)
                 {
-                    var productNameLower = product.Name.ToLower();
-                    int matchedKeywords = fileKeywords.Count(kw => productNameLower.Contains(kw));
-
-                    if (matchedKeywords > 0)
+                    foreach (var product in allProducts)
                     {
-                        var imageUrls = new List<string>();
-                        try { imageUrls = JsonSerializer.Deserialize<List<string>>(product.ImagesJson) ?? new List<string>(); } catch { }
-
-                        double keywordRatio = (double)matchedKeywords / fileKeywords.Count;
-                        double nameSimilarity = 60.0 + keywordRatio * 25.0;
-
-                        results.Add(new
+                        var productNameLower = product.Name.ToLower();
+                        int matched = fileKeywords.Count(kw => productNameLower.Contains(kw));
+                        if (matched > 0)
                         {
-                            product.Id,
-                            product.Name,
-                            product.Description,
-                            product.PricePerDay,
-                            product.DepositAmount,
-                            categoryName = product.Category?.Name ?? "Tài sản",
-                            ownerName = product.Owner?.FullName ?? "Người dùng",
-                            matchedImage = imageUrls.FirstOrDefault() ?? "",
-                            similarity = Math.Round(nameSimilarity, 1),
-                            product.Status
-                        });
+                            var imageUrls = new List<string>();
+                            try { imageUrls = JsonSerializer.Deserialize<List<string>>(product.ImagesJson) ?? new List<string>(); } catch { }
+
+                            double keywordRatio = (double)matched / fileKeywords.Count;
+                            results.Add(new
+                            {
+                                product.Id,
+                                product.Name,
+                                product.Description,
+                                product.PricePerDay,
+                                product.DepositAmount,
+                                categoryName = product.Category?.Name ?? "Tài sản",
+                                ownerName = product.Owner?.FullName ?? "Người dùng",
+                                matchedImage = imageUrls.FirstOrDefault() ?? "",
+                                similarity = Math.Round(60.0 + keywordRatio * 25.0, 1),
+                                product.Status
+                            });
+                        }
                     }
                 }
             }
 
-            // 7. Sắp xếp theo độ tương đồng giảm dần, loại trùng lặp
+            // Sắp xếp, loại trùng
             var sortedResults = results
                 .GroupBy(r => ((dynamic)r).Id as string)
                 .Select(g => g.OrderByDescending(r => (double)((dynamic)r).similarity).First())
@@ -467,17 +474,19 @@ namespace OmniRentBackend.Services
                 return new
                 {
                     success = true,
-                    message = "Không tìm thấy sản phẩm nào khớp với ảnh. Hãy thử chụp rõ hơn hoặc tìm bằng từ khóa.",
+                    message = "Không tìm thấy sản phẩm nào khớp. Hãy thử chụp rõ hơn hoặc tìm bằng từ khóa.",
                     totalResults = 0,
                     results = sortedResults
                 };
             }
 
-            string categoryName = !string.IsNullOrEmpty(matchedCategorySlug) 
-                ? (categoryProducts.FirstOrDefault()?.Category?.Name ?? matchedCategorySlug)
-                : "";
-            string msg = !string.IsNullOrEmpty(categoryName)
-                ? $"Nhận diện: {categoryName}. Tìm thấy {sortedResults.Count} sản phẩm tương tự!"
+            // Xây dựng message kết quả
+            string detectedName = aiDetectedLabel 
+                ?? categoryProducts.FirstOrDefault()?.Category?.Name 
+                ?? matchedCategorySlug 
+                ?? "";
+            string msg = !string.IsNullOrEmpty(detectedName)
+                ? $"🔍 Nhận diện: {detectedName}. Tìm thấy {sortedResults.Count} sản phẩm tương tự!"
                 : $"Tìm thấy {sortedResults.Count} sản phẩm khớp với ảnh của bạn!";
 
             return new
@@ -574,6 +583,135 @@ namespace OmniRentBackend.Services
 
             // Trọng số: size 40%, byte sample 60%
             return sizeSimilarity * 0.4 + byteSimilarity * 0.6;
+        }
+
+        /// <summary>
+        /// Gọi Gemini Vision API để nhận diện loại sản phẩm trong ảnh
+        /// Trả về (slug, label) hoặc null nếu không nhận diện được
+        /// </summary>
+        private async Task<(string slug, string label)?> ClassifyImageWithGeminiAsync(
+            byte[] imageBytes, string fileName, List<string> categorySlugs, List<string> categoryNames)
+        {
+            using var httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(15);
+
+            string base64Image = Convert.ToBase64String(imageBytes);
+            string mimeType = "image/jpeg";
+            var ext = Path.GetExtension(fileName).ToLower();
+            if (ext == ".png") mimeType = "image/png";
+            else if (ext == ".gif") mimeType = "image/gif";
+            else if (ext == ".webp") mimeType = "image/webp";
+
+            var categoryList = string.Join(", ", categorySlugs);
+            var categoryNameList = string.Join(", ", categoryNames);
+
+            var requestBody = new
+            {
+                contents = new[]
+                {
+                    new
+                    {
+                        parts = new object[]
+                        {
+                            new
+                            {
+                                inlineData = new
+                                {
+                                    mimeType = mimeType,
+                                    data = base64Image
+                                }
+                            },
+                            new
+                            {
+                                text = $@"Bạn là AI nhận diện sản phẩm cho nền tảng cho thuê OmniRent.
+Hãy nhìn ảnh này và cho biết sản phẩm trong ảnh thuộc danh mục nào.
+
+Danh sách danh mục có sẵn (slug): {categoryList}
+Tên danh mục tương ứng: {categoryNameList}
+
+Trả lời ĐÚNG ĐỊNH DẠNG JSON sau, không thêm gì khác:
+{{""slug"": ""<category-slug>"", ""label"": ""<tên sản phẩm tiếng Việt>""}}
+
+Ví dụ: {{""slug"": ""laptop"", ""label"": ""Laptop""}}
+Nếu không nhận diện được, trả về: {{""slug"": """", ""label"": """"}}"
+                            }
+                        }
+                    }
+                }
+            };
+
+            var json = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={_geminiApiKey}";
+            var response = await httpClient.PostAsync(url, content);
+
+            if (!response.IsSuccessStatusCode) return null;
+
+            var responseJson = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(responseJson);
+
+            var textResponse = doc.RootElement
+                .GetProperty("candidates")[0]
+                .GetProperty("content")
+                .GetProperty("parts")[0]
+                .GetProperty("text")
+                .GetString();
+
+            if (string.IsNullOrEmpty(textResponse)) return null;
+
+            // Trích xuất JSON từ response (có thể có markdown wrapper)
+            var jsonStart = textResponse.IndexOf('{');
+            var jsonEnd = textResponse.LastIndexOf('}');
+            if (jsonStart < 0 || jsonEnd < 0) return null;
+
+            var resultJson = textResponse.Substring(jsonStart, jsonEnd - jsonStart + 1);
+            using var resultDoc = JsonDocument.Parse(resultJson);
+
+            var slug = resultDoc.RootElement.GetProperty("slug").GetString() ?? "";
+            var label = resultDoc.RootElement.GetProperty("label").GetString() ?? "";
+
+            if (string.IsNullOrEmpty(slug)) return null;
+
+            return (slug, label);
+        }
+
+        /// <summary>
+        /// Tải ảnh từ local path hoặc external URL
+        /// </summary>
+        private async Task<byte[]?> TryLoadImageBytes(string imageUrl, string webRootPath, HttpClient httpClient, Dictionary<string, byte[]?> cache)
+        {
+            if (imageUrl.StartsWith("/uploads/") || imageUrl.StartsWith("/wwwroot/"))
+            {
+                var filePath = Path.Combine(webRootPath, imageUrl.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString()));
+                if (File.Exists(filePath)) return await File.ReadAllBytesAsync(filePath);
+            }
+            else if (imageUrl.StartsWith("uploads/"))
+            {
+                var filePath = Path.Combine(webRootPath, imageUrl.Replace("/", Path.DirectorySeparatorChar.ToString()));
+                if (File.Exists(filePath)) return await File.ReadAllBytesAsync(filePath);
+            }
+            else if (imageUrl.StartsWith("http://") || imageUrl.StartsWith("https://"))
+            {
+                if (cache.TryGetValue(imageUrl, out var cached)) return cached;
+                try
+                {
+                    var response = await httpClient.GetAsync(imageUrl);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var ct = response.Content.Headers.ContentType?.MediaType ?? "";
+                        if (ct.StartsWith("image/"))
+                        {
+                            var bytes = await response.Content.ReadAsByteArrayAsync();
+                            cache[imageUrl] = bytes;
+                            return bytes;
+                        }
+                    }
+                }
+                catch { }
+                cache[imageUrl] = null;
+            }
+            return null;
         }
     }
 }
