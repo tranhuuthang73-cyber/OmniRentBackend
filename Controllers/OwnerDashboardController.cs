@@ -40,7 +40,7 @@ namespace OmniRentBackend.Controllers
             ViewBag.MyProductsCount = myProductIds.Count;
 
             var pendingBookingsCount = await _context.Bookings
-                .Where(b => myProductIds.Contains(b.ProductId) && b.Status == "PENDING")
+                .Where(b => myProductIds.Contains(b.ProductId) && (b.Status == "PENDING" || b.Status == "WAITING_OWNER_CONFIRM"))
                 .CountAsync();
             ViewBag.PendingBookingsCount = pendingBookingsCount;
 
@@ -48,6 +48,27 @@ namespace OmniRentBackend.Controllers
                 .Where(b => myProductIds.Contains(b.ProductId) && b.Status == "COMPLETED")
                 .SumAsync(b => b.TotalPrice);
             ViewBag.TotalRevenue = totalRevenue;
+
+            var now = DateTime.UtcNow;
+            var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var nextMonthStart = monthStart.AddMonths(1);
+            var monthlyRevenue = await _context.Bookings
+                .Where(b => myProductIds.Contains(b.ProductId)
+                    && b.Status == "COMPLETED"
+                    && b.CompletedAt != null
+                    && b.CompletedAt >= monthStart
+                    && b.CompletedAt < nextMonthStart)
+                .SumAsync(b => b.TotalPrice);
+            ViewBag.MonthlyRevenue = monthlyRevenue;
+            ViewBag.MonthlyCommission = monthlyRevenue * 0.20;
+
+            ViewBag.RecentBookings = await _context.Bookings
+                .Include(b => b.Product)
+                .Include(b => b.Renter)
+                .Where(b => myProductIds.Contains(b.ProductId))
+                .OrderByDescending(b => b.CreatedAt)
+                .Take(8)
+                .ToListAsync();
 
             return View();
         }

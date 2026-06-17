@@ -1,3 +1,4 @@
+@using OmniRentBackend.Models
 @{
     ViewData["Title"] = "Tổng quan";
     Layout = "~/Views/Shared/_OwnerLayout.cshtml";
@@ -5,6 +6,9 @@
     var myProductsCount = ViewBag.MyProductsCount ?? 0;
     var pendingBookingsCount = ViewBag.PendingBookingsCount ?? 0;
     var totalRevenue = ViewBag.TotalRevenue ?? 0;
+    var monthlyRevenue = ViewBag.MonthlyRevenue ?? 0;
+    var monthlyCommission = ViewBag.MonthlyCommission ?? 0;
+    var recentBookings = (List<Booking>)(ViewBag.RecentBookings ?? new List<Booking>());
 }
 
 <style>
@@ -104,6 +108,37 @@
         gap: 0.4rem;
     }
     .section-heading i { color: var(--primary); }
+
+    .booking-table-card {
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 1.25rem;
+        box-shadow: var(--card-shadow);
+    }
+    .booking-table-card table { margin-bottom: 0; }
+    .booking-table-card th {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        border-bottom-color: var(--border-color);
+    }
+    .booking-table-card td {
+        vertical-align: middle;
+        color: var(--text-primary);
+        font-size: 0.86rem;
+    }
+    .btn-owner-action {
+        border: 0;
+        border-radius: 8px;
+        padding: 0.45rem 0.75rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #fff;
+    }
+    .btn-confirm-deposit { background: #16a34a; }
+    .btn-complete-booking { background: #2563eb; }
 </style>
 
 <!-- Info banner -->
@@ -117,7 +152,7 @@
     <i class="bi bi-bar-chart-fill"></i> Tổng quan tài sản
 </div>
 <div class="row g-3 mb-5" id="owner-stat-cards">
-    <div class="col-md-4 col-sm-6">
+    <div class="col-md-3 col-sm-6">
         <div class="stat-card" id="stat-my-products">
             <div class="stat-icon" style="background:#dcfce7;">
                 <i class="bi bi-box-seam-fill" style="color:#16a34a;"></i>
@@ -128,7 +163,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4 col-sm-6">
+    <div class="col-md-3 col-sm-6">
         <div class="stat-card" id="stat-pending">
             <div class="stat-icon" style="background:var(--primary-light);">
                 <i class="bi bi-hourglass-split" style="color:var(--primary);"></i>
@@ -139,7 +174,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4 col-sm-6">
+    <div class="col-md-3 col-sm-6">
         <div class="stat-card" id="stat-revenue">
             <div class="stat-icon" style="background:#dbeafe;">
                 <i class="bi bi-currency-dollar" style="color:#1d4ed8;"></i>
@@ -150,6 +185,127 @@
             </div>
         </div>
     </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card" id="stat-commission">
+            <div class="stat-icon" style="background:#fee2e2;">
+                <i class="bi bi-percent" style="color:#dc2626;"></i>
+            </div>
+            <div>
+                <div class="stat-value">@monthlyCommission.ToString("N0")đ</div>
+                <div class="stat-label">Hoa hồng tháng này (20%)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function confirmDeposit(bookingId) {
+        if (!confirm('Xác nhận đã nhận tiền cọc cho đơn này?')) return;
+        await submitOwnerBookingAction(`/bookings/${bookingId}/confirm-deposit`, 'Đã xác nhận tiền cọc.');
+    }
+
+    async function completeBooking(bookingId) {
+        if (!confirm('Xác nhận khách đã trả phần còn lại và hoàn tất đơn?')) return;
+        await submitOwnerBookingAction(`/bookings/${bookingId}/complete`, 'Đã hoàn tất đơn thuê.');
+    }
+
+    async function submitOwnerBookingAction(url, successMessage) {
+        try {
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) {
+                let message = 'Không thể cập nhật đơn thuê.';
+                try {
+                    const data = await response.json();
+                    message = data.message || message;
+                } catch { }
+                alert(message);
+                return;
+            }
+
+            alert(successMessage);
+            window.location.reload();
+        } catch {
+            alert('Không thể kết nối máy chủ.');
+        }
+    }
+</script>
+
+<div class="section-heading">
+    <i class="bi bi-receipt-cutoff"></i> Đơn thuê gần đây
+</div>
+<div class="booking-table-card mb-5">
+    @if (recentBookings.Any())
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th>Khách thuê</th>
+                        <th>Cọc</th>
+                        <th>Còn lại</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var booking in recentBookings)
+                    {
+                        <tr id="booking-row-@booking.Id">
+                            <td class="fw-bold">@(booking.Product?.Name ?? "Sản phẩm")</td>
+                            <td>@(booking.Renter?.FullName ?? "Khách thuê")</td>
+                            <td>@booking.DepositAmount.ToString("N0")đ</td>
+                            <td>@booking.RemainingAmount.ToString("N0")đ</td>
+                            <td>
+                                @if (booking.PaymentStatus == "WAITING_CONFIRMATION")
+                                {
+                                    <span class="badge bg-warning text-dark">Chờ xác nhận cọc</span>
+                                }
+                                else if (booking.PaymentStatus == "PAID")
+                                {
+                                    <span class="badge bg-success">Đã nhận cọc</span>
+                                }
+                                else if (booking.PaymentStatus == "PAID_FULL")
+                                {
+                                    <span class="badge bg-primary">Hoàn tất</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@booking.PaymentStatus</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                @if (booking.PaymentStatus == "WAITING_CONFIRMATION")
+                                {
+                                    <button class="btn-owner-action btn-confirm-deposit" onclick="confirmDeposit('@booking.Id')">Xác nhận cọc</button>
+                                }
+                                else if (booking.Status == "APPROVED" || booking.Status == "ONGOING")
+                                {
+                                    <button class="btn-owner-action btn-complete-booking" onclick="completeBooking('@booking.Id')">Hoàn tất đơn</button>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-3 small text-muted">
+            Doanh thu tháng này: <strong>@monthlyRevenue.ToString("N0")đ</strong>.
+            Hoa hồng hệ thống 20%: <strong>@monthlyCommission.ToString("N0")đ</strong>.
+        </div>
+    }
+    else
+    {
+        <div class="text-muted">Chưa có đơn thuê nào cho tài sản của bạn.</div>
+    }
 </div>
 
 <!-- Quick actions -->

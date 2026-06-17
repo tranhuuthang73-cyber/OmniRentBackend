@@ -2,10 +2,18 @@
 @model Booking
 @{
     Layout = null;
-    var depositAmount = (long)(Model.Product?.DepositAmount ?? 0);
-    var addInfo = Uri.EscapeDataString($"OMNIRENT DEPOSIT {Model.Id.Substring(0, 8).ToUpper()}");
-    var accountName = Uri.EscapeDataString("TRAN THAI DUONG");
-    var qrUrl = $"https://img.vietqr.io/image/vcb-1021357600-qr_only.png?amount={depositAmount}&addInfo={addInfo}&accountName={accountName}";
+    var depositAmount = (long)Math.Round(Model.DepositAmount > 0 ? Model.DepositAmount : Model.TotalPrice * 0.5, 0);
+    var remainingAmount = (long)Math.Max(0, Model.TotalPrice - depositAmount);
+    var transferContent = !string.IsNullOrWhiteSpace(Model.TransferContent)
+        ? Model.TransferContent
+        : $"COC OMNIRENT {Model.Id.Substring(0, 8).ToUpper()}";
+    var owner = Model.Product?.Owner;
+    var bankName = !string.IsNullOrWhiteSpace(owner?.BankName) ? owner!.BankName! : "VietinBank";
+    var bankAccount = !string.IsNullOrWhiteSpace(owner?.BankAccount) ? owner!.BankAccount! : "102878922105";
+    var bankHolder = !string.IsNullOrWhiteSpace(owner?.BankAccountHolder) ? owner!.BankAccountHolder! : "NGUYEN TAN KIET";
+    var addInfo = Uri.EscapeDataString(transferContent);
+    var accountName = Uri.EscapeDataString(bankHolder);
+    var qrUrl = $"https://img.vietqr.io/image/970415-{bankAccount}-compact2.png?amount={depositAmount}&addInfo={addInfo}&accountName={accountName}";
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -199,8 +207,8 @@
             <!-- Success state -->
             <div id="successOverlay" class="success-overlay">
                 <div class="checkmark-circle"><i class="bi bi-check-lg"></i></div>
-                <h2 class="fw-bold mb-2" style="color: var(--text-primary);">Thanh toán thành công!</h2>
-                <p class="text-center" style="color: var(--text-secondary); max-width: 400px;">Đơn thuê của bạn đã được thanh toán cọc và chuyển sang trạng thái chờ nhận tài sản.</p>
+                <h2 class="fw-bold mb-2" style="color: var(--text-primary);">Đã gửi xác nhận chuyển cọc!</h2>
+                <p class="text-center" style="color: var(--text-secondary); max-width: 400px;">Đơn thuê của bạn đã chuyển sang trạng thái chờ chủ cho thuê xác nhận tiền cọc.</p>
                 <div class="spinner-border mt-3" style="color: var(--primary);" role="status"><span class="visually-hidden">Loading...</span></div>
                 <small class="mt-2 text-muted">Đang chuyển hướng về trang cá nhân của bạn...</small>
             </div>
@@ -248,8 +256,12 @@
                             <span class="fw-bold">@Model.TotalPrice.ToString("N0")đ</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center pt-2 border-top" style="border-color: rgba(234,179,8,0.2) !important;">
-                            <span class="fw-bold">Số tiền cọc cần trả (100%)</span>
-                            <h3 class="fw-bold m-0 text-danger">@((Model.Product?.DepositAmount ?? 0).ToString("N0"))đ</h3>
+                            <span class="fw-bold">Tiền cọc cần chuyển (50%)</span>
+                            <h3 class="fw-bold m-0 text-danger">@depositAmount.ToString("N0")đ</h3>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <span>Còn lại trả trực tiếp/chuyển khoản</span>
+                            <span class="fw-bold">@remainingAmount.ToString("N0")đ</span>
                         </div>
                     </div>
                 </div>
@@ -265,15 +277,16 @@
                         </div>
 
                         <div style="color: var(--text-secondary); font-size: 0.85rem;">
-                            <div>Chủ tài khoản: <strong style="color: var(--text-primary);">TRAN THAI DUONG</strong></div>
-                            <div>Số tài khoản: <strong style="color: var(--text-primary);">1021357600</strong> (Vietcombank)</div>
-                            <div>Nội dung: <strong style="color: var(--text-primary);">OMNIRENT DEPOSIT @Model.Id.Substring(0, 8).ToUpper()</strong></div>
+                            <div>Chủ tài khoản: <strong style="color: var(--text-primary);">@bankHolder</strong></div>
+                            <div>Số tài khoản: <strong style="color: var(--text-primary);">@bankAccount</strong> (@bankName)</div>
+                            <div>Số tiền: <strong style="color: var(--text-primary);">@depositAmount.ToString("N0")đ</strong></div>
+                            <div>Nội dung: <strong style="color: var(--text-primary);">@transferContent</strong></div>
                         </div>
                     </div>
 
                     <div class="mt-4 pt-3">
                         <button id="btnConfirmPayment" class="btn btn-pay-custom py-3" onclick="confirmPayment()">
-                            <i class="bi bi-check-circle-fill"></i> Xác nhận Đã thanh toán cọc
+                            <i class="bi bi-check-circle-fill"></i> Tôi đã chuyển tiền cọc
                         </button>
                     </div>
                 </div>
@@ -333,11 +346,11 @@
                 } else {
                     const err = await res.json();
                     showError(err.message || 'Xác thực thanh toán thất bại.');
-                    btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Xác nhận Đã thanh toán cọc';
+                    btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Tôi đã chuyển tiền cọc';
                 }
             } catch (e) {
                 showError('Không thể kết nối máy chủ để kiểm tra giao dịch.');
-                btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Xác nhận Đã thanh toán cọc';
+                btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Tôi đã chuyển tiền cọc';
             }
         }
         function showError(msg) {

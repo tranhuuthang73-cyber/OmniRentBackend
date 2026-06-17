@@ -153,8 +153,14 @@ namespace OmniRentBackend.Controllers
                 StartDate = DateTime.UtcNow.AddDays(-3),
                 EndDate = DateTime.UtcNow.AddDays(-1),
                 TotalPrice = product.PricePerDay * 2,
+                DepositAmount = product.PricePerDay,
+                RemainingAmount = product.PricePerDay,
+                DepositPaid = true,
+                DepositPaidAt = DateTime.UtcNow.AddDays(-3),
+                RemainingPaid = true,
+                CompletedAt = DateTime.UtcNow.AddDays(-1),
                 Status = "COMPLETED",
-                PaymentStatus = "PAID",
+                PaymentStatus = "PAID_FULL",
                 RentalAddress = "123 Test Street, Ho Chi Minh City"
             };
 

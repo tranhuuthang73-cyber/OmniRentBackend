@@ -3,6 +3,7 @@
 @{
     Layout = null;
     var isAuthenticated = User.Identity != null && User.Identity.IsAuthenticated;
+    var ownerPickupAddress = Model.Owner?.PickupAddress ?? Model.Owner?.Address ?? "Chủ cho thuê chưa cập nhật địa chỉ nhận đồ.";
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -377,8 +378,8 @@
                         <span class="fw-bold" style="color: var(--text-primary);">@Model.PricePerDay.ToString("N0")đ / ngày</span>
                     </div>
                     <div class="d-flex justify-content-between mb-2">
-                        <span class="text-secondary">Tiền đặt cọc</span>
-                        <span class="fw-bold" style="color: #dc2626;">@Model.DepositAmount.ToString("N0")đ</span>
+                        <span class="text-secondary">Cọc khi đặt thuê</span>
+                        <span class="fw-bold" style="color: #dc2626;">50% tổng tiền thuê</span>
                     </div>
                     <div class="d-flex justify-content-between">
                         <span class="text-secondary">Chủ sở hữu</span>
@@ -405,8 +406,11 @@
                         </div>
 
                         <div class="mb-4">
-                            <label for="rentalAddress" class="form-label-custom">Địa chỉ nhận tài sản thuê (nhập chi tiết)</label>
-                            <textarea class="form-control form-control-custom" id="rentalAddress" rows="3" placeholder="Ví dụ: Số 12, ngõ 34 Đường Láng, Đống Đa, Hà Nội..." required></textarea>
+                            <label class="form-label-custom">Địa chỉ nhận tài sản của chủ cho thuê</label>
+                            <div class="form-control-custom" style="min-height: 82px; line-height: 1.6;">
+                                <i class="bi bi-geo-alt-fill text-danger me-2"></i>@ownerPickupAddress
+                            </div>
+                            <input type="hidden" id="rentalAddress" value="@ownerPickupAddress" />
                         </div>
 
                         <div class="pricing-summary">
@@ -415,8 +419,8 @@
                                 <span id="summaryDays" class="fw-bold">1 ngày</span>
                             </div>
                             <div class="summary-row">
-                                <span>Tiền đặt cọc</span>
-                                <span class="fw-bold" style="color: #dc2626;">@Model.DepositAmount.ToString("N0")đ</span>
+                                <span>Tiền cọc cần chuyển (50%)</span>
+                                <span id="summaryDeposit" class="fw-bold" style="color: #dc2626;">Calculating...</span>
                             </div>
                             <div class="summary-row total">
                                 <span>Tổng cộng chi phí thuê</span>
@@ -496,9 +500,15 @@
             const endStr = document.getElementById('endDate').value;
             const sumDays = document.getElementById('summaryDays');
             const sumTotal = document.getElementById('summaryTotal');
+            const sumDeposit = document.getElementById('summaryDeposit');
             if (!startStr || !endStr) return;
             const start = new Date(startStr); const end = new Date(endStr);
-            if (end < start) { sumDays.innerText = '0 ngày'; sumTotal.innerText = 'Không hợp lệ'; return; }
+            if (end < start) {
+                sumDays.innerText = '0 ngày';
+                sumTotal.innerText = 'Không hợp lệ';
+                if (sumDeposit) sumDeposit.innerText = 'Không hợp lệ';
+                return;
+            }
             try {
                 const res = await fetch('/bookings/estimate-price', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -506,13 +516,20 @@
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    sumDays.innerText = `${data.days} ngày`; sumTotal.innerText = `${data.totalPrice.toLocaleString('vi-VN')}đ`;
+                    const deposit = Math.round(data.totalPrice * 0.5);
+                    sumDays.innerText = `${data.days} ngày`;
+                    sumTotal.innerText = `${data.totalPrice.toLocaleString('vi-VN')}đ`;
+                    if (sumDeposit) sumDeposit.innerText = `${deposit.toLocaleString('vi-VN')}đ`;
                 } else {
                     const err = await res.json(); sumTotal.innerText = err.message || 'Lỗi tính giá';
                 }
             } catch (e) {
                 const diffDays = Math.max(1, Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)));
-                sumDays.innerText = `${diffDays} ngày`; sumTotal.innerText = `${(diffDays * pricePerDay).toLocaleString('vi-VN')}đ`;
+                const fallbackTotal = diffDays * pricePerDay;
+                const fallbackDeposit = Math.round(fallbackTotal * 0.5);
+                sumDays.innerText = `${diffDays} ngày`;
+                sumTotal.innerText = `${fallbackTotal.toLocaleString('vi-VN')}đ`;
+                if (sumDeposit) sumDeposit.innerText = `${fallbackDeposit.toLocaleString('vi-VN')}đ`;
             }
         }
 

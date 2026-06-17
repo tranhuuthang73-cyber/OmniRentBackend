@@ -375,7 +375,8 @@
 
                                     <div class="d-flex flex-wrap gap-2 align-items-center">
                                         <!-- Booking Status -->
-                                        @if (booking.Status == "PENDING") { <span class="badge bg-warning text-dark badge-status">Chờ duyệt</span> }
+                                        @if (booking.Status == "PENDING") { <span class="badge bg-warning text-dark badge-status">Chờ thanh toán cọc</span> }
+                                        else if (booking.Status == "WAITING_OWNER_CONFIRM") { <span class="badge bg-warning text-dark badge-status">Chờ chủ xác nhận cọc</span> }
                                         else if (booking.Status == "APPROVED") { <span class="badge bg-info badge-status">Đã duyệt</span> }
                                         else if (booking.Status == "ONGOING") { <span class="badge badge-status" style="background: var(--primary); color: #000000;">Đang thuê</span> }
                                         else if (booking.Status == "COMPLETED") { <span class="badge bg-success badge-status">Hoàn thành</span> }
@@ -384,7 +385,9 @@
 
                                         <!-- Payment Status -->
                                         @if (booking.PaymentStatus == "UNPAID") { <span class="badge bg-danger badge-status">Chưa thanh toán</span> }
+                                        else if (booking.PaymentStatus == "WAITING_CONFIRMATION") { <span class="badge bg-warning text-dark badge-status">Đang chờ xác nhận cọc</span> }
                                         else if (booking.PaymentStatus == "PAID") { <span class="badge bg-success badge-status">Đã thanh toán cọc</span> }
+                                        else if (booking.PaymentStatus == "PAID_FULL") { <span class="badge bg-primary badge-status">Đã thanh toán đủ</span> }
                                         else if (booking.PaymentStatus == "REFUNDED") { <span class="badge bg-info badge-status">Đã hoàn tiền</span> }
                                     </div>
                                 </div>

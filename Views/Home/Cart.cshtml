@@ -396,8 +396,10 @@
                         </div>
 
                         <div class="mb-4">
-                            <label for="rentalAddress" class="form-label-custom">Địa chỉ nhận tài sản (nhập chi tiết)</label>
-                            <textarea class="form-control form-control-custom" id="rentalAddress" rows="3" placeholder="Ví dụ: Số 12, ngõ 34 Đường Láng..." required></textarea>
+                            <label class="form-label-custom">Địa chỉ nhận tài sản</label>
+                            <div class="form-control-custom" style="line-height: 1.6;">
+                                Khách sẽ đến địa chỉ/kho của từng chủ cho thuê để nhận đồ. Địa chỉ cụ thể sẽ hiện trong đơn sau khi đặt.
+                            </div>
                         </div>
 
                         <div class="p-3 mb-4 rounded-3" style="background: var(--body-bg); border: 1px solid var(--border); font-size: 0.95rem;">
@@ -411,7 +413,7 @@
                             </div>
                         </div>
 
-                        <button id="btnSubmitCart" class="btn-nav-primary w-100 py-3 justify-content-center">
+                        <button id="btnSubmitCart" class="btn-nav-primary w-100 py-3 justify-content-center" type="button">
                             <i class="bi bi-credit-card-fill"></i> Xác nhận đặt thuê
                         </button>
                     } else {
@@ -552,23 +554,22 @@
             if (cart.length === 0) return;
             const startDateStr = document.getElementById('startDate').value;
             const endDateStr = document.getElementById('endDate').value;
-            const rentalAddress = document.getElementById('rentalAddress').value.trim();
             const btn = document.getElementById('btnSubmitCart');
             const errorBox = document.getElementById('bookingError');
             if (errorBox) errorBox.classList.add('d-none');
             if (!startDateStr || !endDateStr) { showError('Vui lòng chọn ngày bắt đầu và trả đồ.'); return; }
-            if (!rentalAddress) { showError('Vui lòng nhập địa chỉ nhận tài sản thuê.'); return; }
 
             btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Đang tạo đơn thuê...';
             let promises = cart.map(item => fetch('/bookings', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ productId: item.id, startDate: startDateStr, endDate: endDateStr, rentalAddress: rentalAddress })
+                body: JSON.stringify({ productId: item.id, startDate: startDateStr, endDate: endDateStr })
             }));
             try {
                 let results = await Promise.all(promises);
                 if (results.every(res => res.ok)) {
+                    const firstBooking = await results[0].json();
                     localStorage.removeItem('cart');
-                    window.location.href = '/Home/MyBookings';
+                    window.location.href = `/Home/Payment/${firstBooking.id}`;
                 } else {
                     showError('Có lỗi xảy ra. Vui lòng kiểm tra lại.');
                     btn.disabled = false; btn.innerText = 'Xác nhận đặt thuê';
@@ -584,7 +585,11 @@
                 errorBox.innerText = msg; errorBox.classList.remove('d-none');
             }
         }
-        document.addEventListener('DOMContentLoaded', loadCartItems);
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCartItems();
+            const btn = document.getElementById('btnSubmitCart');
+            if (btn) btn.addEventListener('click', submitCartBookings);
+        });
     </script>
 </body>
 </html>

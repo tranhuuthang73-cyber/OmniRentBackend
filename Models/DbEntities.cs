@@ -227,6 +227,18 @@ namespace OmniRentBackend.Models
 
         public bool DepositPaid { get; set; } = false;
 
+        public double DepositAmount { get; set; }
+
+        public double RemainingAmount { get; set; }
+
+        public DateTime? DepositPaidAt { get; set; }
+
+        public bool RemainingPaid { get; set; } = false;
+
+        public DateTime? CompletedAt { get; set; }
+
+        public string? TransferContent { get; set; }
+
         public string Status { get; set; } = "PENDING"; // PENDING, APPROVED, ONGOING, COMPLETED, REJECTED, CANCELLED
 
         public string PaymentStatus { get; set; } = "UNPAID"; // UNPAID, PAID, REFUNDED

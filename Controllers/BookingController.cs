@@ -97,7 +97,9 @@ namespace OmniRentBackend.Controllers
         [HttpPost("estimate-price")]
         public async Task<IActionResult> EstimatePrice([FromBody] EstimatePriceDto dto)
         {
-            var product = await _context.Products.FindAsync(dto.ProductId);
+            var product = await _context.Products
+                .Include(p => p.Owner)
+                .FirstOrDefaultAsync(p => p.Id == dto.ProductId);
             if (product == null)
             {
                 return NotFound(new { message = "Không tìm thấy sản phẩm." });
@@ -145,7 +147,7 @@ namespace OmniRentBackend.Controllers
             // 1. Check overlaps
             var overlapping = await _context.Bookings.AnyAsync(b =>
                 b.ProductId == dto.ProductId &&
-                (b.Status == "APPROVED" || b.Status == "ONGOING" || b.Status == "PENDING") &&
+                (b.Status == "APPROVED" || b.Status == "ONGOING" || b.Status == "PENDING" || b.Status == "WAITING_OWNER_CONFIRM") &&
                 b.StartDate <= end && b.EndDate >= start);
 
             if (overlapping)
@@ -165,6 +167,10 @@ namespace OmniRentBackend.Controllers
             }
 
             dynamic pricing = CalculatePriceDetails(product.PricePerDay, start, end);
+            double totalPrice = pricing.totalPrice;
+            double depositAmount = Math.Round(totalPrice * 0.5, 0);
+            double remainingAmount = totalPrice - depositAmount;
+            var transferContent = $"COC OMNIRENT {Guid.NewGuid().ToString("N")[..8].ToUpper()}";
 
             var booking = new Booking
             {
@@ -172,10 +178,15 @@ namespace OmniRentBackend.Controllers
                 RenterId = userId,
                 StartDate = start,
                 EndDate = end,
-                TotalPrice = pricing.totalPrice,
+                TotalPrice = totalPrice,
+                DepositAmount = depositAmount,
+                RemainingAmount = remainingAmount,
+                TransferContent = transferContent,
                 Status = "PENDING",
                 PaymentStatus = "UNPAID",
-                RentalAddress = dto.RentalAddress
+                RentalAddress = product.Owner?.PickupAddress
+                    ?? product.Owner?.Address
+                    ?? dto.RentalAddress
             };
 
             _context.Bookings.Add(booking);
@@ -288,7 +299,9 @@ namespace OmniRentBackend.Controllers
             booking.Status = dto.Status;
             if (dto.Status == "COMPLETED")
             {
-                booking.PaymentStatus = "REFUNDED";
+                booking.RemainingPaid = true;
+                booking.CompletedAt = DateTime.UtcNow;
+                booking.PaymentStatus = "PAID_FULL";
             }
             else if (dto.Status == "CANCELLED" && booking.PaymentStatus == "PAID")
             {
@@ -424,7 +437,9 @@ namespace OmniRentBackend.Controllers
             booking.Status = nextStatus;
             if (qrLog.CheckInType == "CHECKOUT")
             {
-                booking.PaymentStatus = "REFUNDED";
+                booking.RemainingPaid = true;
+                booking.CompletedAt = DateTime.UtcNow;
+                booking.PaymentStatus = "PAID_FULL";
             }
             booking.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
@@ -569,14 +584,19 @@ namespace OmniRentBackend.Controllers
                 return Forbid();
             }
 
-            if (booking.PaymentStatus == "PAID")
+            if (booking.PaymentStatus == "PAID" || booking.PaymentStatus == "PAID_FULL" || booking.PaymentStatus == "WAITING_CONFIRMATION")
             {
                 return BadRequest(new { message = "Đơn thuê đã được thanh toán cọc." });
             }
 
-            booking.DepositPaid = true;
-            booking.PaymentStatus = "PAID";
-            booking.Status = "APPROVED"; // Auto approve
+            if (booking.DepositAmount <= 0)
+            {
+                booking.DepositAmount = Math.Round(booking.TotalPrice * 0.5, 0);
+                booking.RemainingAmount = booking.TotalPrice - booking.DepositAmount;
+            }
+
+            booking.PaymentStatus = "WAITING_CONFIRMATION";
+            booking.Status = "WAITING_OWNER_CONFIRM";
             booking.UpdatedAt = DateTime.UtcNow;
 
             // Notification for owner
@@ -595,6 +615,111 @@ namespace OmniRentBackend.Controllers
             // Broadcast booking update
             await BroadcastBookingUpdateAsync(booking.RenterId, booking);
             await BroadcastBookingUpdateAsync(booking.Product.OwnerId, booking);
+
+            return Ok(booking);
+        }
+
+        [Authorize(Roles = "OWNER,ADMIN")]
+        [HttpPut("{id}/confirm-deposit")]
+        public async Task<IActionResult> ConfirmDeposit(string id)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            var role = User.FindFirst("role")?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var booking = await _context.Bookings
+                .Include(b => b.Product)
+                .FirstOrDefaultAsync(b => b.Id == id);
+
+            if (booking == null)
+            {
+                return NotFound(new { message = "Khong tim thay don thue." });
+            }
+
+            if (role != "ADMIN" && booking.Product?.OwnerId != userId)
+            {
+                return Forbid();
+            }
+
+            if (booking.PaymentStatus != "WAITING_CONFIRMATION")
+            {
+                return BadRequest(new { message = "Don nay chua o trang thai cho xac nhan coc." });
+            }
+
+            booking.DepositPaid = true;
+            booking.DepositPaidAt = DateTime.UtcNow;
+            booking.PaymentStatus = "PAID";
+            booking.Status = "APPROVED";
+            booking.UpdatedAt = DateTime.UtcNow;
+
+            var renterNotif = new Notification
+            {
+                UserId = booking.RenterId,
+                Title = "Tien coc da duoc xac nhan",
+                Content = $"Chu cho thue da xac nhan tien coc cho \"{booking.Product?.Name}\". Ban co the den nhan do theo lich."
+            };
+            _context.Notifications.Add(renterNotif);
+
+            await _context.SaveChangesAsync();
+            await SendLiveNotificationAsync(booking.RenterId, renterNotif);
+            await BroadcastBookingUpdateAsync(booking.RenterId, booking);
+            if (booking.Product != null)
+            {
+                await BroadcastBookingUpdateAsync(booking.Product.OwnerId, booking);
+            }
+
+            return Ok(booking);
+        }
+
+        [Authorize(Roles = "OWNER,ADMIN")]
+        [HttpPut("{id}/complete")]
+        public async Task<IActionResult> CompleteBooking(string id)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            var role = User.FindFirst("role")?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var booking = await _context.Bookings
+                .Include(b => b.Product)
+                .FirstOrDefaultAsync(b => b.Id == id);
+
+            if (booking == null)
+            {
+                return NotFound(new { message = "Khong tim thay don thue." });
+            }
+
+            if (role != "ADMIN" && booking.Product?.OwnerId != userId)
+            {
+                return Forbid();
+            }
+
+            booking.Status = "COMPLETED";
+            booking.RemainingPaid = true;
+            booking.CompletedAt = DateTime.UtcNow;
+            booking.PaymentStatus = "PAID_FULL";
+            booking.UpdatedAt = DateTime.UtcNow;
+
+            if (booking.Product != null)
+            {
+                booking.Product.Status = "AVAILABLE";
+                booking.Product.UpdatedAt = DateTime.UtcNow;
+            }
+
+            var renterNotif = new Notification
+            {
+                UserId = booking.RenterId,
+                Title = "Don thue da hoan tat",
+                Content = $"Don thue \"{booking.Product?.Name}\" da duoc xac nhan hoan tat."
+            };
+            _context.Notifications.Add(renterNotif);
+
+            await _context.SaveChangesAsync();
+            await SendLiveNotificationAsync(booking.RenterId, renterNotif);
+            await BroadcastBookingUpdateAsync(booking.RenterId, booking);
+            if (booking.Product != null)
+            {
+                await BroadcastBookingUpdateAsync(booking.Product.OwnerId, booking);
+            }
 
             return Ok(booking);
         }
