@@ -67,7 +67,7 @@ namespace OmniRentBackend.Controllers
         /// Tìm kiếm thông minh bằng ảnh — Upload ảnh rồi hệ thống rà soát sản phẩm có ảnh trùng khớp
         /// </summary>
         [HttpPost("image-search")]
-        public async Task<IActionResult> ImageSearch(IFormFile? image)
+        public async Task<IActionResult> ImageSearch(IFormFile? image, [FromForm] string? clientCategory)
         {
             if (image == null || image.Length == 0)
             {
@@ -100,7 +100,7 @@ namespace OmniRentBackend.Controllers
 
             try
             {
-                var result = await _aiService.ImageSearchAsync(filePath, image.FileName, _env.WebRootPath);
+                var result = await _aiService.ImageSearchAsync(filePath, image.FileName, _env.WebRootPath, clientCategory);
                 return Ok(result);
             }
             finally

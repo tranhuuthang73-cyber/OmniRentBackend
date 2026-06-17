@@ -38,6 +38,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
+    <!-- TensorFlow.js & MobileNet client-side classification fallback -->
+    <script src="https://cdn.jsdelivr.net/npm/@@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@@tensorflow-models/mobilenet"></script>
+
     <style>
         html {
             scroll-behavior: smooth;
@@ -1552,6 +1556,51 @@
 
             let selectedFile = null;
 
+            // Model classification logic
+            let net = null;
+            async function loadClassifierModel() {
+                try {
+                    net = await mobilenet.load();
+                    console.log("MobileNet loaded successfully.");
+                } catch (e) {
+                    console.warn("MobileNet load error, will rely on other fallbacks:", e);
+                }
+            }
+            if (window.mobilenet) {
+                loadClassifierModel();
+            }
+
+            function mapPredictionsToCategory(predictions) {
+                for (let pred of predictions) {
+                    const text = pred.className.toLowerCase();
+                    if (text.includes("notebook") || text.includes("laptop") || text.includes("computer")) {
+                        return "laptop";
+                    }
+                    if (text.includes("motorcycle") || text.includes("scooter") || text.includes("moped") || text.includes("vespa") || text.includes("motor bike")) {
+                        return "xe-may";
+                    }
+                    if (text.includes("camera") || text.includes("reflex camera") || text.includes("lens")) {
+                        return "may-anh";
+                    }
+                    if (text.includes("speaker") || text.includes("loudspeaker")) {
+                        return "loa";
+                    }
+                    if (text.includes("gown") || text.includes("dress") || text.includes("skirt")) {
+                        return "vay-tiec";
+                    }
+                    if (text.includes("suit") || text.includes("coat") || text.includes("tuxedo")) {
+                        return "vest";
+                    }
+                    if (text.includes("projector")) {
+                        return "may-chieu";
+                    }
+                    if (text.includes("bicycle") || text.includes("bike")) {
+                        return "xe-dap";
+                    }
+                }
+                return "";
+            }
+
             // Open / Close modal
             btnOpen.addEventListener('click', () => {
                 overlay.classList.add('active');
@@ -1631,8 +1680,23 @@
                 scanResults.classList.remove('active');
                 preview.classList.add('scanning');
 
+                // Client-side classification fallback
+                let clientCategory = '';
+                if (net) {
+                    try {
+                        const predictions = await net.classify(previewImg);
+                        console.log("Client-side predictions:", predictions);
+                        clientCategory = mapPredictionsToCategory(predictions);
+                    } catch (e) {
+                        console.error("Client classification error", e);
+                    }
+                }
+
                 const formData = new FormData();
                 formData.append('image', selectedFile);
+                if (clientCategory) {
+                    formData.append('clientCategory', clientCategory);
+                }
 
                 try {
                     const response = await fetch('/ai/image-search', {

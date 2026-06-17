@@ -275,7 +275,7 @@ namespace OmniRentBackend.Services
         /// Tìm kiếm thông minh bằng ảnh: Upload ảnh → Gemini AI nhận diện → Đề xuất sản phẩm cùng loại
         /// Ưu tiên: 1) Gemini Vision AI phân loại ảnh, 2) Tên file, 3) So sánh byte
         /// </summary>
-        public async Task<object> ImageSearchAsync(string uploadedImagePath, string originalFileName, string webRootPath)
+        public async Task<object> ImageSearchAsync(string uploadedImagePath, string originalFileName, string webRootPath, string? clientCategory = null)
         {
             var results = new List<object>();
 
@@ -303,9 +303,11 @@ namespace OmniRentBackend.Services
             // === BƯỚC 1: Nhận diện loại sản phẩm ===
             string? matchedCategorySlug = null;
             string? aiDetectedLabel = null;
+            bool aiFailed = false;
+            string? aiReason = null;
 
             // 1a. Thử dùng Gemini Vision AI nhận diện ảnh (ưu tiên cao nhất)
-            if (!string.IsNullOrEmpty(_geminiApiKey) && _geminiApiKey != "YOUR_GEMINI_API_KEY_HERE")
+            if (!string.IsNullOrEmpty(_geminiApiKey) && _geminiApiKey != "YOUR_GEMINI_API_KEY_HERE" && _geminiApiKey.Trim() != "")
             {
                 try
                 {
@@ -315,11 +317,43 @@ namespace OmniRentBackend.Services
                         matchedCategorySlug = aiResult.Value.slug;
                         aiDetectedLabel = aiResult.Value.label;
                     }
+                    else
+                    {
+                        aiFailed = true;
+                        aiReason = "Không nhận diện được vật thể trong ảnh.";
+                    }
                 }
-                catch { /* Fallback to filename detection */ }
+                catch (Exception ex)
+                {
+                    aiFailed = true;
+                    if (ex.Message.Contains("429"))
+                    {
+                        aiReason = "Hết hạn mức truy vấn miễn phí (Rate Limit/Quota 429)";
+                    }
+                    else if (ex.Message.Contains("400") || ex.Message.Contains("403"))
+                    {
+                        aiReason = "Khóa API Key không hợp lệ (400/403)";
+                    }
+                    else
+                    {
+                        aiReason = ex.Message;
+                    }
+                }
+            }
+            else
+            {
+                aiFailed = true;
+                aiReason = "Chưa cấu hình API Key trong appsettings.json.";
             }
 
-            // 1b. Fallback: Phân tích tên file
+            // 1b. Fallback 1: Nhận diện từ client-side TensorFlow.js (độ tin cậy cực cao, không lo giới hạn khóa API)
+            if (string.IsNullOrEmpty(matchedCategorySlug) && !string.IsNullOrEmpty(clientCategory))
+            {
+                matchedCategorySlug = clientCategory;
+                aiDetectedLabel = allCategories.FirstOrDefault(c => c.Slug == clientCategory)?.Name;
+            }
+
+            // 1c. Fallback 2: Phân tích tên file
             if (string.IsNullOrEmpty(matchedCategorySlug))
             {
                 var lowerFileName = originalFileName.ToLower();
@@ -469,25 +503,41 @@ namespace OmniRentBackend.Services
                 .Take(10)
                 .ToList();
 
-            if (sortedResults.Count == 0)
-            {
-                return new
-                {
-                    success = true,
-                    message = "Không tìm thấy sản phẩm nào khớp. Hãy thử chụp rõ hơn hoặc tìm bằng từ khóa.",
-                    totalResults = 0,
-                    results = sortedResults
-                };
-            }
-
             // Xây dựng message kết quả
             string detectedName = aiDetectedLabel 
                 ?? categoryProducts.FirstOrDefault()?.Category?.Name 
                 ?? matchedCategorySlug 
                 ?? "";
-            string msg = !string.IsNullOrEmpty(detectedName)
-                ? $"🔍 Nhận diện: {detectedName}. Tìm thấy {sortedResults.Count} sản phẩm tương tự!"
-                : $"Tìm thấy {sortedResults.Count} sản phẩm khớp với ảnh của bạn!";
+
+            string msg;
+            if (sortedResults.Count > 0)
+            {
+                msg = !string.IsNullOrEmpty(detectedName)
+                    ? $"🔍 Nhận diện: {detectedName}. Tìm thấy {sortedResults.Count} sản phẩm tương tự!"
+                    : $"Tìm thấy {sortedResults.Count} sản phẩm khớp với ảnh của bạn!";
+            }
+            else
+            {
+                if (aiFailed)
+                {
+                    msg = $"⚠️ Gemini AI lỗi ({aiReason}). Chế độ dự phòng: Vui lòng đổi tên ảnh chứa từ khóa như 'laptop.jpg', 'xe_may.jpg', 'vay.jpg'... để hệ thống tìm kiếm.";
+                }
+                else
+                {
+                    msg = "Không tìm thấy sản phẩm nào khớp. Hãy thử chụp rõ hơn hoặc tìm bằng từ khóa.";
+                }
+            }
+
+            if (sortedResults.Count == 0)
+            {
+                return new
+                {
+                    success = true,
+                    message = msg,
+                    totalResults = 0,
+                    results = sortedResults
+                };
+            }
 
             return new
             {
@@ -646,7 +696,11 @@ Nếu không nhận diện được, trả về: {{""slug"": """", ""label"": ""
             var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={_geminiApiKey}";
             var response = await httpClient.PostAsync(url, content);
 
-            if (!response.IsSuccessStatusCode) return null;
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Gemini API error ({response.StatusCode}): {errorContent}");
+            }
 
             var responseJson = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(responseJson);
