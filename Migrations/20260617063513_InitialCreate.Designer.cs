@@ -11,8 +11,8 @@ using OmniRentBackend.Data;
 namespace OmniRentBackend.Migrations
 {
     [DbContext(typeof(OmniRentDbContext))]
-    [Migration("20260616162831_AddAddressToUser")]
-    partial class AddAddressToUser
+    [Migration("20260617063513_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -516,6 +516,15 @@ namespace OmniRentBackend.Migrations
                     b.Property<string>("AvatarUrl")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("BankAccount")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BankAccountHolder")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BankName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<long>("CreatedAt")
                         .HasColumnType("bigint");
 
@@ -527,6 +536,9 @@ namespace OmniRentBackend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("NationalId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("OwnerVerified")
                         .HasColumnType("bit");
 
@@ -536,6 +548,12 @@ namespace OmniRentBackend.Migrations
 
                     b.Property<string>("Phone")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PickupAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("ProfileCompleted")
+                        .HasColumnType("bit");
 
                     b.Property<double>("RenterTrustScore")
                         .HasColumnType("float");

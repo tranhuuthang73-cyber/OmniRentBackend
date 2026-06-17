@@ -462,13 +462,7 @@
                                 <span class="d-none d-md-inline">@Model.FullName</span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end p-2 border-0" aria-labelledby="userMenuButton" style="background: var(--card-bg); box-shadow: var(--card-shadow); border-radius: 12px; min-width: 200px;">
-                                <li>
-                                    <a class="dropdown-item rounded-3 py-2 px-3 d-flex align-items-center gap-2"
-                                       href="/Account/EditProfile"
-                                       style="color: var(--text-primary); font-size: 0.85rem; font-weight: 500;">
-                                        <i class="bi bi-person-gear text-primary"></i> Chỉnh sửa hồ sơ
-                                    </a>
-                                </li>
+
                                 <li>
                                     <a class="dropdown-item rounded-3 py-2 px-3 d-flex align-items-center gap-2 active" href="/Account/Profile" style="font-size: 0.85rem; font-weight: 500;">
                                         <i class="bi bi-person-circle"></i> Trang cá nhân & Lịch sử
@@ -690,6 +684,7 @@
                             </div>
                         </div>
 
+
                         <div class="row mb-3">
                             <div class="col-md-6 mb-3 mb-md-0">
                                 <label for="Phone" class="form-label-custom">Số điện thoại liên hệ</label>
@@ -699,6 +694,43 @@
                                 <label for="Address" class="form-label-custom">Địa chỉ giao nhận mặc định</label>
                                 <input type="text" class="form-control form-control-custom" id="Address" name="Address" value="@Model.Address" placeholder="Số nhà, Tên đường, Quận/Huyện, Tỉnh/Thành...">
                             </div>
+                        </div>
+
+                        @* ===== SECTION: CCCD — Hiển thị cho mọi role, khóa nếu đã có dữ liệu ===== *@
+                        <div class="mb-4">
+                            <label for="NationalId" class="form-label-custom">
+                                Số CCCD / CMND
+                                @if (!string.IsNullOrEmpty(Model.NationalId))
+                                {
+                                    <span style="background:#dcfce7; color:#16a34a; border-radius:6px; padding:0.12rem 0.5rem; font-size:0.68rem; font-weight:700; margin-left:6px; vertical-align:middle;">
+                                        <i class="bi bi-shield-check-fill"></i> Đã xác minh
+                                    </span>
+                                }
+                            </label>
+                            @if (!string.IsNullOrEmpty(Model.NationalId))
+                            {
+                                <div style="position:relative;">
+                                    <input type="text" class="form-control form-control-custom" id="NationalId" name="NationalId"
+                                           value="@Model.NationalId" readonly
+                                           style="cursor:not-allowed; padding-right:2.5rem;" />
+                                    <span title="CCCD đã được lưu và không thể thay đổi. Liên hệ Admin nếu cần hỗ trợ."
+                                          style="position:absolute; right:0.85rem; top:50%; transform:translateY(-50%); color:#94a3b8; cursor:help;">
+                                        <i class="bi bi-lock-fill"></i>
+                                    </span>
+                                </div>
+                                <small style="color:var(--text-muted); font-size:0.75rem;">
+                                    <i class="bi bi-info-circle me-1"></i>CCCD đã khóa. Liên hệ Admin nếu cần điều chỉnh.
+                                </small>
+                            }
+                            else
+                            {
+                                <input type="text" class="form-control form-control-custom" id="NationalId" name="NationalId"
+                                       value="" placeholder="Nhập 9 hoặc 12 số CCCD/CMND"
+                                       maxlength="12" pattern="[0-9]{9,12}" title="Chỉ nhập số, 9–12 ký tự" />
+                                <small style="color:var(--text-muted); font-size:0.75rem;">
+                                    <i class="bi bi-info-circle me-1"></i>Sau khi lưu, thông tin CCCD sẽ bị khóa để bảo mật.
+                                </small>
+                            }
                         </div>
 
                         <div class="row mb-4">
@@ -716,6 +748,50 @@
                             <span style="font-size:0.8rem; font-weight:600; color:var(--text-secondary);">Xem trước avatar mới:</span>
                             <img id="avatarPreviewImg" src="" alt="Preview" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--primary);" />
                         </div>
+
+                        @* ===== SECTION: THÔNG TIN CHỦ CHO THUÊ — Chỉ hiển thị với OWNER ===== *@
+                        @if (User.IsInRole("OWNER"))
+                        {
+                            <div style="border-top: 1.5px solid var(--border); margin: 1.5rem 0 1.25rem; padding-top: 1.5rem;">
+                                <div class="d-flex align-items-center gap-2 mb-3">
+                                    <div style="width:28px; height:28px; background:var(--primary-light); border-radius:7px; display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:0.85rem; flex-shrink:0;">
+                                        <i class="bi bi-bank"></i>
+                                    </div>
+                                    <span style="font-size:0.82rem; font-weight:700; color:var(--text-primary); text-transform:uppercase; letter-spacing:0.5px;">Thông tin chủ cho thuê</span>
+                                </div>
+
+                                <div class="alert d-flex gap-2 align-items-start mb-4 rounded-3" style="background:var(--primary-light); border:1px solid rgba(234,179,8,0.3); color:#92400e; font-size:0.82rem; padding:0.85rem 1rem;">
+                                    <i class="bi bi-info-circle-fill mt-1"></i>
+                                    <span>Thông tin tài khoản ngân hàng dùng để nhận tiền cọc từ khách thuê và hoàn tiền tự động qua hệ thống.</span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="PickupAddress" class="form-label-custom">Địa chỉ kho / nơi giao nhận đồ</label>
+                                    <textarea class="form-control form-control-custom" id="PickupAddress" name="PickupAddress" rows="2"
+                                              placeholder="Địa chỉ nơi khách hàng đến lấy sản phẩm...">@Model.PickupAddress</textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="BankName" class="form-label-custom">Tên ngân hàng</label>
+                                    <input type="text" class="form-control form-control-custom" id="BankName" name="BankName"
+                                           value="@Model.BankName" placeholder="Vietcombank / Techcombank / MB Bank..." />
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label for="BankAccount" class="form-label-custom">Số tài khoản ngân hàng</label>
+                                        <input type="text" class="form-control form-control-custom" id="BankAccount" name="BankAccount"
+                                               value="@Model.BankAccount" placeholder="Số tài khoản" />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="BankAccountHolder" class="form-label-custom">Tên chủ tài khoản</label>
+                                        <input type="text" class="form-control form-control-custom" id="BankAccountHolder" name="BankAccountHolder"
+                                               value="@Model.BankAccountHolder" placeholder="TÊN CHỦ TÀI KHOẢN (IN HOA)"
+                                               style="text-transform:uppercase;" />
+                                    </div>
+                                </div>
+                            </div>
+                        }
 
                         <div class="d-flex justify-content-end gap-2 mt-4">
                             <button type="submit" class="btn btn-nav-primary px-4"><i class="bi bi-save2-fill me-2"></i>Lưu thông tin</button>

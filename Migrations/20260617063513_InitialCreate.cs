@@ -5,7 +5,7 @@
 namespace OmniRentBackend.Migrations
 {
     /// <inheritdoc />
-    public partial class QLThue : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -73,6 +73,13 @@ namespace OmniRentBackend.Migrations
                     Phone = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AvatarUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    NationalId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    BankName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    BankAccount = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    BankAccountHolder = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PickupAddress = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ProfileCompleted = table.Column<bool>(type: "bit", nullable: false),
                     RenterTrustScore = table.Column<double>(type: "float", nullable: false),
                     OwnerVerified = table.Column<bool>(type: "bit", nullable: false),
                     CreatedAt = table.Column<long>(type: "bigint", nullable: false),
@@ -249,6 +256,7 @@ namespace OmniRentBackend.Migrations
                     DepositPaid = table.Column<bool>(type: "bit", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PaymentStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RentalAddress = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedAt = table.Column<long>(type: "bigint", nullable: false),
                     UpdatedAt = table.Column<long>(type: "bigint", nullable: false)
                 },

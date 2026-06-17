@@ -226,6 +226,11 @@ namespace OmniRentBackend.Controllers
             [FromForm] string FullName,
             [FromForm] string? Phone,
             [FromForm] string? Address,
+            [FromForm] string? NationalId,
+            [FromForm] string? BankName,
+            [FromForm] string? BankAccount,
+            [FromForm] string? BankAccountHolder,
+            [FromForm] string? PickupAddress,
             [FromForm] string? AvatarUrl,
             Microsoft.AspNetCore.Http.IFormFile? AvatarFile)
         {
@@ -238,6 +243,23 @@ namespace OmniRentBackend.Controllers
             user.FullName = FullName;
             user.Phone = Phone;
             user.Address = Address;
+
+            // NationalId: Chỉ cho phép ghi lần đầu khi DB đang trống/null.
+            if (string.IsNullOrWhiteSpace(user.NationalId) && !string.IsNullOrWhiteSpace(NationalId))
+            {
+                user.NationalId = NationalId.Trim();
+            }
+
+            // Bank info: Chỉ cập nhật nếu user là OWNER
+            if (user.Role == "OWNER")
+            {
+                user.PickupAddress = PickupAddress;
+                user.BankName    = !string.IsNullOrWhiteSpace(BankName)    ? BankName.Trim()    : user.BankName;
+                user.BankAccount = !string.IsNullOrWhiteSpace(BankAccount) ? BankAccount.Trim() : user.BankAccount;
+                user.BankAccountHolder = !string.IsNullOrWhiteSpace(BankAccountHolder)
+                                         ? BankAccountHolder.Trim().ToUpper()
+                                         : user.BankAccountHolder;
+            }
 
             // Handle Avatar uploading
             if (AvatarFile != null && AvatarFile.Length > 0)
@@ -352,13 +374,28 @@ namespace OmniRentBackend.Controllers
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null) return RedirectToAction("Login");
 
+            // Cập nhật thông tin cơ bản
             user.FullName = FullName;
             user.Phone = Phone;
-            user.NationalId = NationalId;
-            user.PickupAddress = PickupAddress;
-            user.BankName = BankName;
-            user.BankAccount = BankAccount;
-            user.BankAccountHolder = BankAccountHolder;
+
+            // NationalId: Chỉ cho phép ghi lần đầu khi DB đang trống/null.
+            // Nếu đã có dữ liệu CCCD, bỏ qua — không cho user tự ý thay đổi.
+            if (string.IsNullOrWhiteSpace(user.NationalId) && !string.IsNullOrWhiteSpace(NationalId))
+            {
+                user.NationalId = NationalId.Trim();
+            }
+
+            // PickupAddress & Bank: Chỉ cập nhật nếu user là OWNER
+            if (user.Role == "OWNER")
+            {
+                user.PickupAddress = PickupAddress;
+                user.BankName    = !string.IsNullOrWhiteSpace(BankName)    ? BankName.Trim()            : user.BankName;
+                user.BankAccount = !string.IsNullOrWhiteSpace(BankAccount) ? BankAccount.Trim()         : user.BankAccount;
+                user.BankAccountHolder = !string.IsNullOrWhiteSpace(BankAccountHolder)
+                                         ? BankAccountHolder.Trim().ToUpper()
+                                         : user.BankAccountHolder;
+            }
+
             user.ProfileCompleted = true;
             user.UpdatedAt = DateTime.UtcNow;
 
@@ -368,17 +405,13 @@ namespace OmniRentBackend.Controllers
                 {
                     var uploadsFolder = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot", "uploads", "avatars");
                     if (!System.IO.Directory.Exists(uploadsFolder))
-                    {
                         System.IO.Directory.CreateDirectory(uploadsFolder);
-                    }
 
                     var fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(AvatarFile.FileName);
                     var filePath = System.IO.Path.Combine(uploadsFolder, fileName);
 
                     using (var fileStream = new System.IO.FileStream(filePath, System.IO.FileMode.Create))
-                    {
                         await AvatarFile.CopyToAsync(fileStream);
-                    }
 
                     user.AvatarUrl = $"/uploads/avatars/{fileName}";
                 }

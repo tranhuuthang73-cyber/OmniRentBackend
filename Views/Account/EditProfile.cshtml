@@ -277,8 +277,39 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="NationalId" class="form-label">Số CCCD / CMND</label>
-                    <input type="text" class="form-control" id="NationalId" name="NationalId" value="@Model.NationalId" placeholder="Số CCCD/CMND" />
+                    <label for="NationalId" class="form-label">
+                        Số CCCD / CMND
+                        @if (!string.IsNullOrEmpty(Model.NationalId))
+                        {
+                            <span style="background: #dcfce7; color: #16a34a; border-radius: 6px; padding: 0.15rem 0.5rem; font-size: 0.7rem; font-weight: 700; margin-left: 6px;">
+                                <i class="bi bi-shield-check-fill"></i> Đã xác minh
+                            </span>
+                        }
+                    </label>
+                    @if (!string.IsNullOrEmpty(Model.NationalId))
+                    {
+                        <div style="position: relative;">
+                            <input type="text" class="form-control" id="NationalId" name="NationalId"
+                                   value="@Model.NationalId" readonly
+                                   style="background:#f1f5f9; cursor:not-allowed; padding-right: 2.5rem;" />
+                            <span title="CCCD đã được lưu và không thể thay đổi. Liên hệ Admin nếu cần hỗ trợ."
+                                  style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); color:#94a3b8; cursor:help; font-size:1rem;">
+                                <i class="bi bi-lock-fill"></i>
+                            </span>
+                        </div>
+                        <small style="color:#94a3b8; font-size:0.75rem;">
+                            <i class="bi bi-info-circle me-1"></i>CCCD đã được lưu và khóa. Liên hệ Admin nếu cần điều chỉnh.
+                        </small>
+                    }
+                    else
+                    {
+                        <input type="text" class="form-control" id="NationalId" name="NationalId"
+                               value="" placeholder="Nhập 9 hoặc 12 số CCCD/CMND"
+                               maxlength="12" pattern="[0-9]{9,12}" title="Chỉ nhập số, 9 hoặc 12 ký tự" />
+                        <small style="color:#94a3b8; font-size:0.75rem;">
+                            <i class="bi bi-info-circle me-1"></i>Sau khi lưu, thông tin CCCD sẽ bị khóa để bảo mật.
+                        </small>
+                    }
                 </div>
 
                 <div class="mb-3">
