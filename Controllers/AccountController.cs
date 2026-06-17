@@ -127,7 +127,7 @@ namespace OmniRentBackend.Controllers
             await _context.SaveChangesAsync();
 
             await SignInUserAsync(user, false);
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("SelectRole", "Account");
         }
 
         [HttpGet]
@@ -163,6 +163,7 @@ namespace OmniRentBackend.Controllers
                     FullName = name ?? email,
                     PasswordHash = "GOOGLE_AUTH_" + Guid.NewGuid().ToString("N"), // Không có mật khẩu, đăng nhập qua Google
                     Role = "RENTER",
+                    ProfileCompleted = false,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
                     OwnerVerified = false,
@@ -175,6 +176,11 @@ namespace OmniRentBackend.Controllers
             // Xóa cookie tạm của Google, đăng nhập vào session chính (Cookies)
             await HttpContext.SignOutAsync("ExternalCookie");
             await SignInUserAsync(user, false);
+
+            if (user.ProfileCompleted == false)
+            {
+                return RedirectToAction("SelectRole", "Account", new { returnUrl });
+            }
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return Redirect(returnUrl);
@@ -273,6 +279,124 @@ namespace OmniRentBackend.Controllers
 
             TempData["SuccessMessage"] = "Cập nhật thông tin cá nhân thành công.";
             return RedirectToAction(nameof(Profile));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SelectRole(string? returnUrl = null)
+        {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+                if (user != null && user.ProfileCompleted)
+                {
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                        return Redirect(returnUrl);
+                    return RedirectToAction("Index", "Home");
+                }
+            }
+            else
+            {
+                return RedirectToAction("Login", new { returnUrl });
+            }
+
+            ViewData["ReturnUrl"] = returnUrl;
+            return View();
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SelectRole([FromForm] string role, string? returnUrl = null)
+        {
+            if (role != "RENTER" && role != "OWNER") return BadRequest();
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return NotFound();
+
+            user.Role = role;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            await SignInUserAsync(user, false);
+
+            return RedirectToAction("EditProfile", "Account");
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> EditProfile()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return RedirectToAction("Login");
+            return View(user);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditProfile(
+            [FromForm] string FullName,
+            [FromForm] string? Phone,
+            [FromForm] string? NationalId,
+            [FromForm] string? AvatarUrl,
+            [FromForm] string? PickupAddress,
+            [FromForm] string? BankName,
+            [FromForm] string? BankAccount,
+            [FromForm] string? BankAccountHolder,
+            IFormFile? AvatarFile)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return RedirectToAction("Login");
+
+            user.FullName = FullName;
+            user.Phone = Phone;
+            user.NationalId = NationalId;
+            user.PickupAddress = PickupAddress;
+            user.BankName = BankName;
+            user.BankAccount = BankAccount;
+            user.BankAccountHolder = BankAccountHolder;
+            user.ProfileCompleted = true;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            if (AvatarFile != null && AvatarFile.Length > 0)
+            {
+                try
+                {
+                    var uploadsFolder = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot", "uploads", "avatars");
+                    if (!System.IO.Directory.Exists(uploadsFolder))
+                    {
+                        System.IO.Directory.CreateDirectory(uploadsFolder);
+                    }
+
+                    var fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(AvatarFile.FileName);
+                    var filePath = System.IO.Path.Combine(uploadsFolder, fileName);
+
+                    using (var fileStream = new System.IO.FileStream(filePath, System.IO.FileMode.Create))
+                    {
+                        await AvatarFile.CopyToAsync(fileStream);
+                    }
+
+                    user.AvatarUrl = $"/uploads/avatars/{fileName}";
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", $"Không thể tải lên ảnh đại diện: {ex.Message}");
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(AvatarUrl))
+            {
+                user.AvatarUrl = AvatarUrl.Trim();
+            }
+
+            await _context.SaveChangesAsync();
+            await SignInUserAsync(user, false);
+
+            TempData["SuccessMessage"] = "Cập nhật hồ sơ thành công!";
+            return RedirectToAction("EditProfile");
         }
 
         private async Task SignInUserAsync(User user, bool isPersistent)

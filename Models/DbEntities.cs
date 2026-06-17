@@ -28,6 +28,13 @@ namespace OmniRentBackend.Models
 
         public string? Address { get; set; }
 
+        public string? NationalId { get; set; }         // Số CCCD — Renter + Owner
+        public string? BankName { get; set; }            // Tên ngân hàng — CHỈ Owner
+        public string? BankAccount { get; set; }         // Số tài khoản — CHỈ Owner
+        public string? BankAccountHolder { get; set; }   // Tên chủ tài khoản — CHỈ Owner
+        public string? PickupAddress { get; set; }       // Địa chỉ kho lấy đồ — CHỈ Owner
+        public bool ProfileCompleted { get; set; } = false; // Đánh dấu đã hoàn thành onboarding
+
         public double RenterTrustScore { get; set; } = 80.0;
 
         public bool OwnerVerified { get; set; } = false;

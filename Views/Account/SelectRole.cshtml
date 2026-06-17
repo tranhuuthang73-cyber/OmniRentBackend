@@ -1,0 +1,269 @@
+@{
+    Layout = null;
+    var returnUrl = ViewData["ReturnUrl"] as string ?? "";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chọn vai trò của bạn — OmniRent</title>
+    <meta name="description" content="Chọn vai trò người dùng trên OmniRent." />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            --primary:       #f59e0b;
+            --primary-hover: #d97706;
+            --primary-light: #fef3c7;
+            --navy:          #0f172a;
+            --navy-2:        #1e293b;
+            --text-main:     #000000;
+            --text-sub:      #333333;
+            --text-muted:    #666666;
+            --border:        #e2e8f0;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: var(--text-main);
+        }
+
+        /* Split layout */
+        .select-role-page {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Left panel — brand */
+        .panel-left {
+            flex: 0 0 45%;
+            background: var(--navy);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .panel-left::before {
+            content: '';
+            position: absolute;
+            width: 400px; height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245,158,11,0.18), transparent 65%);
+            top: -80px; right: -80px;
+            pointer-events: none;
+        }
+        .panel-left::after {
+            content: '';
+            position: absolute;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            border: 1px solid rgba(245,158,11,0.1);
+            bottom: -60px; left: -60px;
+            pointer-events: none;
+        }
+        .brand-logo {
+            width: 64px; height: 64px;
+            background: var(--primary);
+            border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 8px 24px rgba(245,158,11,0.4);
+        }
+        .brand-logo i { font-size: 1.8rem; color: var(--navy); }
+        .brand-name {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.3px;
+        }
+        .brand-tagline {
+            color: #64748b;
+            font-size: 0.9rem;
+            text-align: center;
+            max-width: 260px;
+            line-height: 1.6;
+        }
+
+        /* Right panel — options */
+        .panel-right {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: #ffffff;
+        }
+
+        .select-role-card {
+            width: 100%;
+            max-width: 500px;
+            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+        @@keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .select-role-card h1 {
+            font-size: 1.65rem;
+            font-weight: 800;
+            color: #000000;
+            margin-bottom: 0.3rem;
+        }
+        .select-role-card .subtitle {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Role Card Options */
+        .role-cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .role-option-card {
+            border: 1.5px solid var(--border);
+            border-radius: 14px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-align: left;
+            background: #ffffff;
+        }
+        .role-option-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(245,158,11,0.08);
+        }
+        .role-icon-box {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: var(--primary-light);
+            color: var(--primary-hover);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            transition: transform 0.25s ease;
+        }
+        .role-option-card:hover .role-icon-box {
+            transform: scale(1.08);
+        }
+        .role-details {
+            flex: 1;
+        }
+        .role-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 0.25rem 0;
+        }
+        .role-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.4;
+        }
+        .role-arrow {
+            font-size: 1.2rem;
+            color: #cbd5e1;
+            transition: transform 0.2s;
+        }
+        .role-option-card:hover .role-arrow {
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .panel-left { display: none; }
+            .panel-right { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="select-role-page">
+
+        <!-- Left Brand Panel -->
+        <div class="panel-left">
+            <div class="brand-logo"><i class="bi bi-building-fill"></i></div>
+            <div class="brand-name">OmniRent</div>
+            <div class="brand-tagline">Nền tảng cho thuê tài sản trực tuyến hàng đầu Việt Nam</div>
+        </div>
+
+        <!-- Right Content Panel -->
+        <div class="panel-right">
+            <div class="select-role-card">
+                <h1>Chào mừng bạn đến với OmniRent!</h1>
+                <p class="subtitle">Vui lòng chọn vai trò để bắt đầu trải nghiệm hệ thống</p>
+
+                <form id="roleForm" method="post" action="/Account/SelectRole">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <input type="hidden" id="selectedRole" name="role" value="" />
+
+                    <div class="role-cards-container">
+                        <!-- Option 1: RENTER -->
+                        <div class="role-option-card" onclick="submitRole('RENTER')">
+                            <div class="role-icon-box">
+                                <i class="bi bi-person-check-fill"></i>
+                            </div>
+                            <div class="role-details">
+                                <h3 class="role-title">Tôi muốn thuê đồ</h3>
+                                <p class="role-desc">Tìm kiếm và thuê tài sản từ cộng đồng OmniRent</p>
+                            </div>
+                            <div class="role-arrow">
+                                <i class="bi bi-arrow-right-short"></i>
+                            </div>
+                        </div>
+
+                        <!-- Option 2: OWNER -->
+                        <div class="role-option-card" onclick="submitRole('OWNER')">
+                            <div class="role-icon-box">
+                                <i class="bi bi-building-fill"></i>
+                            </div>
+                            <div class="role-details">
+                                <h3 class="role-title">Tôi muốn cho thuê đồ</h3>
+                                <p class="role-desc">Đăng tài sản và kiếm thu nhập từ việc cho thuê</p>
+                            </div>
+                            <div class="role-arrow">
+                                <i class="bi bi-arrow-right-short"></i>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function submitRole(role) {
+            document.getElementById('selectedRole').value = role;
+            document.getElementById('roleForm').submit();
+        }
+    </script>
+</body>
+</html>
