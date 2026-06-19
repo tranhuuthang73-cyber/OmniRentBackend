@@ -411,6 +411,14 @@
                                 <span style="color: var(--text-secondary);">Tổng giá trị thuê / ngày</span>
                                 <span id="summaryTotalDay" class="fw-bold" style="color: var(--primary); font-size: 1.1rem;">0đ</span>
                             </div>
+                            <div class="d-flex justify-content-between mt-2 pt-2 border-top" style="border-color: var(--border) !important;">
+                                <span style="color: var(--text-secondary);">Tổng tiền thuê theo ngày</span>
+                                <span id="summaryRentalTotal" class="fw-bold" style="color: var(--text-primary);">0đ</span>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <span style="color: var(--text-secondary);">Tiền cọc cần chuyển (50%)</span>
+                                <span id="summaryDeposit" class="fw-bold" style="color: #dc2626; font-size: 1.1rem;">0đ</span>
+                            </div>
                         </div>
 
                         <button id="btnSubmitCart" class="btn-nav-primary w-100 py-3 justify-content-center" type="button">
@@ -509,7 +517,9 @@
             });
         })();
 
-        function loadCartItems() {
+        let enrichedCart = [];
+
+        async function loadCartItems() {
             let cart = JSON.parse(localStorage.getItem('cart')) || [];
             let listContainer = document.getElementById('cartItemsList');
             let emptyMsg = document.getElementById('emptyCartMessage');
@@ -520,8 +530,27 @@
             }
             emptyMsg.classList.add('d-none'); checkoutBox.classList.remove('d-none');
 
+            enrichedCart = await Promise.all(cart.map(async item => {
+                try {
+                    const response = await fetch(`/products/${item.id}`);
+                    if (!response.ok) return item;
+                    const product = await response.json();
+                    const image = product.images && product.images.length > 0 ? product.images[0] : item.image;
+                    return {
+                        ...item,
+                        name: product.name || item.name,
+                        price: product.pricePerDay || item.price,
+                        image,
+                        owner: product.owner?.fullName || item.owner,
+                        pickupAddress: product.owner?.pickupAddress || product.owner?.address || 'Chủ cho thuê chưa cập nhật địa chỉ nhận đồ.'
+                    };
+                } catch {
+                    return item;
+                }
+            }));
+
             let totalPerDay = 0;
-            cart.forEach(item => {
+            enrichedCart.forEach(item => {
                 totalPerDay += item.price;
                 let card = document.createElement('div');
                 card.className = 'cart-item-card';
@@ -531,7 +560,13 @@
                         <div>
                             <h5 class="fw-bold m-0" style="color: var(--text-primary);">${item.name}</h5>
                             <small class="d-block mb-1" style="color: var(--text-secondary);">Chủ đồ: ${item.owner}</small>
+                            <small class="d-block mb-1" style="color: var(--text-secondary);"><i class="bi bi-geo-alt-fill text-danger"></i> Nhận tại: ${item.pickupAddress || 'Chủ cho thuê chưa cập nhật địa chỉ nhận đồ.'}</small>
                             <span class="fw-bold" style="color: var(--primary); font-size: 1.1rem;">${item.price.toLocaleString('vi-VN')}đ / ngày</span>
+                            <div class="mt-1" style="font-size:0.86rem; color:var(--text-secondary);">
+                                Tiền thuê theo ngày chọn: <strong id="itemTotal-${item.id}" style="color:var(--text-primary);">Đang tính...</strong>
+                                <span class="mx-1">•</span>
+                                Cọc 50%: <strong id="itemDeposit-${item.id}" style="color:#dc2626;">Đang tính...</strong>
+                            </div>
                         </div>
                     </div>
                     <button class="btn btn-outline-danger btn-sm rounded-circle p-2 d-flex align-items-center" onclick="removeItem('${item.id}')">
@@ -540,9 +575,46 @@
                 `;
                 listContainer.appendChild(card);
             });
-            document.getElementById('summaryCount').innerText = `${cart.length} sản phẩm`;
+            document.getElementById('summaryCount').innerText = `${enrichedCart.length} sản phẩm`;
             document.getElementById('summaryTotalDay').innerText = `${totalPerDay.toLocaleString('vi-VN')}đ`;
+            await updateCartPriceSummary();
         }
+
+        async function updateCartPriceSummary() {
+            const startDateStr = document.getElementById('startDate')?.value;
+            const endDateStr = document.getElementById('endDate')?.value;
+            const rentalTotalEl = document.getElementById('summaryRentalTotal');
+            const depositEl = document.getElementById('summaryDeposit');
+            if (!startDateStr || !endDateStr || enrichedCart.length === 0) return;
+
+            let totalRental = 0;
+            await Promise.all(enrichedCart.map(async item => {
+                let itemTotal = item.price;
+                try {
+                    const response = await fetch('/bookings/estimate-price', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ productId: item.id, startDate: startDateStr, endDate: endDateStr })
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        itemTotal = data.totalPrice;
+                    }
+                } catch { }
+
+                totalRental += itemTotal;
+                const itemDeposit = Math.round(itemTotal * 0.5);
+                const itemTotalEl = document.getElementById(`itemTotal-${item.id}`);
+                const itemDepositEl = document.getElementById(`itemDeposit-${item.id}`);
+                if (itemTotalEl) itemTotalEl.innerText = `${itemTotal.toLocaleString('vi-VN')}đ`;
+                if (itemDepositEl) itemDepositEl.innerText = `${itemDeposit.toLocaleString('vi-VN')}đ`;
+            }));
+
+            const totalDeposit = Math.round(totalRental * 0.5);
+            if (rentalTotalEl) rentalTotalEl.innerText = `${totalRental.toLocaleString('vi-VN')}đ`;
+            if (depositEl) depositEl.innerText = `${totalDeposit.toLocaleString('vi-VN')}đ`;
+        }
+
         function removeItem(id) {
             let cart = JSON.parse(localStorage.getItem('cart')) || [];
             cart = cart.filter(item => item.id !== id);
@@ -587,6 +659,10 @@
         }
         document.addEventListener('DOMContentLoaded', () => {
             loadCartItems();
+            const startDate = document.getElementById('startDate');
+            const endDate = document.getElementById('endDate');
+            if (startDate) startDate.addEventListener('change', updateCartPriceSummary);
+            if (endDate) endDate.addEventListener('change', updateCartPriceSummary);
             const btn = document.getElementById('btnSubmitCart');
             if (btn) btn.addEventListener('click', submitCartBookings);
         });

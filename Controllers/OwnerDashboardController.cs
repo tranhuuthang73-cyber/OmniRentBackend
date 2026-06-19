@@ -60,7 +60,21 @@ namespace OmniRentBackend.Controllers
                     && b.CompletedAt < nextMonthStart)
                 .SumAsync(b => b.TotalPrice);
             ViewBag.MonthlyRevenue = monthlyRevenue;
-            ViewBag.MonthlyCommission = monthlyRevenue * 0.20;
+            var unpaidMonthlyCommission = await _context.Bookings
+                .Where(b => myProductIds.Contains(b.ProductId)
+                    && b.Status == "COMPLETED"
+                    && !b.CommissionPaid
+                    && b.CompletedAt != null
+                    && b.CompletedAt >= monthStart
+                    && b.CompletedAt < nextMonthStart)
+                .SumAsync(b => b.TotalPrice * 0.20);
+            var unpaidTotalCommission = await _context.Bookings
+                .Where(b => myProductIds.Contains(b.ProductId)
+                    && b.Status == "COMPLETED"
+                    && !b.CommissionPaid)
+                .SumAsync(b => b.TotalPrice * 0.20);
+            ViewBag.MonthlyCommission = unpaidMonthlyCommission;
+            ViewBag.UnpaidTotalCommission = unpaidTotalCommission;
 
             ViewBag.RecentBookings = await _context.Bookings
                 .Include(b => b.Product)

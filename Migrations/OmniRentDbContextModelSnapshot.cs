@@ -59,6 +59,12 @@ namespace OmniRentBackend.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<bool>("CommissionPaid")
+                        .HasColumnType("bit");
+
+                    b.Property<long?>("CommissionPaidAt")
+                        .HasColumnType("bigint");
+
                     b.Property<long?>("CompletedAt")
                         .HasColumnType("bigint");
 

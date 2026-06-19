@@ -1,8 +1,15 @@
 @using OmniRentBackend.Models
+@using OmniRentBackend.Models.ViewModels
 @model IEnumerable<Booking>
 @{
     ViewData["Title"] = "Quản lý Đơn hàng";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var completedRevenue = ViewBag.CompletedRevenue ?? 0;
+    var systemCommission = ViewBag.SystemCommission ?? 0;
+    var unpaidCommission = ViewBag.UnpaidCommission ?? 0;
+    var paidCommission = ViewBag.PaidCommission ?? 0;
+    var ownerSearch = ViewBag.OwnerSearch ?? "";
+    var ownerRevenueStats = (List<AdminOwnerCommissionSummary>)(ViewBag.OwnerRevenueStats ?? new List<AdminOwnerCommissionSummary>());
 }
 
 <style>
@@ -96,6 +103,96 @@
     .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }
     .empty-state p { font-size: 0.875rem; margin: 0; }
 
+    .revenue-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+    .revenue-box {
+        background: #fff;
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+    }
+    .revenue-box .label {
+        color: #64748b;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+    .revenue-box .value {
+        margin-top: 0.35rem;
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #047857;
+    }
+    .filter-panel {
+        background: #fff;
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .filter-form {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .filter-form input {
+        min-width: min(360px, 100%);
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 0.65rem 0.8rem;
+        font-size: 0.9rem;
+    }
+    .btn-filter {
+        border: 0;
+        border-radius: 8px;
+        padding: 0.65rem 0.95rem;
+        font-weight: 800;
+        background: #1d4ed8;
+        color: #fff;
+    }
+    .btn-clear {
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 0.62rem 0.9rem;
+        font-weight: 700;
+        color: #334155;
+        background: #f8fafc;
+        text-decoration: none;
+    }
+    .owner-summary {
+        margin-bottom: 1.25rem;
+    }
+    .owner-summary-title {
+        font-size: 0.9rem;
+        font-weight: 800;
+        color: #334155;
+        margin-bottom: 0.65rem;
+    }
+    .commission-paid {
+        display: inline-flex;
+        padding: 0.25rem 0.55rem;
+        border-radius: 999px;
+        background: #dcfce7;
+        color: #166534;
+        font-size: 0.72rem;
+        font-weight: 800;
+    }
+    .commission-unpaid {
+        display: inline-flex;
+        padding: 0.25rem 0.55rem;
+        border-radius: 999px;
+        background: #fee2e2;
+        color: #991b1b;
+        font-size: 0.72rem;
+        font-weight: 800;
+    }
+
     @@media (max-width: 992px) {
         .actions-cell { min-width: 225px; }
         .btn-action { padding: 0.42rem 0.55rem; }
@@ -110,6 +207,87 @@
     <div class="booking-page-subtitle">Xem và quản lý các đơn thuê trong hệ thống</div>
 </div>
 
+<div class="revenue-summary">
+    <div class="revenue-box">
+        <div class="label">Doanh thu đơn hoàn tất</div>
+        <div class="value">@completedRevenue.ToString("N0")đ</div>
+    </div>
+    <div class="revenue-box">
+        <div class="label">Tổng hoa hồng hệ thống 20%</div>
+        <div class="value" style="color:#dc2626;">@systemCommission.ToString("N0")đ</div>
+    </div>
+    <div class="revenue-box">
+        <div class="label">Hoa hồng chưa thu</div>
+        <div class="value" style="color:#dc2626;">@unpaidCommission.ToString("N0")đ</div>
+    </div>
+    <div class="revenue-box">
+        <div class="label">Hoa hồng đã thu</div>
+        <div class="value">@paidCommission.ToString("N0")đ</div>
+    </div>
+</div>
+
+<div class="filter-panel">
+    <form method="get" action="/AdminDashboard/Bookings" class="filter-form">
+        <input type="text" name="ownerSearch" value="@ownerSearch" placeholder="Nhập tên chủ cho thuê để lọc đơn hàng..." />
+        <button type="submit" class="btn-filter">
+            <i class="bi bi-search me-1"></i>Tìm kiếm
+        </button>
+        <a href="/AdminDashboard/Bookings" class="btn-clear">Xóa lọc</a>
+    </form>
+</div>
+
+@if (ownerRevenueStats.Any())
+{
+    <div class="card-custom owner-summary">
+        <div class="owner-summary-title">Thống kê doanh thu và hoa hồng theo chủ cho thuê</div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="padding-left:1.25rem;">Chủ cho thuê</th>
+                        <th>Số đơn hoàn tất</th>
+                        <th>Doanh thu</th>
+                        <th>Tổng hoa hồng</th>
+                        <th>Chưa thu</th>
+                        <th>Đã thu</th>
+                        <th class="text-end">Thu hoa hồng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var owner in ownerRevenueStats)
+                    {
+                        <tr>
+                            <td style="padding-left:1.25rem; font-weight:800;">@owner.OwnerName</td>
+                            <td>@owner.BookingCount</td>
+                            <td><span class="price-col">@owner.Revenue.ToString("N0")đ</span></td>
+                            <td><span class="price-col" style="color:#dc2626;">@owner.Commission.ToString("N0")đ</span></td>
+                            <td><span class="price-col" style="color:#dc2626;">@owner.UnpaidCommission.ToString("N0")đ</span></td>
+                            <td><span class="price-col">@owner.PaidCommission.ToString("N0")đ</span></td>
+                            <td class="text-end">
+                                @if (owner.UnpaidCommission > 0)
+                                {
+                                    <form action="/AdminDashboard/MarkOwnerCommissionPaid" method="post" onsubmit="return confirm('Xác nhận đã nhận hoa hồng của chủ @owner.OwnerName?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="ownerId" value="@owner.OwnerId" />
+                                        <input type="hidden" name="ownerSearch" value="@ownerSearch" />
+                                        <button type="submit" class="btn-action btn-edit">
+                                            <i class="bi bi-cash-coin"></i><span>Đã nhận</span>
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="commission-paid">Đã đủ</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
 <div class="card-custom">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
@@ -117,10 +295,13 @@
                 <tr>
                     <th style="padding-left:1.25rem;">Mã Đơn</th>
                     <th>Sản phẩm</th>
+                    <th>Chủ cho thuê</th>
                     <th>Người thuê</th>
                     <th>Ngày Thuê</th>
                     <th>Ngày Trả</th>
                     <th>Tổng Tiền</th>
+                    <th>Hoa hồng 20%</th>
+                    <th>Thu hoa hồng</th>
                     <th>Trạng thái</th>
                     <th class="actions-cell" style="text-align:right;">Thao tác</th>
                 </tr>
@@ -138,11 +319,29 @@
                                 <strong style="font-size:0.875rem; color:var(--text-primary);">@(item.Product?.Name ?? "N/A")</strong>
                             </td>
                             <td style="font-size:0.85rem; color:var(--text-secondary); font-weight:500;">
+                                @(item.Product?.Owner?.FullName ?? "N/A")
+                            </td>
+                            <td style="font-size:0.85rem; color:var(--text-secondary); font-weight:500;">
                                 @(item.Renter?.FullName ?? "N/A")
                             </td>
                             <td style="font-size:0.82rem; color:var(--text-secondary); font-weight:600;">@item.StartDate.ToString("dd/MM/yyyy")</td>
                             <td style="font-size:0.82rem; color:var(--text-secondary); font-weight:600;">@item.EndDate.ToString("dd/MM/yyyy")</td>
                             <td><span class="price-col">@item.TotalPrice.ToString("N0")đ</span></td>
+                            <td><span class="price-col" style="color:#dc2626;">@((item.TotalPrice * 0.20).ToString("N0"))đ</span></td>
+                            <td>
+                                @if (item.Status != "COMPLETED")
+                                {
+                                    <span class="commission-unpaid">Chưa phát sinh</span>
+                                }
+                                else if (item.CommissionPaid)
+                                {
+                                    <span class="commission-paid">Đã thu</span>
+                                }
+                                else
+                                {
+                                    <span class="commission-unpaid">Chưa thu</span>
+                                }
+                            </td>
                             <td>
                                 @if (item.Status == "PENDING")
                                 {
@@ -191,7 +390,7 @@
                 else
                 {
                     <tr>
-                        <td colspan="8">
+                        <td colspan="11">
                             <div class="empty-state">
                                 <i class="bi bi-inbox"></i>
                                 <p>Chưa có đơn hàng nào trong hệ thống.</p>

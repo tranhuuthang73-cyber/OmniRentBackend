@@ -47,50 +47,17 @@ namespace OmniRentBackend.Controllers
             }
 
             int durationDays = Math.Max(1, (int)Math.Ceiling(timeDiff.TotalDays));
-            double basePrice = 0;
-            double weekendSurcharge = 0;
-            double holidaySurcharge = 0;
-
-            var current = start;
-            for (int i = 0; i < durationDays; i++)
-            {
-                var dayOfWeek = current.DayOfWeek;
-                int date = current.Day;
-                int month = current.Month; // 1-12
-
-                bool isWeekend = dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday;
-                bool isHoliday = (month == 12 && (date == 24 || date == 25)) || (month == 1 && date == 1);
-
-                if (isHoliday)
-                {
-                    holidaySurcharge += pricePerDay * 0.25;
-                }
-                else if (isWeekend)
-                {
-                    weekendSurcharge += pricePerDay * 0.10;
-                }
-
-                basePrice += pricePerDay;
-                current = current.AddDays(1);
-            }
-
-            double discountRate = 0;
-            if (durationDays > 7) discountRate = 0.10;
-            else if (durationDays > 3) discountRate = 0.05;
-
-            double subtotal = basePrice + weekendSurcharge + holidaySurcharge;
-            double discountAmount = subtotal * discountRate;
-            double totalPrice = subtotal - discountAmount;
+            double basePrice = Math.Round(pricePerDay * durationDays, 0, MidpointRounding.AwayFromZero);
 
             return new
             {
                 durationDays,
                 originalBasePrice = basePrice,
-                weekendSurcharge,
-                holidaySurcharge,
-                discountRate,
-                discountAmount,
-                totalPrice
+                weekendSurcharge = 0.0,
+                holidaySurcharge = 0.0,
+                discountRate = 0.0,
+                discountAmount = 0.0,
+                totalPrice = basePrice
             };
         }
 
@@ -130,7 +97,9 @@ namespace OmniRentBackend.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var product = await _context.Products.FindAsync(dto.ProductId);
+            var product = await _context.Products
+                .Include(p => p.Owner)
+                .FirstOrDefaultAsync(p => p.Id == dto.ProductId);
             if (product == null)
             {
                 return NotFound(new { message = "Không tìm thấy sản phẩm." });
@@ -168,7 +137,7 @@ namespace OmniRentBackend.Controllers
 
             dynamic pricing = CalculatePriceDetails(product.PricePerDay, start, end);
             double totalPrice = pricing.totalPrice;
-            double depositAmount = Math.Round(totalPrice * 0.5, 0);
+            double depositAmount = Math.Round(totalPrice * 0.5, 0, MidpointRounding.AwayFromZero);
             double remainingAmount = totalPrice - depositAmount;
             var transferContent = $"COC OMNIRENT {Guid.NewGuid().ToString("N")[..8].ToUpper()}";
 
@@ -591,7 +560,7 @@ namespace OmniRentBackend.Controllers
 
             if (booking.DepositAmount <= 0)
             {
-                booking.DepositAmount = Math.Round(booking.TotalPrice * 0.5, 0);
+                booking.DepositAmount = Math.Round(booking.TotalPrice * 0.5, 0, MidpointRounding.AwayFromZero);
                 booking.RemainingAmount = booking.TotalPrice - booking.DepositAmount;
             }
 

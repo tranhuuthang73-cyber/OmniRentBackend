@@ -8,6 +8,7 @@
     var totalRevenue = ViewBag.TotalRevenue ?? 0;
     var monthlyRevenue = ViewBag.MonthlyRevenue ?? 0;
     var monthlyCommission = ViewBag.MonthlyCommission ?? 0;
+    var unpaidTotalCommission = ViewBag.UnpaidTotalCommission ?? 0;
     var recentBookings = (List<Booking>)(ViewBag.RecentBookings ?? new List<Booking>());
 }
 
@@ -191,8 +192,8 @@
                 <i class="bi bi-percent" style="color:#dc2626;"></i>
             </div>
             <div>
-                <div class="stat-value">@monthlyCommission.ToString("N0")đ</div>
-                <div class="stat-label">Hoa hồng tháng này (20%)</div>
+                <div class="stat-value">@unpaidTotalCommission.ToString("N0")đ</div>
+                <div class="stat-label">Phí còn phải trả hệ thống</div>
             </div>
         </div>
     </div>
@@ -248,6 +249,9 @@
                         <th>Khách thuê</th>
                         <th>Cọc</th>
                         <th>Còn lại</th>
+                        <th>Doanh thu đơn</th>
+                        <th>Phí hệ thống 20%</th>
+                        <th>Phí đã trả</th>
                         <th>Trạng thái</th>
                         <th class="text-end">Thao tác</th>
                     </tr>
@@ -260,6 +264,22 @@
                             <td>@(booking.Renter?.FullName ?? "Khách thuê")</td>
                             <td>@booking.DepositAmount.ToString("N0")đ</td>
                             <td>@booking.RemainingAmount.ToString("N0")đ</td>
+                            <td>@booking.TotalPrice.ToString("N0")đ</td>
+                            <td style="color:#dc2626; font-weight:700;">@((booking.TotalPrice * 0.20).ToString("N0"))đ</td>
+                            <td>
+                                @if (booking.CommissionPaid)
+                                {
+                                    <span class="badge bg-success">Đã thu</span>
+                                }
+                                else if (booking.Status == "COMPLETED")
+                                {
+                                    <span class="badge bg-danger">Chưa trả</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Chưa phát sinh</span>
+                                }
+                            </td>
                             <td>
                                 @if (booking.PaymentStatus == "WAITING_CONFIRMATION")
                                 {
@@ -299,7 +319,8 @@
         </div>
         <div class="mt-3 small text-muted">
             Doanh thu tháng này: <strong>@monthlyRevenue.ToString("N0")đ</strong>.
-            Hoa hồng hệ thống 20%: <strong>@monthlyCommission.ToString("N0")đ</strong>.
+            Phí hoa hồng tháng này chưa trả: <strong>@monthlyCommission.ToString("N0")đ</strong>.
+            Tổng phí còn phải trả: <strong>@unpaidTotalCommission.ToString("N0")đ</strong>.
         </div>
     }
     else

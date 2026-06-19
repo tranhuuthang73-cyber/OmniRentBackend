@@ -190,6 +190,11 @@
                     <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:1rem 1.25rem; width:100%;">
                         <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#94a3b8; margin-bottom:0.25rem;">Tổng tiền</div>
                         <div class="price-big">@Model.TotalPrice.ToString("N0")đ</div>
+                        <div style="font-size:0.78rem; color:#475569; margin-top:0.6rem;">
+                            Cọc 50%: <strong>@Model.DepositAmount.ToString("N0")đ</strong><br />
+                            Còn lại: <strong>@Model.RemainingAmount.ToString("N0")đ</strong><br />
+                            Hoa hồng hệ thống 20%: <strong style="color:#dc2626;">@((Model.TotalPrice * 0.20).ToString("N0"))đ</strong>
+                        </div>
                     </div>
                 </div>
             </div>

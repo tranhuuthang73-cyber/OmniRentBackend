@@ -40,6 +40,7 @@ namespace OmniRentBackend.Controllers
                 .Select(b => b.TotalPrice)
                 .ToListAsync();
             double totalRevenue = completedBookings.Sum();
+            double totalCommission = totalRevenue * 0.20;
 
             // Bookings count by month (for charts)
             var bookings = await _context.Bookings
@@ -106,12 +107,45 @@ namespace OmniRentBackend.Controllers
             int totalBookings = await _context.Bookings.CountAsync();
             int activeBookings = await _context.Bookings.CountAsync(b => b.Status == "APPROVED" || b.Status == "ONGOING");
 
+            var completedBookingDetails = await _context.Bookings
+                .Include(b => b.Product)
+                    .ThenInclude(p => p!.Owner)
+                .Include(b => b.Renter)
+                .Where(b => b.Status == "COMPLETED")
+                .OrderByDescending(b => b.CompletedAt ?? b.UpdatedAt)
+                .Select(b => new
+                {
+                    bookingId = b.Id,
+                    productName = b.Product != null ? b.Product.Name : "N/A",
+                    ownerId = b.Product != null ? b.Product.OwnerId : "",
+                    ownerName = b.Product != null && b.Product.Owner != null ? b.Product.Owner.FullName : "N/A",
+                    renterName = b.Renter != null ? b.Renter.FullName : "N/A",
+                    totalPrice = b.TotalPrice,
+                    commission = b.TotalPrice * 0.20,
+                    completedAt = b.CompletedAt
+                })
+                .ToListAsync();
+
+            var ownerRevenueStats = completedBookingDetails
+                .GroupBy(b => new { b.ownerId, b.ownerName })
+                .Select(g => new
+                {
+                    ownerId = g.Key.ownerId,
+                    ownerName = g.Key.ownerName,
+                    completedBookings = g.Count(),
+                    revenue = g.Sum(x => x.totalPrice),
+                    commissionDue = g.Sum(x => x.commission)
+                })
+                .OrderByDescending(x => x.revenue)
+                .ToList();
+
             // Fraud alerts
             var fraudAlerts = await DetectFraudAsync();
 
             return Ok(new
             {
                 totalRevenue,
+                totalCommission,
                 totalUsers,
                 ownerCount = totalOwners,
                 renterCount = totalRenters,
@@ -122,6 +156,8 @@ namespace OmniRentBackend.Controllers
                 activeBookings,
                 monthlyRevenue = monthlyChartData,
                 categoryStats,
+                ownerRevenueStats,
+                completedBookingDetails,
                 fraudAlerts
             });
         }

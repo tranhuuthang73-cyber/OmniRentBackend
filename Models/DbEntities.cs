@@ -237,6 +237,10 @@ namespace OmniRentBackend.Models
 
         public DateTime? CompletedAt { get; set; }
 
+        public bool CommissionPaid { get; set; } = false;
+
+        public DateTime? CommissionPaidAt { get; set; }
+
         public string? TransferContent { get; set; }
 
         public string Status { get; set; } = "PENDING"; // PENDING, APPROVED, ONGOING, COMPLETED, REJECTED, CANCELLED

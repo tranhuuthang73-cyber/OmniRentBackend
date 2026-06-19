@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OmniRentBackend.Data;
 using OmniRentBackend.Models;
+using OmniRentBackend.Models.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -141,14 +142,92 @@ namespace OmniRentBackend.Controllers
         }
 
         // GET: /AdminDashboard/Bookings
-        public async Task<IActionResult> Bookings()
+        public async Task<IActionResult> Bookings(string? ownerSearch)
         {
-            var bookings = await _context.Bookings
+            var bookingQuery = _context.Bookings
                 .Include(b => b.Product)
+                    .ThenInclude(p => p!.Owner)
                 .Include(b => b.Renter)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(ownerSearch))
+            {
+                var keyword = ownerSearch.Trim();
+                bookingQuery = bookingQuery.Where(b =>
+                    b.Product != null
+                    && b.Product.Owner != null
+                    && b.Product.Owner.FullName.Contains(keyword));
+            }
+
+            var bookings = await bookingQuery
                 .OrderByDescending(b => b.CreatedAt)
                 .ToListAsync();
+
+            var completedBookings = bookings.Where(b => b.Status == "COMPLETED").ToList();
+            ViewBag.CompletedRevenue = completedBookings.Sum(b => b.TotalPrice);
+            ViewBag.SystemCommission = completedBookings.Sum(b => b.TotalPrice * 0.20);
+            ViewBag.UnpaidCommission = completedBookings.Where(b => !b.CommissionPaid).Sum(b => b.TotalPrice * 0.20);
+            ViewBag.PaidCommission = completedBookings.Where(b => b.CommissionPaid).Sum(b => b.TotalPrice * 0.20);
+            ViewBag.OwnerRevenueStats = completedBookings
+                .GroupBy(b => new
+                {
+                    OwnerId = b.Product?.OwnerId ?? string.Empty,
+                    OwnerName = b.Product?.Owner?.FullName ?? "N/A"
+                })
+                .Select(g => new AdminOwnerCommissionSummary
+                {
+                    OwnerId = g.Key.OwnerId,
+                    OwnerName = g.Key.OwnerName,
+                    BookingCount = g.Count(),
+                    Revenue = g.Sum(b => b.TotalPrice),
+                    Commission = g.Sum(b => b.TotalPrice * 0.20),
+                    UnpaidCommission = g.Where(b => !b.CommissionPaid).Sum(b => b.TotalPrice * 0.20),
+                    PaidCommission = g.Where(b => b.CommissionPaid).Sum(b => b.TotalPrice * 0.20)
+                })
+                .OrderByDescending(x => x.Revenue)
+                .ToList();
+            ViewBag.OwnerSearch = ownerSearch ?? string.Empty;
             return View(bookings);
+        }
+
+        // POST: /AdminDashboard/MarkOwnerCommissionPaid
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkOwnerCommissionPaid([FromForm] string ownerId, [FromForm] string? ownerSearch)
+        {
+            if (string.IsNullOrWhiteSpace(ownerId))
+            {
+                TempData["ErrorMessage"] = "Khong tim thay chu cho thue can thu hoa hong.";
+                return RedirectToAction(nameof(Bookings), new { ownerSearch });
+            }
+
+            var unpaidBookings = await _context.Bookings
+                .Include(b => b.Product)
+                .Where(b => b.Product != null
+                    && b.Product.OwnerId == ownerId
+                    && b.Status == "COMPLETED"
+                    && !b.CommissionPaid)
+                .ToListAsync();
+
+            if (!unpaidBookings.Any())
+            {
+                TempData["ErrorMessage"] = "Chu cho thue nay khong con hoa hong chua thanh toan.";
+                return RedirectToAction(nameof(Bookings), new { ownerSearch });
+            }
+
+            var paidAt = DateTime.UtcNow;
+            foreach (var booking in unpaidBookings)
+            {
+                booking.CommissionPaid = true;
+                booking.CommissionPaidAt = paidAt;
+                booking.UpdatedAt = paidAt;
+            }
+
+            var commissionAmount = unpaidBookings.Sum(b => b.TotalPrice * 0.20);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Da ghi nhan thu hoa hong {commissionAmount:N0}d thanh cong.";
+            return RedirectToAction(nameof(Bookings), new { ownerSearch });
         }
 
         // GET: /AdminDashboard/BookingDetails/5

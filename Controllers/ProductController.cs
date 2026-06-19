@@ -143,7 +143,9 @@ namespace OmniRentBackend.Controllers
                         p.Owner.Email,
                         p.Owner.Phone,
                         p.Owner.AvatarUrl,
-                        p.Owner.OwnerVerified
+                        p.Owner.OwnerVerified,
+                        p.Owner.Address,
+                        p.Owner.PickupAddress
                     },
                     images = imagesList,
                     imagesJson = p.ImagesJson,
@@ -228,7 +230,9 @@ namespace OmniRentBackend.Controllers
                     product.Owner.Phone,
                     product.Owner.AvatarUrl,
                     product.Owner.OwnerVerified,
-                    product.Owner.RenterTrustScore
+                    product.Owner.RenterTrustScore,
+                    product.Owner.Address,
+                    product.Owner.PickupAddress
                 },
                 images = imagesList,
                 imagesJson = product.ImagesJson,
@@ -513,7 +517,9 @@ namespace OmniRentBackend.Controllers
                     product.Owner.Email,
                     product.Owner.Phone,
                     product.Owner.AvatarUrl,
-                    product.Owner.OwnerVerified
+                    product.Owner.OwnerVerified,
+                    product.Owner.Address,
+                    product.Owner.PickupAddress
                 },
                 images = imagesList,
                 imagesJson = product.ImagesJson,
