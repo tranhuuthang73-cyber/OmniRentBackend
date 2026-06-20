@@ -1264,7 +1264,7 @@
                         foreach (var category in Model.Categories)
                         {
                             <div class="col-6 col-md-4 col-lg-3">
-                                <a href="/?categoryId=@category.Id" class="category-card @(ViewBag.SelectedCategoryId == category.Id ? "active-category" : "")">
+                                <a href="/?categoryId=@category.Id" class="category-card @(ViewBag.SelectedParentId == category.Id ? "active-category" : "")">
                                     <div class="category-icon-wrap">
                                         <i class="bi @getCategoryIcon(category.Slug)"></i>
                                     </div>
@@ -1295,6 +1295,25 @@
                         }
                     }
                 </div>
+                </div>
+                
+                @if (ViewBag.DisplaySubcategories != null && ((List<OmniRentBackend.Models.Category>)ViewBag.DisplaySubcategories).Any())
+                {
+                    <div class="mt-4 pt-3 text-center" style="border-top: 1px dashed var(--border);">
+                        <div class="d-flex flex-wrap justify-content-center gap-2">
+                            <a href="/?categoryId=@ViewBag.SelectedParentId" class="@(string.IsNullOrEmpty((string)ViewBag.SelectedSubcategoryId) ? "btn-nav-primary" : "btn-nav-outline")" style="border-radius: 50px; padding: 0.5rem 1.5rem;">
+                                Tất cả
+                            </a>
+                            
+                            @foreach(var subcat in (List<OmniRentBackend.Models.Category>)ViewBag.DisplaySubcategories)
+                            {
+                                <a href="/?categoryId=@subcat.Id" class="@((string)ViewBag.SelectedSubcategoryId == subcat.Id ? "btn-nav-primary" : "btn-nav-outline")" style="border-radius: 50px; padding: 0.5rem 1.5rem;">
+                                    @subcat.Name
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
         </div>
     </section>
@@ -1307,8 +1326,7 @@
                     <div class="section-tag"><i class="bi bi-box-seam"></i> Sản phẩm</div>
                     @if (ViewBag.SelectedCategoryId != null)
                     {
-                        var selectedCat = Model.Categories.FirstOrDefault(c => c.Id == ViewBag.SelectedCategoryId);
-                        <h2 class="section-title">Sản phẩm: @selectedCat?.Name</h2>
+                        <h2 class="section-title">Sản phẩm: @ViewBag.SelectedCategoryName</h2>
                         <a href="/" style="font-size:0.82rem; color:var(--text-secondary); text-decoration:none;">
                             <i class="bi bi-arrow-left"></i> Xem tất cả danh mục
                         </a>

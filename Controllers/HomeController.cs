@@ -32,21 +32,49 @@ namespace OmniRentBackend.Controllers
                 .Include(p => p.Owner)
                 .Where(p => p.Status == "AVAILABLE");
 
+            string? selectedParentId = null;
+            string? selectedSubcategoryId = null;
+            var displaySubcategories = new List<Category>();
+
             if (!string.IsNullOrEmpty(categoryId))
             {
                 var category = await _context.Categories
                     .Include(c => c.Subcategories)
+                    .Include(c => c.Parent)
+                        .ThenInclude(p => p!.Subcategories)
                     .FirstOrDefaultAsync(c => c.Id == categoryId);
 
                 var ids = new List<string> { categoryId };
-                if (category != null && category.Subcategories != null)
+                if (category != null)
                 {
-                    ids.AddRange(category.Subcategories.Select(s => s.Id));
+                    if (category.ParentId == null)
+                    {
+                        selectedParentId = category.Id;
+                        if (category.Subcategories != null)
+                        {
+                            ids.AddRange(category.Subcategories.Select(s => s.Id));
+                            displaySubcategories = category.Subcategories.ToList();
+                        }
+                    }
+                    else
+                    {
+                        selectedParentId = category.ParentId;
+                        selectedSubcategoryId = category.Id;
+                        if (category.Parent?.Subcategories != null)
+                        {
+                            displaySubcategories = category.Parent.Subcategories.ToList();
+                        }
+                    }
+                    ViewBag.SelectedCategoryName = category.Name;
                 }
 
                 query = query.Where(p => ids.Contains(p.CategoryId));
                 ViewBag.SelectedCategoryId = categoryId;
             }
+            
+            ViewBag.SelectedParentId = selectedParentId;
+            ViewBag.SelectedSubcategoryId = selectedSubcategoryId;
+            ViewBag.DisplaySubcategories = displaySubcategories;
 
             var featuredProducts = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
 
