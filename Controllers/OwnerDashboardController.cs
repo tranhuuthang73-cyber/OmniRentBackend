@@ -40,7 +40,7 @@ namespace OmniRentBackend.Controllers
             ViewBag.MyProductsCount = myProductIds.Count;
 
             var pendingBookingsCount = await _context.Bookings
-                .Where(b => myProductIds.Contains(b.ProductId) && (b.Status == "PENDING" || b.Status == "WAITING_OWNER_CONFIRM"))
+                .Where(b => myProductIds.Contains(b.ProductId) && b.Status == "WAITING_OWNER_CONFIRM")
                 .CountAsync();
             ViewBag.PendingBookingsCount = pendingBookingsCount;
 
@@ -79,7 +79,7 @@ namespace OmniRentBackend.Controllers
             ViewBag.RecentBookings = await _context.Bookings
                 .Include(b => b.Product)
                 .Include(b => b.Renter)
-                .Where(b => myProductIds.Contains(b.ProductId))
+                .Where(b => myProductIds.Contains(b.ProductId) && b.Status != "PENDING")
                 .OrderByDescending(b => b.CreatedAt)
                 .Take(8)
                 .ToListAsync();

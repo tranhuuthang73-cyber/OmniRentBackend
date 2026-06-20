@@ -178,7 +178,15 @@
             </div>
             <div class="col-md-4 mb-3 mb-md-0">
                 <label for="DepositAmount" class="form-label">Tiền cọc thiết lập (đ) <span class="text-danger">*</span></label>
-                <input type="number" class="form-control" id="DepositAmount" name="DepositAmount" step="1000" min="0" required placeholder="500000">
+                <div class="input-group">
+                    <select class="form-select" id="DepositPercentage" style="max-width: 110px;" title="Gợi ý mức cọc">
+                        <option value="">Tùy chỉnh</option>
+                        <option value="30">30%</option>
+                        <option value="50">50%</option>
+                        <option value="70">70%</option>
+                    </select>
+                    <input type="number" class="form-control" id="DepositAmount" name="DepositAmount" step="1000" min="0" required placeholder="500000">
+                </div>
             </div>
             <div class="col-md-4">
                 <label for="Status" class="form-label">Trạng thái ban đầu</label>
@@ -274,6 +282,28 @@
         });
         document.getElementById('imagePreviewContainer').style.display = hasUrl ? 'block' : 'none';
     }
+
+    document.getElementById('DepositPercentage').addEventListener('change', function() {
+        var percentage = this.value;
+        var priceStr = document.getElementById('PricePerDay').value;
+        if (percentage && priceStr) {
+            var price = parseFloat(priceStr);
+            if (!isNaN(price)) {
+                document.getElementById('DepositAmount').value = price * (percentage / 100);
+            }
+        }
+    });
+
+    document.getElementById('PricePerDay').addEventListener('input', function() {
+        var percentage = document.getElementById('DepositPercentage').value;
+        var priceStr = this.value;
+        if (percentage && priceStr) {
+            var price = parseFloat(priceStr);
+            if (!isNaN(price)) {
+                document.getElementById('DepositAmount').value = price * (percentage / 100);
+            }
+        }
+    });
 
     document.getElementById('productForm').addEventListener('submit', function (e) {
         const name = document.getElementById('Name').value.trim();

@@ -199,7 +199,15 @@
             </div>
             <div class="col-md-6 mb-3 mb-md-0">
                 <label for="DepositAmount" class="form-label">Tiền Cọc (đ)</label>
-                <input type="number" class="form-control" id="DepositAmount" name="DepositAmount" step="1000" min="0" placeholder="500,000">
+                <div class="input-group">
+                    <select class="form-select" id="DepositPercentage" style="max-width: 110px;" title="Gợi ý mức cọc">
+                        <option value="">Tùy chỉnh</option>
+                        <option value="30">30%</option>
+                        <option value="50">50%</option>
+                        <option value="70">70%</option>
+                    </select>
+                    <input type="number" class="form-control" id="DepositAmount" name="DepositAmount" step="1000" min="0" placeholder="500000">
+                </div>
             </div>
         </div>
 
@@ -291,69 +299,34 @@
                 hasUrl = true;
                 const div = document.createElement('div');
                 div.className = 'image-preview';
-                div.innerHTML = `<img src="${url}" alt="Preview" onerror="this.style.border='2px solid #dc2626';" />`;
-                container.appendChild(div);
-            }
-        });
-        document.getElementById('imagePreviewContainer').style.display = hasUrl ? 'block' : 'none';
-    }
-
-    document.getElementById('productForm').addEventListener('submit', function (e) {
-        const name = document.getElementById('Name').value.trim();
-        if (!name) {
-            e.preventDefault();
-            alert('Vui lòng nhập tên sản phẩm');
-            return false;
-        }
-    });
-</script>
-
-
-<script>
-    let urlRowCount = 1;
-
-    function addUrlRow() {
-        const container = document.getElementById('imageUrlsContainer');
-        const idx = urlRowCount++;
-        const div = document.createElement('div');
-        div.className = 'image-url-row d-flex gap-2 mb-2';
-        div.id = 'urlRow_' + idx;
-        div.innerHTML = `
-            <input type="text" class="form-control" name="ImageUrls" placeholder="https://example.com/image.jpg" oninput="previewUrlImage(this, ${idx})">
-            <button type="button" class="btn btn-outline-danger" onclick="removeUrlRow(${idx})" title="Xóa"><i class="bi bi-trash"></i></button>
-        `;
-        container.appendChild(div);
-    }
-
-    function removeUrlRow(idx) {
-        const row = document.getElementById('urlRow_' + idx);
-        if (row) {
-            row.remove();
-            updateUrlPreviews();
-        }
-    }
-
-    function previewUrlImage(input, idx) {
-        updateUrlPreviews();
-    }
-
-    function updateUrlPreviews() {
-        const inputs = document.querySelectorAll('#imageUrlsContainer input[name="ImageUrls"]');
-        const container = document.getElementById('previewsList');
-        container.innerHTML = '';
-        let hasUrl = false;
-        inputs.forEach(function (inp) {
-            const url = inp.value.trim();
-            if (url) {
-                hasUrl = true;
-                const div = document.createElement('div');
-                div.className = 'image-preview';
                 div.innerHTML = `<img src="${url}" alt="Preview" onerror="this.src=''; this.style.border='2px solid red';" />`;
                 container.appendChild(div);
             }
         });
         document.getElementById('imagePreviewContainer').style.display = hasUrl ? 'block' : 'none';
     }
+
+    document.getElementById('DepositPercentage').addEventListener('change', function() {
+        var percentage = this.value;
+        var priceStr = document.getElementById('PricePerDay').value;
+        if (percentage && priceStr) {
+            var price = parseFloat(priceStr);
+            if (!isNaN(price)) {
+                document.getElementById('DepositAmount').value = price * (percentage / 100);
+            }
+        }
+    });
+
+    document.getElementById('PricePerDay').addEventListener('input', function() {
+        var percentage = document.getElementById('DepositPercentage').value;
+        var priceStr = this.value;
+        if (percentage && priceStr) {
+            var price = parseFloat(priceStr);
+            if (!isNaN(price)) {
+                document.getElementById('DepositAmount').value = price * (percentage / 100);
+            }
+        }
+    });
 
     // Form validation — chỉ bắt buộc Tên
     document.getElementById('productForm').addEventListener('submit', function (e) {

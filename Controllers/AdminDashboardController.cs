@@ -148,6 +148,7 @@ namespace OmniRentBackend.Controllers
                 .Include(b => b.Product)
                     .ThenInclude(p => p!.Owner)
                 .Include(b => b.Renter)
+                .Where(b => b.Status != "PENDING")
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(ownerSearch))

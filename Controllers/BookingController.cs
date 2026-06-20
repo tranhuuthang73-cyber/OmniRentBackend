@@ -160,19 +160,7 @@ namespace OmniRentBackend.Controllers
 
             _context.Bookings.Add(booking);
 
-            // Create notification for owner
-            var notif = new Notification
-            {
-                UserId = product.OwnerId,
-                Title = "Yêu cầu thuê mới",
-                Content = $"Bạn có một yêu cầu thuê mới cho sản phẩm: \"{product.Name}\"."
-            };
-            _context.Notifications.Add(notif);
-
             await _context.SaveChangesAsync();
-
-            // Push notification via SignalR
-            await SendLiveNotificationAsync(product.OwnerId, notif);
 
             return Ok(booking);
         }
@@ -193,6 +181,7 @@ namespace OmniRentBackend.Controllers
                     .Include(b => b.Product)
                         .ThenInclude(p => p!.Owner)
                     .Include(b => b.Renter)
+                    .Where(b => b.Status != "PENDING")
                     .OrderByDescending(b => b.CreatedAt)
                     .ToListAsync();
             }
@@ -201,7 +190,7 @@ namespace OmniRentBackend.Controllers
                 bookings = await _context.Bookings
                     .Include(b => b.Product)
                     .Include(b => b.Renter)
-                    .Where(b => b.Product != null && b.Product.OwnerId == userId)
+                    .Where(b => b.Product != null && b.Product.OwnerId == userId && b.Status != "PENDING")
                     .OrderByDescending(b => b.CreatedAt)
                     .ToListAsync();
             }
