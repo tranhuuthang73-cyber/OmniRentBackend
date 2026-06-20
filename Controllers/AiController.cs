@@ -59,7 +59,7 @@ namespace OmniRentBackend.Controllers
                 return BadRequest(new { message = "Tin nhắn trống." });
             }
 
-            var response = await _aiService.GetChatbotResponseAsync(dto.Message);
+            var response = await _aiService.GetChatbotResponseAsync(dto.Message, dto.ConversationHistory, dto.ProductId);
             return Ok(response);
         }
 
@@ -122,5 +122,7 @@ namespace OmniRentBackend.Controllers
     public class ChatbotRequestDto
     {
         public string Message { get; set; } = string.Empty;
+        public List<string>? ConversationHistory { get; set; }
+        public string? ProductId { get; set; }
     }
 }
