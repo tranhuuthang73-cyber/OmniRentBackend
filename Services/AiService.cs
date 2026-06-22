@@ -220,7 +220,7 @@ namespace OmniRentBackend.Services
             });
         }
 
-        public async Task<object> GetChatbotResponseAsync(string message)
+        public async Task<object> GetChatbotResponseAsync(string message, List<string>? conversationHistory = null, string? productId = null)
         {
             var parsed = await ParseSemanticQueryAsync(message);
 

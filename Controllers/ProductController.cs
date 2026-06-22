@@ -91,7 +91,10 @@ namespace OmniRentBackend.Controllers
             if (!string.IsNullOrEmpty(search))
             {
                 var s = search.ToLower();
-                query = query.Where(p => p.Name.ToLower().Contains(s) || p.Description.ToLower().Contains(s));
+                query = query.Where(p => p.Name.ToLower().Contains(s) || 
+                                         p.Description.ToLower().Contains(s) ||
+                                         (p.Category != null && p.Category.Name.ToLower().Contains(s)) ||
+                                         (p.Category != null && p.Category.Parent != null && p.Category.Parent.Name.ToLower().Contains(s)));
             }
 
             query = query.Where(p => p.PricePerDay >= parsedMinPrice && p.PricePerDay <= parsedMaxPrice);

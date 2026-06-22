@@ -20,7 +20,7 @@ namespace OmniRentBackend.Controllers
         }
 
         // GET /  hoặc  /Home/Index
-        public async Task<IActionResult> Index(string? categoryId)
+        public async Task<IActionResult> Index(string? categoryId, string? search)
         {
             var categories = await _context.Categories
                 .Include(c => c.Subcategories)
@@ -70,6 +70,16 @@ namespace OmniRentBackend.Controllers
 
                 query = query.Where(p => ids.Contains(p.CategoryId));
                 ViewBag.SelectedCategoryId = categoryId;
+            }
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                var s = search.ToLower();
+                query = query.Where(p => p.Name.ToLower().Contains(s) || 
+                                         p.Description.ToLower().Contains(s) ||
+                                         (p.Category != null && p.Category.Name.ToLower().Contains(s)) ||
+                                         (p.Category != null && p.Category.Parent != null && p.Category.Parent.Name.ToLower().Contains(s)));
+                ViewBag.SearchKeyword = search;
             }
             
             ViewBag.SelectedParentId = selectedParentId;
