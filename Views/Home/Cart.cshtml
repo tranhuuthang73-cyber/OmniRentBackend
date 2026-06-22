@@ -517,10 +517,48 @@
             });
         })();
 
+        const cartKey = '@(isAuthenticated ? "cart_" + User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value : "cart_guest")';
+
         let enrichedCart = [];
 
+        function getCartItems() {
+            try {
+                return JSON.parse(localStorage.getItem(cartKey)) || [];
+            } catch {
+                return [];
+            }
+        }
+
+        function setCartItems(cart) {
+            localStorage.setItem(cartKey, JSON.stringify(cart));
+        }
+
+        function updateCartSelection(id, selected) {
+            let cart = getCartItems();
+            cart = cart.map(item => item.id === id ? { ...item, selected } : item);
+            setCartItems(cart);
+            loadCartItems();
+        }
+
+        function updateCartQuantity(id, quantity) {
+            const qty = Math.max(1, parseInt(quantity, 10) || 1);
+            let cart = getCartItems();
+            cart = cart.map(item => item.id === id ? { ...item, quantity: qty } : item);
+            setCartItems(cart);
+            loadCartItems();
+        }
+
+        function toggleSelectAll(selected) {
+            let cart = getCartItems();
+            cart = cart.map(item => ({ ...item, selected }));
+            setCartItems(cart);
+            loadCartItems();
+        }
+
         async function loadCartItems() {
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let cart = getCartItems();
+            cart = cart.map(item => ({ ...item, quantity: item.quantity || 1, selected: item.selected !== false }));
+            setCartItems(cart);
             let listContainer = document.getElementById('cartItemsList');
             let emptyMsg = document.getElementById('emptyCartMessage');
             let checkoutBox = document.getElementById('checkoutSettings');
@@ -530,14 +568,16 @@
             }
             emptyMsg.classList.add('d-none'); checkoutBox.classList.remove('d-none');
 
+            const allSelected = cart.length > 0 && cart.every(item => item.selected !== false);
             enrichedCart = await Promise.all(cart.map(async item => {
                 try {
                     const response = await fetch(`/products/${item.id}`);
-                    if (!response.ok) return item;
+                    if (!response.ok) return { ...item, selected: item.selected !== false };
                     const product = await response.json();
                     const image = product.images && product.images.length > 0 ? product.images[0] : item.image;
                     return {
                         ...item,
+                        selected: item.selected !== false,
                         name: product.name || item.name,
                         price: product.pricePerDay || item.price,
                         image,
@@ -545,23 +585,42 @@
                         pickupAddress: product.owner?.pickupAddress || product.owner?.address || 'Chủ cho thuê chưa cập nhật địa chỉ nhận đồ.'
                     };
                 } catch {
-                    return item;
+                    return { ...item, selected: item.selected !== false };
                 }
             }));
 
-            let totalPerDay = 0;
+            const selectAllHtml = `
+                <div class="form-check mb-4">
+                    <input class="form-check-input" type="checkbox" id="selectAllCheckbox" ${allSelected ? 'checked' : ''} onchange="toggleSelectAll(this.checked)">
+                    <label class="form-check-label" for="selectAllCheckbox"><strong>Chọn tất cả sản phẩm</strong></label>
+                </div>
+            `;
+            listContainer.insertAdjacentHTML('beforeend', selectAllHtml);
+
+            const selectedItems = enrichedCart.filter(item => item.selected);
+            const totalQuantity = selectedItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
+            let totalPerDay = selectedItems.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0);
             enrichedCart.forEach(item => {
-                totalPerDay += item.price;
                 let card = document.createElement('div');
                 card.className = 'cart-item-card';
                 card.innerHTML = `
                     <div class="d-flex align-items-center gap-3">
                         <img src="${item.image}" class="cart-item-img" onerror="this.src='https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80'">
                         <div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input cart-item-checkbox" type="checkbox" id="itemCheckbox-${item.id}" ${item.selected ? 'checked' : ''} onchange="updateCartSelection('${item.id}', this.checked)">
+                                <label class="form-check-label" for="itemCheckbox-${item.id}">Chọn sản phẩm</label>
+                            </div>
                             <h5 class="fw-bold m-0" style="color: var(--text-primary);">${item.name}</h5>
                             <small class="d-block mb-1" style="color: var(--text-secondary);">Chủ đồ: ${item.owner}</small>
                             <small class="d-block mb-1" style="color: var(--text-secondary);"><i class="bi bi-geo-alt-fill text-danger"></i> Nhận tại: ${item.pickupAddress || 'Chủ cho thuê chưa cập nhật địa chỉ nhận đồ.'}</small>
-                            <span class="fw-bold" style="color: var(--primary); font-size: 1.1rem;">${item.price.toLocaleString('vi-VN')}đ / ngày</span>
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="fw-bold" style="color: var(--primary); font-size: 1.1rem;">${item.price.toLocaleString('vi-VN')}đ / ngày</span>
+                                <div class="input-group input-group-sm" style="width: 120px;">
+                                    <span class="input-group-text">SL</span>
+                                    <input type="number" min="1" value="${item.quantity || 1}" class="form-control form-control-sm" onchange="updateCartQuantity('${item.id}', this.value)">
+                                </div>
+                            </div>
                             <div class="mt-1" style="font-size:0.86rem; color:var(--text-secondary);">
                                 Tiền thuê theo ngày chọn: <strong id="itemTotal-${item.id}" style="color:var(--text-primary);">Đang tính...</strong>
                                 <span class="mx-1">•</span>
@@ -575,7 +634,8 @@
                 `;
                 listContainer.appendChild(card);
             });
-            document.getElementById('summaryCount').innerText = `${enrichedCart.length} sản phẩm`;
+            const selectedCount = selectedItems.length;
+            document.getElementById('summaryCount').innerText = `${selectedCount} / ${enrichedCart.length} sản phẩm (${totalQuantity} item)`;
             document.getElementById('summaryTotalDay').innerText = `${totalPerDay.toLocaleString('vi-VN')}đ`;
             await updateCartPriceSummary();
         }
@@ -585,11 +645,22 @@
             const endDateStr = document.getElementById('endDate')?.value;
             const rentalTotalEl = document.getElementById('summaryRentalTotal');
             const depositEl = document.getElementById('summaryDeposit');
-            if (!startDateStr || !endDateStr || enrichedCart.length === 0) return;
+            if (!startDateStr || !endDateStr || enrichedCart.length === 0) {
+                if (rentalTotalEl) rentalTotalEl.innerText = `0đ`;
+                if (depositEl) depositEl.innerText = `0đ`;
+                return;
+            }
 
             let totalRental = 0;
-            await Promise.all(enrichedCart.map(async item => {
-                let itemTotal = item.price;
+            const selectedItems = enrichedCart.filter(item => item.selected);
+            if (selectedItems.length === 0) {
+                if (rentalTotalEl) rentalTotalEl.innerText = `0đ`;
+                if (depositEl) depositEl.innerText = `0đ`;
+                return;
+            }
+
+            await Promise.all(selectedItems.map(async item => {
+                let itemTotal = item.price * item.quantity;
                 try {
                     const response = await fetch('/bookings/estimate-price', {
                         method: 'POST',
@@ -598,7 +669,7 @@
                     });
                     if (response.ok) {
                         const data = await response.json();
-                        itemTotal = data.totalPrice;
+                        itemTotal = data.totalPrice * item.quantity;
                     }
                 } catch { }
 
@@ -616,14 +687,18 @@
         }
 
         function removeItem(id) {
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let cart = getCartItems();
             cart = cart.filter(item => item.id !== id);
-            localStorage.setItem('cart', JSON.stringify(cart));
+            setCartItems(cart);
             loadCartItems();
         }
         async function submitCartBookings() {
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
-            if (cart.length === 0) return;
+            let cart = getCartItems();
+            const selectedItems = cart.filter(item => item.selected);
+            if (selectedItems.length === 0) {
+                showError('Vui lòng chọn ít nhất một sản phẩm trong giỏ hàng.');
+                return;
+            }
             const startDateStr = document.getElementById('startDate').value;
             const endDateStr = document.getElementById('endDate').value;
             const btn = document.getElementById('btnSubmitCart');
@@ -632,15 +707,16 @@
             if (!startDateStr || !endDateStr) { showError('Vui lòng chọn ngày bắt đầu và trả đồ.'); return; }
 
             btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Đang tạo đơn thuê...';
-            let promises = cart.map(item => fetch('/bookings', {
+            let promises = selectedItems.map(item => fetch('/bookings', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ productId: item.id, startDate: startDateStr, endDate: endDateStr })
+                body: JSON.stringify({ productId: item.id, startDate: startDateStr, endDate: endDateStr, quantity: item.quantity || 1 })
             }));
             try {
                 let results = await Promise.all(promises);
                 if (results.every(res => res.ok)) {
                     const firstBooking = await results[0].json();
-                    localStorage.removeItem('cart');
+                    const remaining = cart.filter(item => !item.selected);
+                    setCartItems(remaining);
                     window.location.href = `/Home/Payment/${firstBooking.id}`;
                 } else {
                     showError('Có lỗi xảy ra. Vui lòng kiểm tra lại.');

@@ -1536,9 +1536,35 @@
             });
         })();
 
+        const cartKey = '@(User.Identity != null && User.Identity.IsAuthenticated ? "cart_" + User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value : "cart_guest")';
+
+        function migrateLegacyCart() {
+            if (localStorage.getItem(cartKey)) return;
+            try {
+                const legacy = JSON.parse(localStorage.getItem('cart')) || [];
+                if (Array.isArray(legacy) && legacy.length > 0) {
+                    localStorage.setItem(cartKey, JSON.stringify(legacy.map(item => ({ ...item, selected: true }))));
+                }
+            } catch {
+            }
+        }
+
+        function getCartItems() {
+            migrateLegacyCart();
+            try {
+                return JSON.parse(localStorage.getItem(cartKey)) || [];
+            } catch {
+                return [];
+            }
+        }
+
+        function setCartItems(cart) {
+            localStorage.setItem(cartKey, JSON.stringify(cart));
+        }
+
         // =================== Cart badge ===================
         function updateCartBadge() {
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let cart = getCartItems();
             let badge = document.getElementById('cartBadge');
             if (badge) {
                 badge.innerText = cart.length;
